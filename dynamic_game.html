@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Smart Academy - Round-Up AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    body { font-family: 'Nunito', sans-serif; background: #f8fafc; }
+    .wiggle { animation: wiggle 0.4s ease-in-out; }
+    @keyframes wiggle { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+    .input-blank { border: none; border-bottom: 3px dashed #94a3b8; background: transparent; text-align: center; font-weight: 900; color: #0f766e; width: 100px; outline: none; transition: all 0.3s; }
+    .input-blank:focus { border-bottom-color: #10b981; width: 120px; }
+    .choice-btn { transition: all 0.2s; }
+    .choice-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+  </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden antialiased bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] hidden" id="gameBody">
+
+  <!-- TOPBAR -->
+  <header class="bg-white border-b-2 border-emerald-100 p-4 flex justify-between items-center shadow-sm z-10">
+    <div class="flex items-center space-x-3">
+      <button onclick="window.location.href='dashboard.html'" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-xl flex justify-center items-center text-slate-600 transition" title="Back to Dashboard">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+      <div>
+        <h1 class="font-black text-xl text-indigo-900 leading-tight">AI Smart Practice</h1>
+        <p id="exerciseProgress" class="text-xs font-bold text-slate-400">Loading...</p>
+      </div>
+    </div>
+    <div class="flex items-center space-x-2 bg-amber-50 border-2 border-amber-200 px-4 py-1.5 rounded-full shadow-sm">
+      <i class="fa-solid fa-coins text-amber-500 animate-pulse"></i>
+      <span id="scoreDisplay" class="font-black text-amber-700 text-lg">0</span>
+    </div>
+  </header>
+
+  <!-- MAIN GAME AREA -->
+  <main class="flex-1 flex flex-col items-center justify-center p-4 relative">
+    
+    <!-- AI Teacher Avatar -->
+    <div class="absolute bottom-4 left-4 sm:left-10 flex items-end space-x-3 z-30">
+      <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher&backgroundColor=b6e3f4" class="w-20 h-20 rounded-full border-4 border-white shadow-xl bg-blue-100">
+      <div class="bg-white px-4 py-3 rounded-2xl rounded-bl-none shadow-lg border border-slate-100 max-w-[250px]">
+        <p id="aiMessage" class="font-bold text-slate-700 text-sm">Welcome to the class!</p>
+      </div>
+    </div>
+
+    <!-- Game Card -->
+    <div id="gameCard" class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border-4 border-indigo-100 p-6 sm:p-10 flex flex-col items-center space-y-6 relative z-20 transition-all duration-300">
+      
+      <!-- Instruction -->
+      <div class="w-full bg-indigo-50 p-4 rounded-2xl border-2 border-indigo-100 text-center relative overflow-hidden">
+        <div class="absolute -right-4 -top-4 text-6xl opacity-10"><i class="fa-solid fa-bullhorn"></i></div>
+        <h2 id="instructionText" class="font-black text-indigo-800 text-lg sm:text-xl uppercase tracking-wide relative z-10">...</h2>
+      </div>
+
+      <!-- Smart Audio Player (Hidden by default) -->
+      <div id="audioPlayerContainer" class="hidden w-full bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+        <div class="flex items-center space-x-4">
+          <button onclick="toggleAudio()" id="btnPlayAudio" class="w-12 h-12 bg-indigo-500 text-white rounded-full flex items-center justify-center text-xl shadow-md hover:bg-indigo-400 hover:scale-105 transition">
+            <i class="fa-solid fa-play" id="iconPlayAudio"></i>
+          </button>
+          <div>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Lesson Track</p>
+            <p class="text-sm font-black text-slate-700">Listen carefully</p>
+          </div>
+        </div>
+        <audio id="lessonAudio" src=""></audio>
+        <div class="text-indigo-400 text-2xl"><i class="fa-solid fa-headphones-simple"></i></div>
+      </div>
+
+      <!-- Question Area -->
+      <div class="w-full py-4 flex flex-col items-center justify-center space-y-6 min-h-[150px]">
+        <div class="bg-slate-100 px-4 py-1 rounded-full text-xs font-bold text-slate-500 mb-2">Question <span id="qCount">-/-</span></div>
+        <div id="questionContent" class="w-full text-center tracking-wider leading-relaxed">
+          <i class="fa-solid fa-spinner fa-spin text-emerald-500 text-3xl"></i>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <audio id="sfxSuccess" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
+  <audio id="sfxFail" src="https://assets.mixkit.co/active_storage/sfx/2955/2955-preview.mp3"></audio>
+
+  <script>
+    // ==========================================
+    // R&D: CƠ SỞ DỮ LIỆU BÀI TẬP (JSON)
+    // Tích hợp link Audio CDN jsDelivr của Boss
+    // ==========================================
+    const masterData = [
+      {
+        "exercise_id": "1",
+        "type": "listening_choice",
+        "instruction": "Listen and choose the correct answer.",
+        "audio_url": "https://cdn.jsdelivr.net/gh/shopkazoku/roundup-audio/starter/track_01.mp3", // Link GitHub của Boss
+        "questions": [
+          { "q_num": 1, "question_text": "What is the boy's name?", "options": ["Tom", "Peter", "John"], "answer": "Peter" },
+          { "q_num": 2, "question_text": "How old is he?", "options": ["Seven", "Eight", "Nine"], "answer": "Eight" }
+        ]
+      },
+      {
+        "exercise_id": "2",
+        "type": "fill_in_blank",
+        "instruction": "Fill in the missing word.",
+        "questions": [
+          { "q_num": 1, "question_text": "An apple a day keeps the", "answer": "DOCTOR" }
+        ]
+      }
+    ];
+
+    let currentExIndex = 0, currentQIndex = 0, wrongAttempts = 0, score = 0;
+    let currentUser = null; 
+
+    // ==========================================
+    // BOSS DÁN ĐOẠN FIREBASE CONFIG VÀO ĐÂY
+    // ==========================================
+    const firebaseConfig = {
+  apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
+  authDomain: "roundup-ai-academy.firebaseapp.com",
+  projectId: "roundup-ai-academy",
+  storageBucket: "roundup-ai-academy.firebasestorage.app",
+  messagingSenderId: "723976989630",
+  appId: "1:723976989630:web:45f3de91269e70f604e7ef"
+};
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const database = firebase.database();
+
+    // KIỂM TRA ĐĂNG NHẬP & ĐỒNG BỘ COIN
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        currentUser = user;
+        document.getElementById('gameBody').classList.remove('hidden'); 
+        
+        database.ref('users/' + user.uid).once('value').then((snapshot) => {
+          const data = snapshot.val();
+          if (data && data.coins !== undefined) score = data.coins;
+          document.getElementById('scoreDisplay').innerText = score;
+          loadQuestion(); // Bắt đầu game
+        });
+      } else {
+        window.location.href = "login.html";
+      }
+    });
+
+    // GIỌNG ĐỌC AI TÍCH HỢP SẴN CỦA TRÌNH DUYỆT
+    function teacherSpeak(text) {
+      document.getElementById('aiMessage').innerText = text;
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel(); 
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-GB'; utterance.rate = 0.9; utterance.pitch = 1.1;    
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    // ĐIỀU KHIỂN SMART AUDIO PLAYER
+    function toggleAudio() {
+      const audioEl = document.getElementById('lessonAudio');
+      const icon = document.getElementById('iconPlayAudio');
+      if (audioEl.paused) {
+        audioEl.play();
+        icon.classList.replace('fa-play', 'fa-pause');
+      } else {
+        audioEl.pause();
+        icon.classList.replace('fa-pause', 'fa-play');
+      }
+      
+      // Tự động đổi lại icon khi hết bài
+      audioEl.onended = () => icon.classList.replace('fa-pause', 'fa-play');
+    }
+
+    // TẢI BÀI TẬP LÊN MÀN HÌNH
+    function loadQuestion() {
+      if (currentExIndex >= masterData.length) {
+        teacherSpeak("Incredible! You completed all exercises!");
+        document.getElementById('audioPlayerContainer').classList.add('hidden');
+        document.getElementById('gameCard').innerHTML = `<h2 class="text-4xl font-black text-emerald-500 text-center py-20"><i class="fa-solid fa-trophy mb-4 text-6xl text-amber-400"></i><br>LESSON COMPLETE!</h2>`;
+        confetti({ particleCount: 200, spread: 120, origin: { y: 0.5 } }); return;
+      }
+
+      const currentEx = masterData[currentExIndex];
+      const currentQ = currentEx.questions[currentQIndex];
+      wrongAttempts = 0;
+
+      document.getElementById('exerciseProgress').innerText = `Exercise ${currentExIndex + 1}/${masterData.length}`;
+      document.getElementById('instructionText').innerText = currentEx.instruction;
+      document.getElementById('qCount').innerText = `${currentQIndex + 1} / ${currentEx.questions.length}`;
+
+      // Bật/Tắt Audio Player tùy dạng bài
+      const audioContainer = document.getElementById('audioPlayerContainer');
+      const audioEl = document.getElementById('lessonAudio');
+      if (currentEx.type === "listening_choice" && currentEx.audio_url) {
+        audioContainer.classList.remove('hidden');
+        if(audioEl.src !== currentEx.audio_url) {
+            audioEl.src = currentEx.audio_url; // Gắn link MP3 vào máy phát
+        }
+      } else {
+        audioContainer.classList.add('hidden');
+        audioEl.pause();
+      }
+
+      let questionHtml = "";
+      
+      // Dạng 1: Viết từ (Fill in the blank)
+      if (currentEx.type === "fill_in_blank") {
+        teacherSpeak("Type your answer and press Enter.");
+        questionHtml = `<div class="text-3xl font-black text-slate-700">${currentQ.question_text} <input type="text" id="answerInput" class="input-blank" autocomplete="off" autofocus></div>`;
+      } 
+      // Dạng 2: Nghe & Trắc nghiệm (Listening Choice)
+      else if (currentEx.type === "listening_choice") {
+        teacherSpeak("Listen and choose the correct answer.");
+        questionHtml = `<h3 class="text-2xl font-black text-slate-700 mb-6">${currentQ.question_text}</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">`;
+        
+        // Vẽ các nút đáp án (A, B, C...)
+        currentQ.options.forEach(opt => {
+          questionHtml += `<button onclick="checkMultipleChoice('${opt}')" class="choice-btn w-full py-4 px-6 bg-white border-4 border-slate-200 rounded-2xl text-lg font-black text-slate-600 hover:border-indigo-400 hover:text-indigo-600 focus:outline-none">${opt}</button>`;
+        });
+        questionHtml += `</div>`;
+      }
+
+      document.getElementById('questionContent').innerHTML = questionHtml;
+      
+      const inputEl = document.getElementById('answerInput');
+      if(inputEl) {
+        inputEl.addEventListener("keypress", (e) => { if (e.key === "Enter") { e.preventDefault(); checkTextAnswer(); } });
+        setTimeout(() => inputEl.focus(), 100);
+      }
+    }
+
+    // XỬ LÝ ĐÁP ÁN: TRẮC NGHIỆM
+    function checkMultipleChoice(selectedAnswer) {
+      const currentQ = masterData[currentExIndex].questions[currentQIndex];
+      processAnswer(selectedAnswer === currentQ.answer, currentQ.answer);
+    }
+
+    // XỬ LÝ ĐÁP ÁN: GÕ CHỮ
+    function checkTextAnswer() {
+      const inputEl = document.getElementById('answerInput');
+      if (!inputEl || inputEl.value.trim() === "") { teacherSpeak("Please provide an answer first!"); return; }
+      
+      const currentQ = masterData[currentExIndex].questions[currentQIndex];
+      const userAnswer = inputEl.value.trim().toLowerCase().replace(/\s+/g, '');
+      const correctAnswer = currentQ.answer.trim().toLowerCase().replace(/\s+/g, '');
+      
+      processAnswer(userAnswer === correctAnswer, currentQ.answer, inputEl);
+    }
+
+    // LOGIC CHẤM ĐIỂM CHUNG VÀ CỘNG COIN (0Đ TỪ FIREBASE)
+    function processAnswer(isCorrect, correctAnswer, inputEl = null) {
+      if (isCorrect) {
+        document.getElementById('sfxSuccess').play();
+        if (wrongAttempts === 0) { 
+            teacherSpeak("Excellent!"); 
+            score += 10; 
+            database.ref('users/' + currentUser.uid).update({ coins: score }); // Ghi đè Coin lên Đám mây
+        } else { teacherSpeak("Good job!"); }
+        
+        document.getElementById('scoreDisplay').innerText = score;
+        confetti({ particleCount: 30, spread: 50, origin: { y: 0.7 }, colors: ['#10b981', '#f59e0b'] });
+        
+        if (inputEl) { inputEl.style.color = "#10b981"; inputEl.style.borderBottomColor = "#10b981"; inputEl.disabled = true; }
+        
+        currentQIndex++;
+        if (currentQIndex >= masterData[currentExIndex].questions.length) { currentQIndex = 0; currentExIndex++; }
+        setTimeout(loadQuestion, 1500); 
+      } else {
+        wrongAttempts++; 
+        document.getElementById('sfxFail').play();
+        document.getElementById('gameCard').classList.add('wiggle');
+        setTimeout(() => document.getElementById('gameCard').classList.remove('wiggle'), 400);
+
+        if (inputEl) inputEl.value = "";
+        
+        if (wrongAttempts === 1) { teacherSpeak("Not quite right. Try again!"); } 
+        else {
+            teacherSpeak(`The correct answer is ${correctAnswer}. Let's move on!`);
+            setTimeout(() => {
+                currentQIndex++; 
+                if (currentQIndex >= masterData[currentExIndex].questions.length) { currentQIndex = 0; currentExIndex++; }
+                loadQuestion();
+            }, 3000); 
+        }
+      }
+    }
+  </script>
+</body>
+</html>

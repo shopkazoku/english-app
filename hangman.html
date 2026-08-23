@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hangman - Round-Up AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900;1000&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    body { font-family: 'Nunito', sans-serif; background-color: #0f172a; overflow: hidden; user-select: none; }
+    
+    /* VẬT LÝ NÚT BÀN PHÍM */
+    .key-btn { transition: all 0.1s; }
+    .key-btn:active:not(:disabled) { transform: scale(0.9); }
+    .key-disabled { opacity: 0.4; pointer-events: none; }
+    .key-correct { background-color: #10b981 !important; color: white !important; border-color: #059669 !important; }
+    .key-wrong { background-color: #f43f5e !important; color: white !important; border-color: #be123c !important; }
+
+    /* HANGMAN ĐỒ HỌA SVG 0Đ */
+    .draw-part { transition: opacity 0.3s ease-in-out; }
+    .shake-danger { animation: shakeDanger 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+    @keyframes shakeDanger { 10%, 90% { transform: translate3d(-2px, 0, 0) rotate(-1deg); } 20%, 80% { transform: translate3d(2px, 0, 0) rotate(1deg); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0) rotate(-2deg); } 40%, 60% { transform: translate3d(4px, 0, 0) rotate(2deg); } }
+  </style>
+</head>
+<body class="h-screen w-full flex flex-col hidden bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')] bg-slate-900" id="mainBody">
+
+  <!-- OVERLAY BẮT ĐẦU -->
+  <div id="startOverlay" class="fixed inset-0 bg-black/95 z-[200] flex flex-col items-center justify-center p-4">
+    <div id="loadingData" class="flex flex-col items-center mb-6">
+        <i class="fa-solid fa-cloud-arrow-down text-4xl text-sky-400 animate-bounce mb-3"></i>
+        <p class="text-sky-300 font-bold animate-pulse">Syncing Word Bank from Google Sheets...</p>
+    </div>
+    
+    <div id="playUI" class="hidden flex-col items-center">
+        <div class="text-7xl mb-4">🪢</div>
+        <h1 class="text-5xl sm:text-7xl font-black text-white mb-2 uppercase tracking-widest text-center">Hangman</h1>
+        <p class="text-sky-400 font-bold mb-2 text-lg sm:text-xl text-center max-w-lg">Guess the word before the drawing is complete!</p>
+        <p class="text-slate-400 font-bold mb-8 text-sm uppercase tracking-wider"><i class="fa-solid fa-ticket text-amber-500 mr-1"></i> Entry: 20 Coins</p>
+        
+        <button onclick="startGame()" class="bg-sky-600 hover:bg-sky-500 text-white font-black text-2xl px-12 py-4 rounded-3xl shadow-[0_8px_0_#0284c7] active:shadow-[0_0px_0_#0284c7] active:translate-y-[8px] transition-all border-4 border-sky-300 uppercase tracking-widest">
+          PLAY NOW
+        </button>
+    </div>
+  </div>
+
+  <!-- ÂM THANH -->
+  <audio id="bgmAudio" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_12b0c7443c.mp3" loop></audio>
+  <audio id="sfxTap" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
+  <audio id="sfxCorrect" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
+  <audio id="sfxWrong" src="https://assets.mixkit.co/active_storage/sfx/2955/2955-preview.mp3"></audio>
+  <audio id="sfxLose" src="https://assets.mixkit.co/active_storage/sfx/2737/2737-preview.mp3"></audio> <!-- Tiếng gãy đổ khi thua -->
+
+  <!-- TOPBAR -->
+  <header class="bg-slate-900/90 backdrop-blur-md border-b-2 border-slate-700 p-2 sm:p-3 flex justify-between items-center z-50 shrink-0">
+    <div class="flex items-center space-x-3">
+      <button onclick="window.location.href='home.html'" class="w-10 h-10 bg-slate-800 hover:bg-slate-700 rounded-xl flex justify-center items-center text-slate-300 transition border border-slate-600 shadow-lg">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+      <div>
+        <h1 class="font-black text-lg sm:text-xl text-white tracking-wide uppercase leading-none">Hangman</h1>
+      </div>
+    </div>
+    
+    <div class="flex items-center space-x-2 sm:space-x-4">
+      <div class="bg-slate-800 px-3 py-1 rounded-xl border-2 border-slate-600 shadow-inner flex flex-col items-center min-w-[70px]">
+        <span class="text-[9px] font-bold text-slate-400 uppercase">Errors</span>
+        <span class="font-black text-rose-500 text-lg leading-none"><span id="mistakeDisplay">0</span>/6</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- KHU VỰC CHƠI GAME -->
+  <main class="flex-1 w-full flex flex-col items-center justify-between relative overflow-hidden py-4 px-2 sm:px-6">
+    
+    <!-- KHU VỰC 1: GIÁ TREO CỔ (Vẽ bằng SVG 0đ) -->
+    <div class="w-full max-w-sm h-48 sm:h-56 relative flex justify-center items-center mb-4" id="hangmanArea">
+        <svg viewBox="0 0 200 250" class="w-40 sm:w-48 h-full stroke-white fill-none stroke-[6px] stroke-linecap-round">
+            <!-- Khung cơ sở (Luôn hiện) -->
+            <line x1="20" y1="240" x2="180" y2="240" /> <!-- Đế -->
+            <line x1="50" y1="240" x2="50" y2="20" />   <!-- Cột dọc -->
+            <line x1="50" y1="20" x2="130" y2="20" />   <!-- Xà ngang -->
+            <line x1="130" y1="20" x2="130" y2="50" />  <!-- Dây thừng -->
+            
+            <!-- Các bộ phận cơ thể (Ẩn mặc định, hiện dần theo số lần sai) -->
+            <circle id="hm-part-1" cx="130" cy="75" r="25" class="draw-part opacity-0" /> <!-- Đầu -->
+            <line id="hm-part-2" x1="130" y1="100" x2="130" y2="160" class="draw-part opacity-0" /> <!-- Thân -->
+            <line id="hm-part-3" x1="130" y1="110" x2="100" y2="140" class="draw-part opacity-0" /> <!-- Tay Trái -->
+            <line id="hm-part-4" x1="130" y1="110" x2="160" y2="140" class="draw-part opacity-0" /> <!-- Tay Phải -->
+            <line id="hm-part-5" x1="130" y1="160" x2="100" y2="210" class="draw-part opacity-0" /> <!-- Chân Trái -->
+            <line id="hm-part-6" x1="130" y1="160" x2="160" y2="210" class="draw-part opacity-0 stroke-rose-500" /> <!-- Chân Phải (Chết) -->
+        </svg>
+
+        <!-- Hộp gợi ý nổi lên bên trái -->
+        <div class="absolute left-0 top-1/2 transform -translate-y-1/2 bg-slate-800/80 border border-sky-500/50 p-3 rounded-xl max-w-[120px] text-center shadow-lg">
+            <div id="hintIcon" class="text-3xl mb-1">🤔</div>
+            <p id="hintText" class="text-xs font-bold text-sky-200 leading-tight">Hint appears here</p>
+        </div>
+    </div>
+
+    <!-- KHU VỰC 2: Ô CHỮ (CÁC KHOẢNG TRỐNG) -->
+    <div id="wordDisplay" class="flex flex-wrap justify-center gap-1 sm:gap-2 mb-6 w-full max-w-2xl px-2">
+        <!-- JS sẽ sinh ra các ô _ _ _ ở đây -->
+    </div>
+
+    <!-- KHU VỰC 3: BÀN PHÍM ẢO (VIRTUAL KEYBOARD) -->
+    <div id="keyboard" class="w-full max-w-3xl flex flex-wrap justify-center gap-1.5 sm:gap-2 pb-2">
+        <!-- Render 26 chữ cái A-Z bằng JS -->
+    </div>
+
+  </main>
+
+  <!-- KẾT QUẢ TRẬN ĐẤU -->
+  <div id="resultModal" class="fixed inset-0 bg-slate-900/95 z-[300] hidden flex-col items-center justify-center backdrop-blur-sm p-4 text-center">
+    <div class="bg-slate-800 border-4 border-slate-600 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl relative">
+        
+        <div id="resultIcon" class="text-[80px] sm:text-[100px] mb-2 drop-shadow-2xl">🏆</div>
+        <h1 id="resultTitle" class="text-4xl sm:text-5xl font-black text-white uppercase tracking-widest mb-2 text-transparent bg-clip-text bg-gradient-to-r from-sky-300 to-sky-500">YOU SURVIVED!</h1>
+        <p id="resultDesc" class="text-slate-400 font-bold text-sm mb-6">The word was:</p>
+        
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-4 mb-6 shadow-inner">
+          <span id="finalWord" class="font-black text-3xl sm:text-4xl tracking-widest text-white uppercase">APPLE</span>
+        </div>
+        
+        <div id="rewardBox" class="bg-slate-900 border-2 border-slate-700 p-4 rounded-2xl flex items-center justify-center space-x-3 mb-6">
+          <i class="fa-solid fa-coins text-3xl text-amber-500"></i>
+          <div class="text-left">
+            <p class="text-[10px] font-bold text-amber-600 uppercase tracking-wider" id="rewardLabel">Reward</p>
+            <p class="text-2xl font-black text-amber-500" id="rewardAmount">+0 Coins</p>
+          </div>
+        </div>
+
+        <div class="flex gap-2">
+            <button onclick="startGame()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-lg py-4 rounded-xl shadow-[0_5px_0_#059669] active:translate-y-[5px] transition-all uppercase">PLAY AGAIN</button>
+            <button onclick="window.location.href='home.html'" class="w-16 bg-slate-700 hover:bg-slate-600 text-white font-black text-lg py-4 rounded-xl shadow-[0_5px_0_#475569] active:translate-y-[5px] transition-all flex justify-center items-center"><i class="fa-solid fa-house"></i></button>
+        </div>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // 1. LINK GOOGLE SHEETS CSV CHUNG NGUỒN VỚI SCRAMBLE
+    // ==========================================
+    const googleSheetCSV = "https://docs.google.com/spreadsheets/d/1dIJhG6EAr-9qrfFFBmAXCp9rolUDZHN-Bd881EY56Jo/export?format=csv";
+
+    // ==========================================
+    // 2. FIREBASE CONFIG
+    // ==========================================
+    const firebaseConfig = {
+  apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
+  authDomain: "roundup-ai-academy.firebaseapp.com",
+  projectId: "roundup-ai-academy",
+  storageBucket: "roundup-ai-academy.firebasestorage.app",
+  messagingSenderId: "723976989630",
+  appId: "1:723976989630:web:45f3de91269e70f604e7ef"
+};
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    let currentUser = null;
+    let userCoins = 0;
+
+    // THÔNG SỐ GAME
+    const ENTRY_FEE = 20;
+    const WIN_REWARD = 50;
+    const MAX_MISTAKES = 6;
+    
+    let mistakes = 0;
+    let gameActive = false;
+    let wordBank = [];
+    
+    let currentWord = "";
+    let currentHint = "";
+    let currentIcon = "";
+    let guessedLetters = [];
+
+    // TẢI DỮ LIỆU TỪ GOOGLE SHEETS
+    function fetchGoogleSheetsData() {
+        fetch(googleSheetCSV)
+            .then(res => res.text())
+            .then(csvText => {
+                const rows = csvText.split('\n');
+                for (let i = 1; i < rows.length; i++) {
+                    const columns = rows[i].split(',');
+                    if (columns.length >= 3) {
+                        wordBank.push({
+                            word: columns[0].trim().toUpperCase(),
+                            hint: columns[1].trim(),
+                            icon: columns[2].trim()
+                        });
+                    }
+                }
+                if (wordBank.length > 0) {
+                    document.getElementById('loadingData').style.display = 'none';
+                    document.getElementById('playUI').style.display = 'flex';
+                }
+            })
+            .catch(err => { alert("Lỗi tải Google Sheets. Vui lòng kiểm tra link CSV!"); });
+    }
+
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        currentUser = user;
+        document.getElementById('mainBody').classList.remove('hidden');
+        db.ref('users/' + user.uid).once('value').then((snapshot) => {
+          if (snapshot.val()) userCoins = snapshot.val().coins || 0;
+        });
+        fetchGoogleSheetsData();
+      } else { window.location.href = "login.html"; }
+    });
+
+    function startGame() {
+      if (userCoins < ENTRY_FEE) { alert("Not enough coins! (Need 20 Coins)"); return; }
+      userCoins -= ENTRY_FEE;
+      db.ref('users/' + currentUser.uid).update({ coins: userCoins });
+      
+      document.getElementById('startOverlay').style.display = 'none';
+      document.getElementById('resultModal').classList.add('hidden');
+      document.getElementById('resultModal').classList.remove('flex');
+      
+      const bgm = document.getElementById('bgmAudio');
+      bgm.volume = 0.4; bgm.play().catch(e => {});
+
+      // Reset Biến
+      mistakes = 0;
+      guessedLetters = [];
+      gameActive = true;
+      document.getElementById('mistakeDisplay').innerText = mistakes;
+      
+      // Reset Hình vẽ Hangman (Đưa opacity về 0)
+      for(let i=1; i<=6; i++) {
+          document.getElementById(`hm-part-${i}`).classList.replace('opacity-100', 'opacity-0');
+      }
+      document.getElementById('hangmanArea').classList.remove('shake-danger');
+
+      // Chọn từ mới
+      const wordObj = wordBank[Math.floor(Math.random() * wordBank.length)];
+      currentWord = wordObj.word;
+      currentHint = wordObj.hint;
+      currentIcon = wordObj.icon;
+
+      // Cho trước 1-2 chữ cái ngẫu nhiên làm Gợi ý (Hints) để dễ chơi hơn
+      let hintsGiven = 0;
+      const numHints = currentWord.length > 5 ? 2 : 1;
+      while(hintsGiven < numHints) {
+          let randomChar = currentWord[Math.floor(Math.random() * currentWord.length)];
+          if (!guessedLetters.includes(randomChar)) {
+              guessedLetters.push(randomChar);
+              hintsGiven++;
+          }
+      }
+
+      document.getElementById('hintIcon').innerText = currentIcon;
+      document.getElementById('hintText').innerText = currentHint;
+
+      renderWord();
+      renderKeyboard();
+    }
+
+    // VẼ CÁC Ô CHỮ CÁI
+    function renderWord() {
+        const display = document.getElementById('wordDisplay');
+        display.innerHTML = '';
+        
+        for (let i = 0; i < currentWord.length; i++) {
+            const char = currentWord[i];
+            const span = document.createElement('span');
+            span.className = "w-10 h-14 sm:w-12 sm:h-16 flex items-center justify-center font-black text-2xl sm:text-3xl rounded-lg bg-slate-800 text-white border-b-4 border-slate-600 uppercase";
+            
+            if (guessedLetters.includes(char)) {
+                span.innerText = char;
+            } else {
+                span.innerText = "";
+            }
+            display.appendChild(span);
+        }
+    }
+
+    // TẠO BÀN PHÍM ẢO QWERTY CHUẨN
+    function renderKeyboard() {
+        const keyboard = document.getElementById('keyboard');
+        keyboard.innerHTML = '';
+        const layout = "QWERTYUIOPASDFGHJKLZXCVBNM".split('');
+
+        layout.forEach(letter => {
+            const btn = document.createElement('button');
+            btn.className = "key-btn w-[10%] max-w-[36px] sm:max-w-[44px] h-12 sm:h-14 bg-slate-700 text-slate-200 font-black text-sm sm:text-lg rounded-md sm:rounded-lg border-b-4 border-slate-900 flex items-center justify-center";
+            btn.innerText = letter;
+            
+            // Nếu chữ này đã được cho trước (Hint), đổi màu và vô hiệu hóa
+            if (guessedLetters.includes(letter) && currentWord.includes(letter)) {
+                 btn.classList.add('key-correct', 'key-disabled');
+            }
+            
+            btn.onclick = () => handleGuess(letter, btn);
+            keyboard.appendChild(btn);
+        });
+    }
+
+    // XỬ LÝ KHI NGƯỜI CHƠI BẤM VÀO 1 CHỮ CÁI
+    function handleGuess(letter, btn) {
+        if (!gameActive) return;
+        
+        guessedLetters.push(letter);
+        btn.classList.add('key-disabled');
+
+        if (currentWord.includes(letter)) {
+            // ĐOÁN ĐÚNG
+            document.getElementById('sfxTap').play();
+            btn.classList.add('key-correct');
+            renderWord();
+            checkWin();
+        } else {
+            // ĐOÁN SAI
+            document.getElementById('sfxWrong').play();
+            btn.classList.add('key-wrong');
+            mistakes++;
+            document.getElementById('mistakeDisplay').innerText = mistakes;
+            
+            // Cập nhật Hình Hangman
+            if(mistakes <= 6) {
+                document.getElementById(`hm-part-${mistakes}`).classList.replace('opacity-0', 'opacity-100');
+                
+                // Rung màn hình nhẹ báo động
+                const hmArea = document.getElementById('hangmanArea');
+                hmArea.classList.remove('shake-danger');
+                void hmArea.offsetWidth; // trigger reflow
+                hmArea.classList.add('shake-danger');
+            }
+            checkLose();
+        }
+    }
+
+    function checkWin() {
+        let isWin = true;
+        for (let i = 0; i < currentWord.length; i++) {
+            if (!guessedLetters.includes(currentWord[i])) {
+                isWin = false; break;
+            }
+        }
+        if (isWin) setTimeout(() => showResult(true), 500);
+    }
+
+    function checkLose() {
+        if (mistakes >= MAX_MISTAKES) setTimeout(() => showResult(false), 500);
+    }
+
+    // SHOW KẾT QUẢ
+    function showResult(isWin) {
+      gameActive = false;
+      document.getElementById('bgmAudio').pause();
+
+      const modal = document.getElementById('resultModal');
+      const icon = document.getElementById('resultIcon');
+      const title = document.getElementById('resultTitle');
+      const rewardAmount = document.getElementById('rewardAmount');
+      const rewardBox = document.getElementById('rewardBox');
+      
+      document.getElementById('finalWord').innerText = currentWord;
+
+      if (isWin) {
+        document.getElementById('sfxCorrect').play();
+        icon.innerText = '🥳'; icon.classList.add('animate-bounce');
+        title.innerText = 'YOU SURVIVED!';
+        title.className = "text-4xl sm:text-5xl font-black uppercase tracking-widest mb-2 text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-emerald-500";
+        
+        rewardAmount.innerText = `+${WIN_REWARD} Coins`;
+        rewardAmount.className = "text-2xl font-black text-emerald-400";
+        rewardBox.className = "bg-slate-900 border-2 border-emerald-500/50 p-4 rounded-2xl flex items-center justify-center space-x-3 shadow-[0_0_30px_rgba(16,185,129,0.3)]";
+        
+        db.ref('users/' + currentUser.uid).update({ coins: userCoins + WIN_REWARD });
+        confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 }, colors: ['#10b981', '#34d399', '#fbbf24'] });
+      } else {
+        // Vẽ nốt nét cuối cùng và phát âm thanh thua
+        document.getElementById(`hm-part-6`).classList.replace('opacity-0', 'opacity-100');
+        document.getElementById('sfxLose').play();
+
+        icon.innerText = '😵'; icon.classList.remove('animate-bounce');
+        title.innerText = 'HANGED!';
+        title.className = "text-4xl sm:text-5xl font-black uppercase tracking-widest mb-2 text-rose-500";
+        
+        rewardAmount.innerText = "0 Coins";
+        rewardAmount.className = "text-2xl font-black text-slate-500";
+        rewardBox.className = "bg-slate-900 border-2 border-slate-700 p-4 rounded-2xl flex items-center justify-center space-x-3";
+      }
+
+      modal.classList.remove('hidden'); modal.classList.add('flex');
+    }
+  </script>
+</body>
+</html>

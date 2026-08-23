@@ -1,0 +1,64 @@
+Page,Track,Title
+5,2,Listen and repeat.
+5,3,Sing along!
+6,4,Listen and repeat.
+6,5,Sing along!
+7,6,Listen and repeat.
+7,7,Sing along!
+10,8,Listen and repeat.
+11,9,Listen and repeat.
+11,10,Listen and repeat.
+12,11,Listen and repeat.
+13,12,"Write the words in the correct column. Listen and check. Listen and repeat."
+16,13,Listen and draw lines. There is one example.
+16,14,Song
+17,15,Listen and repeat.
+17,16,Listen and repeat.
+18,17,Listen and repeat.
+19,18,Listen and repeat.
+19,19,Listen and repeat.
+20,20,Listen and repeat.
+21,21,"Listen and tick (✓). Listen again and repeat."
+21,22,Listen and repeat.
+23,23,Listen and write a name or a number. There are two examples.
+23,24,Song
+24,25,Listen and repeat.
+26,26,"Write I, you, he, she, it, we or they. Listen and check."
+28,27,Listen and repeat.
+32,28,"Fill in: am, is or are. Listen and check."
+34,29,Listen and tick (✓) the box. There is one example.
+34,30,Song
+35,31,Listen and repeat.
+38,32,"Fill in: This, That, These or Those. Listen and check."
+39,33,Listen and repeat.
+45,34,Listen and draw lines. There is one example.
+45,35,Song
+46,36,Listen and repeat.
+47,37,"Look at the picture. Fill in: is, are, isn't, aren't. Listen and check."
+49,38,Listen and repeat.
+51,39,"Write out the questions and answers with can/can't. Listen and check."
+55,40,Listen and write a name or a number. There are two examples.
+55,41,Song
+56,42,Listen and repeat.
+57,43,"Fill in: my, his, her, its, our or their. Listen and check."
+59,44,Listen and check.
+61,45,Listen and repeat.
+61,46,Write. Listen and check.
+63,47,Match the sentences with the pictures. Listen and check.
+65,48,Listen and colour. There is one example.
+65,49,Song
+66,50,Listen and repeat.
+69,51,Listen and repeat.
+71,52,Listen and repeat.
+72,53,"Write the verbs in the correct columns. Listen and check. Listen and repeat."
+78,54,"Put the verbs in brackets into the present simple or the present continuous. Listen and check."
+81,55,Listen and tick (✓). There is one example.
+81,56,Song
+82,57,Listen and repeat. Then act out.
+84,58,"Fill in: on, in, behind or under. Listen and check."
+86,59,Listen and repeat.
+88,60,"Write the words or phrases in the correct box. Listen and check."
+91,61,Listen and repeat. Act out.
+93,62,"Fill in: who or what. Listen and check."
+95,63,Listen and draw lines. There is one example.
+95,64,Song

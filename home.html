@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Store - Round-Up AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    body { font-family: 'Nunito', sans-serif; background: #f8fafc; }
+    .custom-scroll::-webkit-scrollbar { width: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+    
+    .tab-active { background-color: #3b82f6; color: white; border-color: #2563eb; }
+    .tab-inactive { background-color: white; color: #64748b; border-color: #e2e8f0; }
+
+    /* R&D: Các loại khung Avatar VIP bằng CSS */
+    .border-wood { border: 6px solid #8B4513; box-shadow: 0 0 10px rgba(139, 69, 19, 0.5); }
+    .border-silver { border: 6px solid #C0C0C0; box-shadow: 0 0 15px rgba(192, 192, 192, 0.8); }
+    .border-gold { border: 6px solid #FFD700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.8); animation: glow 2s infinite alternate; }
+    @keyframes glow { from { box-shadow: 0 0 10px #FFD700; } to { box-shadow: 0 0 25px #FFD700, 0 0 10px #FFD700; } }
+  </style>
+</head>
+<body class="h-screen flex flex-col hidden bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" id="mainBody">
+
+  <!-- TOPBAR -->
+  <header class="bg-white border-b-2 border-blue-100 p-3 sm:p-4 flex justify-between items-center shadow-sm z-50 shrink-0">
+    <div class="flex items-center space-x-3">
+      <button onclick="window.location.href='dashboard.html'" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-xl flex justify-center items-center text-slate-600 transition border border-slate-200">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+      <div>
+        <h1 class="font-black text-xl text-blue-900 leading-tight">Smart Hub</h1>
+        <p class="text-[10px] font-bold text-blue-500 uppercase tracking-wider mt-0.5">Shop & Play</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center bg-amber-50 px-4 py-2 rounded-full border border-amber-200 shadow-sm">
+      <i class="fa-solid fa-coins text-amber-500 mr-2 animate-bounce text-lg"></i>
+      <span id="displayCoins" class="font-black text-amber-700 text-xl">...</span>
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="flex-1 w-full max-w-6xl mx-auto p-4 flex flex-col lg:flex-row gap-6 overflow-hidden">
+    
+    <!-- LEFT: PLAYER CARD (Thẻ Học Viên Chứa Frame & Pet) -->
+    <div class="w-full lg:w-4/12 flex flex-col h-full">
+      <div class="bg-white rounded-3xl p-6 border-4 border-blue-100 shadow-xl flex flex-col items-center relative flex-1 justify-center">
+        
+        <h2 class="font-black text-blue-800 uppercase tracking-widest text-sm mb-8">
+          <i class="fa-solid fa-id-badge text-blue-500 mr-1"></i> Player Card
+        </h2>
+        
+        <!-- Avatar & Border & Pet -->
+        <div class="relative mb-6">
+          <div id="avatarFrame" class="w-32 h-32 sm:w-48 sm:h-48 bg-blue-50 rounded-full transition-all duration-300 flex items-center justify-center overflow-hidden border-4 border-slate-200">
+            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=BaseStudent&backgroundColor=transparent" class="w-full h-full object-contain">
+          </div>
+          <!-- Pet Ảo bằng Emoji -->
+          <div id="petDisplay" class="absolute -bottom-2 -right-4 text-5xl sm:text-6xl drop-shadow-xl hover:scale-110 transition-transform cursor-pointer animate-bounce hidden" title="Your Pet">
+            🥚
+          </div>
+        </div>
+        
+        <h3 id="playerName" class="font-black text-2xl text-slate-800 mb-1">Student</h3>
+        <!-- Danh hiệu VIP -->
+        <span id="playerTitle" class="bg-slate-100 text-slate-500 font-bold text-xs px-4 py-1.5 rounded-full uppercase tracking-widest border border-slate-200">Newbie</span>
+
+      </div>
+    </div>
+
+    <!-- RIGHT: SMART STORE & MINI-GAMES -->
+    <div class="w-full lg:w-8/12 bg-white rounded-3xl border-4 border-slate-100 shadow-xl flex flex-col overflow-hidden h-full">
+      
+      <!-- Tabs -->
+      <div class="flex p-3 gap-2 border-b-2 border-slate-100 bg-slate-50 overflow-x-auto custom-scroll shrink-0">
+        <button onclick="switchTab('borders')" id="tab-borders" class="px-5 py-2.5 rounded-xl font-black text-sm transition-all tab-active shrink-0"><i class="fa-solid fa-ring mr-2"></i> Frames</button>
+        <button onclick="switchTab('titles')" id="tab-titles" class="px-5 py-2.5 rounded-xl font-black text-sm transition-all tab-inactive shrink-0"><i class="fa-solid fa-crown mr-2"></i> Titles</button>
+        <button onclick="switchTab('pets')" id="tab-pets" class="px-5 py-2.5 rounded-xl font-black text-sm transition-all tab-inactive shrink-0"><i class="fa-solid fa-paw mr-2"></i> Pets</button>
+        <button onclick="switchTab('games')" id="tab-games" class="px-5 py-2.5 rounded-xl font-black text-sm transition-all tab-inactive shrink-0 text-rose-600 border-rose-200"><i class="fa-solid fa-gamepad mr-2"></i> Mini-Games</button>
+      </div>
+
+      <!-- Shop Grid -->
+      <div class="flex-1 p-4 overflow-y-auto custom-scroll bg-slate-50/50">
+        <div id="shopGrid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          <!-- Nội dung Render bằng JS -->
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    // ==========================================
+    // R&D: HỆ THỐNG DỮ LIỆU ĐẶC QUYỀN (0đ)
+    // ==========================================
+    const shopData = {
+      "borders": [
+        { id: "br_wood", name: "Wood Frame", price: 100, class: "border-wood", desc: "Basic wooden frame." },
+        { id: "br_silver", name: "Silver Frame", price: 500, class: "border-silver", desc: "Shiny silver frame." },
+        { id: "br_gold", name: "Gold VIP Frame", price: 2000, class: "border-gold", desc: "Glowing golden aura!" }
+      ],
+      "titles": [
+        { id: "ti_pro", name: "Pro Learner", price: 200, style: "bg-blue-100 text-blue-600 border-blue-200" },
+        { id: "ti_master", name: "Master Mind", price: 1000, style: "bg-purple-100 text-purple-600 border-purple-200" },
+        { id: "ti_king", name: "The King", price: 5000, style: "bg-amber-100 text-amber-600 border-amber-300 shadow-md" }
+      ],
+      "pets": [
+        { id: "pe_egg", name: "Mystery Egg", price: 500, emoji: "🥚", desc: "What will it hatch into?" },
+        { id: "pe_chick", name: "Baby Chick", price: 1500, emoji: "🐥", desc: "A cute little companion." },
+        { id: "pe_dragon", name: "Fire Dragon", price: 5000, emoji: "🐉", desc: "The ultimate pet!" }
+      ],
+      "games": [
+        { id: "gm_tictactoe", name: "Tic-Tac-Toe", price: 10, icon: "fa-hashtag", color: "text-blue-500", url: "tictactoe.html", desc: "Classic Caro Game. Win to double coins!" },
+        { id: "gm_bubble", name: "Bubble Shooter", price: 20, icon: "fa-bowling-ball", color: "text-pink-500", url: "bubble.html", desc: "Pop bubbles to earn rewards." },
+        { id: "gm_chess", name: "Smart Chess", price: 50, icon: "fa-chess", color: "text-slate-800", url: "chess.html", desc: "Train your brain. High rewards!" }
+      ]
+    };
+
+    // ==========================================
+    // BOSS DÁN ĐOẠN FIREBASE CONFIG VÀO ĐÂY
+    // ==========================================
+    const firebaseConfig = {
+  apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
+  authDomain: "roundup-ai-academy.firebaseapp.com",
+  projectId: "roundup-ai-academy",
+  storageBucket: "roundup-ai-academy.firebasestorage.app",
+  messagingSenderId: "723976989630",
+  appId: "1:723976989630:web:45f3de91269e70f604e7ef"
+};
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    let currentUser = null;
+    let userCoins = 0;
+    
+    // Lưu các mục đã mua và đang trang bị
+    let userInventory = {};
+    let equipped = { border: "", title: "", pet: "" };
+    
+    let currentCategory = 'borders';
+
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        currentUser = user;
+        document.getElementById('playerName').innerText = user.email.split('@')[0];
+        document.getElementById('mainBody').classList.remove('hidden');
+        
+        db.ref('users/' + user.uid).once('value').then((snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            userCoins = data.coins || 0;
+            if (data.inventory) userInventory = data.inventory;
+            if (data.equipped) equipped = data.equipped;
+            
+            document.getElementById('displayCoins').innerText = userCoins;
+            applyEquippedItems();
+            renderShop();
+          }
+        });
+      } else { window.location.href = "login.html"; }
+    });
+
+    function switchTab(category) {
+      currentCategory = category;
+      ['borders', 'titles', 'pets', 'games'].forEach(cat => {
+        const btn = document.getElementById(`tab-${cat}`);
+        if(cat === category) {
+          btn.classList.remove('tab-inactive'); btn.classList.add('tab-active');
+        } else {
+          btn.classList.remove('tab-active'); btn.classList.add('tab-inactive');
+        }
+      });
+      renderShop();
+    }
+
+    function renderShop() {
+      const grid = document.getElementById('shopGrid');
+      grid.innerHTML = "";
+      const items = shopData[currentCategory];
+      
+      items.forEach(item => {
+        const isOwned = userInventory[item.id] === true;
+        
+        let cardContent = "";
+        
+        if (currentCategory === 'games') {
+          // Giao diện Thẻ Mini-Game
+          cardContent = `
+            <div class="bg-white border-2 border-slate-200 rounded-2xl p-4 flex flex-col items-center text-center hover:border-blue-400 transition-all hover:-translate-y-1 hover:shadow-lg">
+              <i class="fa-solid ${item.icon} ${item.color} text-5xl mb-3"></i>
+              <h3 class="font-black text-slate-800 text-lg mb-1">${item.name}</h3>
+              <p class="text-xs font-bold text-slate-400 mb-4 h-8">${item.desc}</p>
+              <button onclick="playGame('${item.url}', ${item.price})" class="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-black py-3 rounded-xl uppercase tracking-wider active:scale-95 transition-all shadow-[0_4px_0_#059669]">
+                PLAY (-${item.price} <i class="fa-solid fa-coins text-[10px]"></i>)
+              </button>
+            </div>
+          `;
+        } else {
+          // Giao diện Khung/Danh Hiệu/Pet
+          let visual = "";
+          if (currentCategory === 'borders') visual = `<div class="w-16 h-16 rounded-full mb-3 ${item.class}"></div>`;
+          if (currentCategory === 'titles') visual = `<span class="mb-5 px-3 py-1 rounded-full font-bold text-xs ${item.style}">${item.name}</span>`;
+          if (currentCategory === 'pets') visual = `<div class="text-5xl mb-2">${item.emoji}</div>`;
+
+          const isEquipped = equipped.border === item.id || equipped.title === item.id || equipped.pet === item.id;
+          
+          let btnHtml = "";
+          if (isEquipped) {
+            btnHtml = `<button disabled class="w-full bg-emerald-100 text-emerald-600 font-black py-2 rounded-xl text-xs uppercase tracking-wider border-2 border-emerald-200"><i class="fa-solid fa-check mr-1"></i> Equipped</button>`;
+          } else if (isOwned) {
+            btnHtml = `<button onclick="equipItem('${currentCategory}', '${item.id}')" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-black py-2 rounded-xl text-xs uppercase tracking-wider transition-all active:scale-95">Equip</button>`;
+          } else {
+            btnHtml = `<button onclick="buyItem('${item.id}', ${item.price}, '${currentCategory}')" class="w-full bg-amber-400 hover:bg-amber-300 text-amber-900 font-black py-2 rounded-xl text-xs uppercase tracking-wider transition-all active:scale-95 shadow-[0_4px_0_#d97706]">
+              <i class="fa-solid fa-coins mr-1"></i> ${item.price}
+            </button>`;
+          }
+
+          cardContent = `
+            <div class="bg-white border-2 ${isEquipped ? 'border-emerald-400 shadow-md' : 'border-slate-200'} rounded-2xl p-4 flex flex-col items-center text-center">
+              ${visual}
+              <h3 class="font-black text-slate-700 text-sm mb-1">${item.name}</h3>
+              <p class="text-[10px] font-bold text-slate-400 mb-4 h-6">${item.desc || ''}</p>
+              ${btnHtml}
+            </div>
+          `;
+        }
+        
+        grid.innerHTML += cardContent;
+      });
+    }
+
+    function buyItem(itemId, price, category) {
+      if (userCoins >= price) {
+        userCoins -= price;
+        userInventory[itemId] = true;
+        
+        // Cập nhật Firebase ngay lập tức
+        db.ref('users/' + currentUser.uid).update({ coins: userCoins, inventory: userInventory }).then(() => {
+          document.getElementById('displayCoins').innerText = userCoins;
+          confetti({ particleCount: 50, spread: 60, origin: { y: 0.8 }, colors: ['#fbbf24', '#34d399'] });
+          equipItem(category, itemId); // Tự động mặc sau khi mua
+        });
+      } else { alert(`Not enough coins! You need ${price - userCoins} more coins.`); }
+    }
+
+    function equipItem(category, itemId) {
+      if (category === 'borders') equipped.border = itemId;
+      if (category === 'titles') equipped.title = itemId;
+      if (category === 'pets') equipped.pet = itemId;
+      
+      // Lưu lại thay đổi lên Firebase
+      db.ref('users/' + currentUser.uid).update({ equipped: equipped }).then(() => {
+        applyEquippedItems();
+        renderShop();
+      });
+    }
+
+    function applyEquippedItems() {
+      // 1. Khung Avatar
+      const frameEl = document.getElementById('avatarFrame');
+      frameEl.className = "w-32 h-32 sm:w-48 sm:h-48 bg-blue-50 rounded-full transition-all duration-300 flex items-center justify-center overflow-hidden"; // Reset class
+      if (equipped.border) {
+        const borderData = shopData.borders.find(b => b.id === equipped.border);
+        if (borderData) frameEl.classList.add(...borderData.class.split(' '));
+      } else { frameEl.classList.add('border-4', 'border-slate-200'); }
+
+      // 2. Danh hiệu
+      const titleEl = document.getElementById('playerTitle');
+      if (equipped.title) {
+        const titleData = shopData.titles.find(t => t.id === equipped.title);
+        if (titleData) {
+          titleEl.innerText = titleData.name;
+          titleEl.className = `font-bold text-xs px-4 py-1.5 rounded-full uppercase tracking-widest border ${titleData.style}`;
+        }
+      }
+
+      // 3. Pet Emoji
+      const petEl = document.getElementById('petDisplay');
+      if (equipped.pet) {
+        const petData = shopData.pets.find(p => p.id === equipped.pet);
+        if (petData) {
+          petEl.innerText = petData.emoji;
+          petEl.classList.remove('hidden');
+        }
+      }
+    }
+
+    // VÀO CHƠI MINI-GAME
+    function playGame(url, cost) {
+      if (userCoins >= cost) {
+        // Trừ vé vào cổng
+        userCoins -= cost;
+        db.ref('users/' + currentUser.uid).update({ coins: userCoins }).then(() => {
+          // Chuyển hướng sang file Game tương ứng
+          window.location.href = url;
+        });
+      } else {
+        alert("Not enough coins to play! Study more lessons to earn coins.");
+      }
+    }
+  </script>
+</body>
+</html>

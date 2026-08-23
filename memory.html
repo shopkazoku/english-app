@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Memory v2 - Round-Up AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900;1000&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    body { font-family: 'Nunito', sans-serif; background-color: #0f172a; overflow: hidden; user-select: none; }
+    
+    /* CSS 3D TRANSFORM */
+    .perspective-1000 { perspective: 1000px; }
+    .transform-style-3d { transform-style: preserve-3d; }
+    .backface-hidden { backface-visibility: hidden; }
+    .rotate-y-180 { transform: rotateY(180deg); }
+    
+    .card-inner { transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .is-flipped .card-inner { transform: rotateY(180deg); }
+    
+    .match-success .card-back { background-color: #ecfdf5 !important; border-color: #10b981 !important; box-shadow: 0 0 15px rgba(16,185,129,0.5); }
+    .match-fail .card-back { background-color: #fff1f2 !important; border-color: #f43f5e !important; animation: shake 0.4s; }
+    
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+    .custom-scroll::-webkit-scrollbar { width: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 8px; }
+  </style>
+</head>
+<body class="h-screen w-full flex flex-col hidden bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')] bg-slate-900" id="mainBody">
+
+  <!-- OVERLAY BẮT ĐẦU -->
+  <div id="startOverlay" class="fixed inset-0 bg-black/90 z-[200] flex flex-col items-center justify-center p-4">
+    <div class="flex space-x-2 mb-4 animate-bounce">
+        <div class="w-16 h-20 bg-indigo-500 rounded-xl border-4 border-white flex items-center justify-center text-4xl shadow-xl transform -rotate-12">💎</div>
+        <div class="w-16 h-20 bg-emerald-500 rounded-xl border-4 border-white flex items-center justify-center text-4xl shadow-xl transform rotate-12">🦄</div>
+    </div>
+    <h1 class="text-4xl sm:text-6xl font-black text-white mb-2 uppercase tracking-widest text-center">Memory <span class="text-indigo-400">Pro</span></h1>
+    <p class="text-slate-300 font-bold mb-2 text-lg sm:text-xl text-center max-w-lg">Full board challenge! Find all 12 pairs in 60s.</p>
+    <p class="text-slate-400 font-bold mb-8 text-sm uppercase tracking-wider"><i class="fa-solid fa-ticket text-amber-500 mr-1"></i> Entry: 20 Coins</p>
+    
+    <button onclick="startGame()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-black text-2xl px-12 py-4 rounded-3xl shadow-[0_8px_0_#4338ca] active:shadow-[0_0px_0_#4338ca] active:translate-y-[8px] transition-all border-4 border-indigo-300 uppercase tracking-widest">
+      PLAY NOW
+    </button>
+  </div>
+
+  <audio id="bgmAudio" src="https://assets.mixkit.co/music/download/mixkit-puzzle-game-music-706.mp3" loop></audio>
+  <audio id="sfxFlip" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
+  <audio id="sfxMatch" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
+  <audio id="sfxFail" src="https://assets.mixkit.co/active_storage/sfx/2955/2955-preview.mp3"></audio>
+
+  <!-- TOPBAR -->
+  <header class="bg-slate-900/90 backdrop-blur-md border-b-2 border-slate-700 p-2 sm:p-3 flex justify-between items-center z-50 shrink-0">
+    <div class="flex items-center space-x-3">
+      <button onclick="window.location.href='home.html'" class="w-10 h-10 bg-slate-800 hover:bg-slate-700 rounded-xl flex justify-center items-center text-slate-300 transition border border-slate-600 shadow-lg">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+      <div>
+        <h1 class="font-black text-lg sm:text-xl text-white tracking-wide uppercase leading-none">Memory Pro</h1>
+      </div>
+    </div>
+    
+    <div class="flex items-center space-x-2 sm:space-x-4">
+      <div class="bg-slate-800 px-3 py-1 rounded-xl border-2 border-slate-600 shadow-inner flex flex-col items-center min-w-[70px]">
+        <span class="text-[9px] font-bold text-slate-400 uppercase">Pairs</span>
+        <span class="font-black text-emerald-400 text-lg leading-none"><span id="scoreDisplay">0</span>/12</span>
+      </div>
+      <div id="timerBox" class="bg-slate-800 px-3 py-1 rounded-xl border-2 border-slate-600 shadow-inner flex flex-col items-center min-w-[70px] transition-colors duration-300">
+        <span class="text-[9px] font-bold text-slate-400 uppercase">Time</span>
+        <span id="timerDisplay" class="font-black text-amber-400 text-lg leading-none">60s</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- SÂN CHƠI GAME: Tối ưu không gian bằng flex-1 và w-full -->
+  <main class="flex-1 w-full p-2 sm:p-4 flex flex-col items-center justify-center relative overflow-hidden">
+    <!-- KHUNG CHỨA BÀI (Mở rộng max-w-4xl, Tự động 4 cột mobile, 6 cột PC) -->
+    <div class="bg-slate-800 p-3 sm:p-5 rounded-3xl border-4 border-slate-600 shadow-2xl w-full max-w-sm sm:max-w-2xl lg:max-w-4xl max-h-full flex items-center justify-center">
+      <div id="gameBoard" class="grid grid-cols-4 sm:grid-cols-6 gap-2 sm:gap-3 w-full h-full max-h-[75vh]">
+        <!-- 24 lá bài sẽ được sinh ra ở đây -->
+      </div>
+    </div>
+  </main>
+
+  <!-- KẾT QUẢ TRẬN ĐẤU -->
+  <div id="resultModal" class="fixed inset-0 bg-slate-900/95 z-[300] hidden flex-col items-center justify-center backdrop-blur-sm p-4 text-center">
+    <div class="bg-slate-800 border-4 border-slate-600 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scroll">
+        
+        <div id="resultIcon" class="text-[80px] sm:text-[100px] mb-2 drop-shadow-2xl">🏆</div>
+        <h1 id="resultTitle" class="text-4xl sm:text-5xl font-black text-white uppercase tracking-widest mb-2 text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-indigo-500">TIME'S UP!</h1>
+        
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-4 mb-6 shadow-inner mt-4">
+          <div class="flex justify-between items-center mb-3">
+            <span class="font-bold text-slate-400 text-sm">Pairs Matched:</span>
+            <span class="font-black text-3xl text-white"><span id="finalScore">0</span> / 12</span>
+          </div>
+        </div>
+        
+        <div id="rewardBox" class="bg-slate-900 border-2 border-slate-700 p-4 rounded-2xl flex items-center justify-center space-x-3 mb-6">
+          <i class="fa-solid fa-coins text-3xl text-amber-500"></i>
+          <div class="text-left">
+            <p class="text-[10px] font-bold text-amber-600 uppercase tracking-wider" id="rewardLabel">Reward</p>
+            <p class="text-2xl font-black text-amber-500" id="rewardAmount">+0 Coins</p>
+          </div>
+        </div>
+
+        <button onclick="window.location.href='home.html'" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black text-lg px-6 py-4 rounded-xl shadow-[0_5px_0_#2563eb] active:shadow-[0_0px_0_#2563eb] active:translate-y-[5px] transition-all border-2 border-blue-400 uppercase tracking-widest">
+          RETURN TO HUB
+        </button>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // BOSS DÁN ĐOẠN FIREBASE CONFIG VÀO ĐÂY
+    // ==========================================
+    const firebaseConfig = {
+  apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
+  authDomain: "roundup-ai-academy.firebaseapp.com",
+  projectId: "roundup-ai-academy",
+  storageBucket: "roundup-ai-academy.firebasestorage.app",
+  messagingSenderId: "723976989630",
+  appId: "1:723976989630:web:45f3de91269e70f604e7ef"
+};
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    let currentUser = null;
+    let userCoins = 0;
+
+    // THÔNG SỐ GAME MEMORY MỞ RỘNG (12 CẶP = 24 LÁ)
+    const ENTRY_FEE = 20;
+    const WIN_REWARD = 80;
+    let timeLeft = 60; // Tăng lên 60 giây
+    const TOTAL_PAIRS = 12;
+    
+    let matchedPairs = 0;
+    let timerInterval;
+    let gameActive = false;
+    
+    // Mở rộng kho đồ vật thành 12 Icon
+    const emojis = ['🍎', '🐶', '🚗', '🚀', '🎸', '⚽', '🍔', '👻', '🍕', '💎', '🎮', '🦄'];
+    let cardsArray = [];
+    let firstCard = null;
+    let secondCard = null;
+    let lockBoard = false;
+
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        currentUser = user;
+        document.getElementById('mainBody').classList.remove('hidden');
+        db.ref('users/' + user.uid).once('value').then((snapshot) => {
+          const data = snapshot.val();
+          if (data) { userCoins = data.coins || 0; }
+        });
+      } else { window.location.href = "login.html"; }
+    });
+
+    function startGame() {
+      if (userCoins < ENTRY_FEE) { alert("Bạn không đủ Coin để mua vé! (Cần 20 Coins)"); return; }
+      
+      userCoins -= ENTRY_FEE;
+      db.ref('users/' + currentUser.uid).update({ coins: userCoins });
+      
+      document.getElementById('startOverlay').style.display = 'none';
+      const bgm = document.getElementById('bgmAudio');
+      bgm.volume = 0.4; bgm.play().catch(e => {});
+
+      matchedPairs = 0;
+      timeLeft = 60;
+      gameActive = true;
+      document.getElementById('scoreDisplay').innerText = matchedPairs;
+      document.getElementById('timerDisplay').innerText = timeLeft + "s";
+      
+      initBoard();
+      timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    function updateTimer() {
+      timeLeft--;
+      document.getElementById('timerDisplay').innerText = timeLeft + "s";
+      
+      if (timeLeft <= 10) {
+        document.getElementById('timerBox').classList.replace('border-slate-600', 'border-rose-500');
+        document.getElementById('timerDisplay').classList.replace('text-amber-400', 'text-rose-500');
+        document.getElementById('timerDisplay').classList.add('animate-ping');
+      }
+      if (timeLeft <= 0) endGame();
+    }
+
+    function initBoard() {
+        const board = document.getElementById('gameBoard');
+        board.innerHTML = "";
+        
+        cardsArray = [...emojis, ...emojis];
+        cardsArray.sort(() => Math.random() - 0.5);
+
+        cardsArray.forEach((emoji) => {
+            const card = document.createElement('div');
+            // Đã fix lỗi giao diện: Giới hạn chiều cao tuyệt đối thay vì aspect-square
+            card.className = "relative w-full h-14 sm:h-20 md:h-24 lg:h-28 perspective-1000 cursor-pointer card-element";
+            card.setAttribute('data-emoji', emoji);
+            
+            card.innerHTML = `
+                <div class="w-full h-full transform-style-3d card-inner shadow-md rounded-lg sm:rounded-xl">
+                    <div class="absolute inset-0 backface-hidden bg-indigo-500 rounded-lg sm:rounded-xl flex items-center justify-center border-b-[4px] border-indigo-700 text-2xl sm:text-3xl text-white/50 border-2 border-indigo-400">
+                        <i class="fa-solid fa-question"></i>
+                    </div>
+                    <div class="absolute inset-0 backface-hidden rotate-y-180 bg-white rounded-lg sm:rounded-xl flex items-center justify-center border-b-[4px] border-slate-300 text-3xl sm:text-5xl border-2 border-slate-200 card-back">
+                        ${emoji}
+                    </div>
+                </div>
+            `;
+            
+            card.onclick = () => flipCard(card);
+            board.appendChild(card);
+        });
+    }
+
+    function flipCard(card) {
+        if (!gameActive || lockBoard || card === firstCard || card.classList.contains('is-flipped')) return;
+
+        document.getElementById('sfxFlip').currentTime = 0;
+        document.getElementById('sfxFlip').play();
+        
+        card.classList.add('is-flipped');
+
+        if (!firstCard) {
+            firstCard = card; return;
+        }
+
+        secondCard = card;
+        checkForMatch();
+    }
+
+    function checkForMatch() {
+        let isMatch = firstCard.getAttribute('data-emoji') === secondCard.getAttribute('data-emoji');
+        if (isMatch) disableCards();
+        else unflipCards();
+    }
+
+    function disableCards() {
+        document.getElementById('sfxMatch').play();
+        firstCard.classList.add('match-success');
+        secondCard.classList.add('match-success');
+        
+        matchedPairs++;
+        document.getElementById('scoreDisplay').innerText = matchedPairs;
+        
+        resetBoard();
+
+        if (matchedPairs === TOTAL_PAIRS) {
+            setTimeout(endGame, 500);
+        }
+    }
+
+    function unflipCards() {
+        lockBoard = true; 
+        document.getElementById('sfxFail').play();
+        firstCard.classList.add('match-fail');
+        secondCard.classList.add('match-fail');
+
+        setTimeout(() => {
+            firstCard.classList.remove('is-flipped', 'match-fail');
+            secondCard.classList.remove('is-flipped', 'match-fail');
+            resetBoard();
+        }, 800); 
+    }
+
+    function resetBoard() {
+        firstCard = null; secondCard = null; lockBoard = false;
+    }
+
+    function endGame() {
+      gameActive = false;
+      clearInterval(timerInterval);
+      document.getElementById('bgmAudio').pause();
+
+      const modal = document.getElementById('resultModal');
+      const icon = document.getElementById('resultIcon');
+      const title = document.getElementById('resultTitle');
+      const rewardAmount = document.getElementById('rewardAmount');
+      const rewardBox = document.getElementById('rewardBox');
+      
+      document.getElementById('finalScore').innerText = matchedPairs;
+
+      if (matchedPairs === TOTAL_PAIRS) {
+        document.getElementById('sfxMatch').play();
+        icon.innerText = '🧠'; icon.classList.add('animate-bounce');
+        title.innerText = 'BRILLIANT!';
+        title.className = "text-4xl sm:text-5xl font-black uppercase tracking-widest mb-2 text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-indigo-500";
+        
+        rewardAmount.innerText = `+${WIN_REWARD} Coins`;
+        rewardAmount.className = "text-2xl font-black text-indigo-400";
+        rewardBox.className = "bg-slate-900 border-2 border-indigo-500/50 p-4 rounded-2xl flex items-center justify-center space-x-3 shadow-[0_0_30px_rgba(99,102,241,0.3)]";
+        
+        db.ref('users/' + currentUser.uid).update({ coins: userCoins + WIN_REWARD });
+        confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 }, colors: ['#6366f1', '#a855f7', '#fbbf24'] });
+      } else {
+        document.getElementById('sfxFail').play();
+        icon.innerText = '😭'; icon.classList.remove('animate-bounce');
+        title.innerText = 'GAME OVER';
+        title.className = "text-4xl sm:text-5xl font-black uppercase tracking-widest mb-2 text-rose-500";
+        
+        rewardAmount.innerText = "0 Coins";
+        rewardAmount.className = "text-2xl font-black text-slate-500";
+        rewardBox.className = "bg-slate-900 border-2 border-slate-700 p-4 rounded-2xl flex items-center justify-center space-x-3";
+      }
+
+      modal.classList.remove('hidden'); modal.classList.add('flex');
+    }
+  </script>
+</body>
+</html>

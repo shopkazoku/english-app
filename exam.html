@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Exam v2.0 - Round-Up AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    body { font-family: 'Nunito', sans-serif; background: #f8fafc; }
+    .choice-btn { transition: all 0.2s; }
+    .choice-btn:active { transform: translateY(2px); box-shadow: none; }
+    .choice-correct { background-color: #10b981 !important; color: white !important; border-color: #059669 !important; box-shadow: 0 4px 0 #059669 !important; }
+    .choice-wrong { background-color: #f43f5e !important; color: white !important; border-color: #be123c !important; box-shadow: 0 4px 0 #be123c !important; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col hidden bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" id="mainBody">
+
+  <!-- TOPBAR -->
+  <header class="bg-white border-b-2 border-indigo-100 p-3 sm:p-4 flex justify-between items-center shadow-sm z-50 shrink-0">
+    <div class="flex items-center space-x-3">
+      <button onclick="window.location.href='classroom.html'" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-xl flex justify-center items-center text-slate-600 transition shadow-sm border border-slate-200">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+      <div>
+        <h1 class="font-black text-xl text-indigo-900 leading-tight">Smart Assessment</h1>
+        <p class="text-[10px] font-bold text-indigo-500 uppercase tracking-wider mt-0.5" id="examTitle">Connecting to Cloud...</p>
+      </div>
+    </div>
+    
+    <!-- Bộ đếm ngược thời gian -->
+    <div class="hidden sm:flex items-center bg-slate-800 px-4 py-2 rounded-full shadow-inner border-2 border-slate-700 mr-4">
+        <i class="fa-solid fa-hourglass-half text-amber-400 mr-2 animate-pulse"></i>
+        <span id="timerDisplay" class="font-black text-white tracking-widest">00:00</span>
+    </div>
+
+    <div class="flex items-center bg-amber-50 px-4 py-2 rounded-full border border-amber-200 shadow-sm">
+      <i class="fa-solid fa-coins text-amber-500 mr-2"></i>
+      <span id="displayCoins" class="font-black text-amber-700">...</span>
+    </div>
+  </header>
+
+  <!-- MAIN EXAM AREA -->
+  <main class="flex-1 flex flex-col items-center justify-center p-4 w-full max-w-4xl mx-auto relative">
+    
+    <!-- Màn hình chờ tải dữ liệu -->
+    <div id="loadingOverlay" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#f8fafc]">
+        <i class="fa-solid fa-circle-notch fa-spin text-5xl text-indigo-500 mb-4"></i>
+        <p class="font-black text-slate-500 animate-pulse">Fetching Exam from Database...</p>
+    </div>
+
+    <!-- Cảnh báo chống gian lận -->
+    <div id="cheatWarning" class="hidden absolute top-0 w-full max-w-3xl bg-rose-50 border-2 border-rose-200 text-rose-600 p-3 rounded-xl shadow-md flex items-center justify-center font-bold text-sm z-20">
+      <i class="fa-solid fa-shield-halved mr-2"></i> Review Mode: You will not earn coins for this lower-level exam.
+    </div>
+
+    <div class="w-full bg-white rounded-3xl shadow-2xl border-4 border-slate-100 p-5 sm:p-8 relative z-10 flex flex-col mt-4">
+      
+      <!-- Progress Bar -->
+      <div class="w-full flex items-center justify-between mb-8">
+        <span class="text-xs font-black text-slate-400 uppercase tracking-wider">Question <span id="qCurrent">0</span>/<span id="qTotal">0</span></span>
+        <div class="flex-1 mx-4 bg-slate-100 h-4 rounded-full border border-slate-200 overflow-hidden shadow-inner">
+          <div id="progressBar" class="bg-indigo-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Question Text & R&D VOICE BUTTON -->
+      <div class="min-h-[140px] flex flex-col items-center justify-center text-center mb-8 relative">
+        <h2 id="questionText" class="text-2xl sm:text-3xl font-black text-slate-800 leading-tight mb-6 px-4">Loading question...</h2>
+        
+        <!-- NÚT GỌI AI ĐỌC CÂU HỎI -->
+        <button onclick="readCurrentQuestion()" class="group bg-indigo-50 border-2 border-indigo-200 hover:bg-indigo-500 hover:border-indigo-500 text-indigo-500 hover:text-white px-6 py-2 rounded-full font-black text-sm uppercase tracking-widest transition-all shadow-sm flex items-center active:scale-95">
+            <i class="fa-solid fa-volume-high mr-2 group-hover:animate-bounce"></i> Listen
+        </button>
+      </div>
+
+      <!-- Answers Grid -->
+      <div id="answersGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+        <!-- Buttons injected by JS -->
+      </div>
+      
+    </div>
+  </main>
+
+  <!-- Result Modal -->
+  <div id="resultModal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-sm z-[100] hidden flex-col items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-8 text-center shadow-2xl border-4 border-emerald-400 relative">
+      <div class="absolute -top-12 left-1/2 transform -translate-x-1/2 text-7xl">
+        <i class="fa-solid fa-trophy text-amber-400 drop-shadow-lg"></i>
+      </div>
+      <h2 class="text-4xl font-black text-slate-800 mt-8 mb-2">COMPLETE!</h2>
+      <p class="text-slate-500 font-bold mb-6">Exam evaluation finished.</p>
+      
+      <div class="bg-slate-50 rounded-2xl p-6 border border-slate-200 mb-6">
+        <p class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">Total Score</p>
+        <p class="text-5xl font-black text-emerald-500"><span id="finalScore">0</span> / 20</p>
+      </div>
+
+      <div id="rewardBox" class="bg-amber-50 rounded-xl p-4 border border-amber-200 mb-6 flex items-center justify-center space-x-3">
+        <i class="fa-solid fa-coins text-4xl text-amber-500"></i>
+        <div class="text-left">
+          <p class="text-xs font-bold text-amber-600 uppercase tracking-wider">Coins Earned</p>
+          <p class="text-2xl font-black text-amber-700">+<span id="earnedCoins">0</span></p>
+        </div>
+      </div>
+
+      <button onclick="window.location.href='dashboard.html'" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-4 rounded-xl shadow-[0_5px_0_#4f46e5] active:shadow-[0_0px_0_#4f46e5] active:translate-y-[5px] transition-all uppercase tracking-widest">
+        RETURN TO DASHBOARD
+      </button>
+    </div>
+  </div>
+
+  <audio id="sfxCorrect" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
+  <audio id="sfxWrong" src="https://assets.mixkit.co/active_storage/sfx/2955/2955-preview.mp3"></audio>
+
+  <script>
+    // ==========================================
+    // BOSS DÁN ĐOẠN FIREBASE CONFIG VÀO ĐÂY
+    // ==========================================
+    const firebaseConfig = {
+  apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
+  authDomain: "roundup-ai-academy.firebaseapp.com",
+  projectId: "roundup-ai-academy",
+  storageBucket: "roundup-ai-academy.firebasestorage.app",
+  messagingSenderId: "723976989630",
+  appId: "1:723976989630:web:45f3de91269e70f604e7ef"
+};
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    let currentUser = null;
+    let userCoins = 0;
+    let userMaxLevelWeight = 1; 
+    
+    // R&D: Biến hệ thống Voice
+    let britishFemaleVoice = null;
+    
+    let currentExamData = null;
+    let currentQIndex = 0;
+    let correctCount = 0;
+    let isReviewMode = false;
+    let isClickLocked = false;
+    
+    let timeRemaining = 0;
+    let timerInterval = null;
+
+    // 1. KHỞI TẠO GIỌNG ĐỌC AI (Text-to-Speech)
+    function loadVoices() {
+      let voices = window.speechSynthesis.getVoices();
+      britishFemaleVoice = voices.find(v => v.lang === 'en-GB' && (v.name.includes('Female') || v.name.includes('UK English'))) || voices.find(v => v.lang === 'en-GB') || voices.find(v => v.lang === 'en-US');
+    }
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+
+    // Xác thực người dùng
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        currentUser = user;
+        document.getElementById('mainBody').classList.remove('hidden');
+        
+        db.ref('users/' + user.uid).once('value').then((snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            userCoins = data.coins || 0;
+            const currentLevel = data.current_level || 'starter';
+            const levelWeights = { "starter": 1, "level_1": 2, "level_2": 3, "level_3": 4, "level_4": 5, "level_5": 6, "level_6": 7 };
+            userMaxLevelWeight = levelWeights[currentLevel] || 1;
+            
+            document.getElementById('displayCoins').innerText = userCoins;
+            fetchExamFromCloud(); // Gọi hàm lấy đề thi
+          }
+        });
+      } else { window.location.href = "login.html"; }
+    });
+
+    // 2. KÉO DỮ LIỆU ĐỀ THI TỪ FIREBASE CLOUD
+    function fetchExamFromCloud() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const examId = urlParams.get('id') || 'level_1_entry'; // Lấy ID bài thi từ link (Mặc định lấy bài Boss vừa tạo)
+
+      db.ref('exams/' + examId).once('value').then((snapshot) => {
+          const data = snapshot.val();
+          if (data && data.questions) {
+              currentExamData = data;
+              document.getElementById('loadingOverlay').style.display = 'none';
+              
+              // Khởi tạo thông tin
+              document.getElementById('examTitle').innerText = data.title;
+              document.getElementById('qTotal').innerText = data.questions.length;
+              
+              // Bật đồng hồ đếm ngược
+              timeRemaining = data.timeLimit * 60; // Đổi phút ra giây
+              startTimer();
+
+              // Check Anti-Cheat (Gian lận Level)
+              if (data.levelWeight < userMaxLevelWeight) {
+                isReviewMode = true;
+                document.getElementById('cheatWarning').classList.remove('hidden');
+              }
+
+              loadVoices(); // Nạp sẵn bộ giọng đọc
+              loadQuestion();
+          } else {
+              document.getElementById('loadingOverlay').innerHTML = `<p class="font-black text-rose-500 text-2xl">Exam not found in Database!</p><button onclick="window.location.href='dashboard.html'" class="mt-4 bg-slate-200 px-4 py-2 rounded-lg font-bold">Go Back</button>`;
+          }
+      }).catch(err => {
+          alert("Lỗi tải đề thi: " + err.message);
+      });
+    }
+
+   // 3. ĐỌC CÂU HỎI HIỆN TẠI BẰNG AI (ĐÃ FIX LỖI ĐỌC DẤU GẠCH DƯỚI)
+    function readCurrentQuestion() {
+        if (!currentExamData) return;
+        
+        // R&D Regex: Tìm tất cả các cụm dấu gạch dưới (___) và thay bằng từ "blank"
+        let textToRead = currentExamData.questions[currentQIndex].q;
+        textToRead = textToRead.replace(/_+/g, " blank ");
+        
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel(); // Ngắt giọng cũ nếu đang đọc dở
+            if (!britishFemaleVoice) loadVoices();
+            
+            const utterance = new SpeechSynthesisUtterance(textToRead);
+            if (britishFemaleVoice) utterance.voice = britishFemaleVoice; else utterance.lang = 'en-US'; 
+            utterance.rate = 0.9; // Tốc độ đọc vừa phải để học viên nghe rõ
+            utterance.pitch = 1.0;    
+            
+            window.speechSynthesis.speak(utterance);
+        } else {
+            alert("Trình duyệt của bạn không hỗ trợ tính năng đọc giọng nói.");
+        }
+    }
+
+    // ĐỒNG HỒ ĐẾM NGƯỢC
+    function startTimer() {
+        const timerDisplay = document.getElementById('timerDisplay');
+        timerInterval = setInterval(() => {
+            timeRemaining--;
+            let m = Math.floor(timeRemaining / 60);
+            let s = timeRemaining % 60;
+            timerDisplay.innerText = `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
+            
+            if(timeRemaining <= 300) { // Dưới 5 phút báo đỏ
+                timerDisplay.parentElement.classList.replace('bg-slate-800', 'bg-rose-600');
+                timerDisplay.parentElement.classList.replace('border-slate-700', 'border-rose-400');
+            }
+
+            if(timeRemaining <= 0) {
+                clearInterval(timerInterval);
+                finishExam(); // Hết giờ tự động nộp bài
+            }
+        }, 1000);
+    }
+
+    // TẢI CÂU HỎI LÊN MÀN HÌNH
+    function loadQuestion() {
+      if (currentQIndex >= currentExamData.questions.length) {
+        finishExam(); return;
+      }
+
+      isClickLocked = false;
+      const qData = currentExamData.questions[currentQIndex];
+      
+      document.getElementById('qCurrent').innerText = currentQIndex + 1;
+      const progressPercent = ((currentQIndex) / currentExamData.questions.length) * 100;
+      document.getElementById('progressBar').style.width = `${progressPercent}%`;
+
+      document.getElementById('questionText').innerText = qData.q;
+      const grid = document.getElementById('answersGrid');
+      grid.innerHTML = "";
+
+      const shuffledOptions = [...qData.options].sort(() => Math.random() - 0.5);
+
+      shuffledOptions.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = "choice-btn w-full py-5 px-6 bg-white border-b-4 border-slate-200 rounded-2xl text-lg sm:text-xl font-black text-slate-600 hover:border-indigo-400 hover:text-indigo-600 focus:outline-none shadow-sm";
+        btn.innerText = opt;
+        btn.onclick = () => checkAnswer(btn, opt, qData.answer);
+        grid.appendChild(btn);
+      });
+    }
+
+    function checkAnswer(btnEl, selected, correct) {
+      if (isClickLocked) return;
+      isClickLocked = true; 
+      window.speechSynthesis.cancel(); // Nếu đang đọc câu hỏi mà bấm chọn thì tắt tiếng luôn
+
+      const allBtns = document.getElementById('answersGrid').children;
+
+      if (selected === correct) {
+        document.getElementById('sfxCorrect').play();
+        btnEl.classList.add('choice-correct');
+        correctCount++;
+      } else {
+        document.getElementById('sfxWrong').play();
+        btnEl.classList.add('choice-wrong');
+        Array.from(allBtns).forEach(b => {
+          if (b.innerText === correct) b.classList.add('choice-correct');
+        });
+      }
+
+      setTimeout(() => {
+        currentQIndex++;
+        loadQuestion();
+      }, 1500);
+    }
+
+    // KẾT THÚC BÀI THI & TÍNH ĐIỂM HỆ 20 (TÍCH HỢP MỞ KHÓA UNIT)
+    function finishExam() {
+      clearInterval(timerInterval);
+      document.getElementById('progressBar').style.width = `100%`;
+      document.getElementById('resultModal').classList.remove('hidden');
+      document.getElementById('resultModal').classList.add('flex');
+      
+      confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+
+      // Tính điểm theo thang 20
+      const totalQs = currentExamData.questions.length;
+      const pointsPerQ = 20 / totalQs;
+      const finalScore = Math.round(correctCount * pointsPerQ * 10) / 10; 
+      
+      document.getElementById('finalScore').innerText = finalScore;
+
+      // ====================================================
+      // R&D LOGIC: MỞ KHÓA UNIT TIẾP THEO KHI THI ĐẬU (>= 10 ĐIỂM)
+      // ====================================================
+      if (finalScore >= 10) {
+          if (currentUser) {
+              db.ref('users/' + currentUser.uid).once('value').then((snapshot) => {
+                  const userData = snapshot.val();
+                  if (userData && userData.current_unit) {
+                      let currentU = parseInt(userData.current_unit);
+                      
+                      // Lấy ID bài thi hiện tại từ URL (Ví dụ: level_1_unit_1)
+                      const urlParams = new URLSearchParams(window.location.search);
+                      const examId = urlParams.get('id');
+                      
+                      if (examId && examId.includes('_unit_')) {
+                          const examUnitNum = parseInt(examId.split('_unit_')[1]);
+                          
+                          // Tuyệt chiêu chống Hack: Chỉ mở khóa nếu học viên thi đúng Unit cao nhất của mình
+                          if (examUnitNum === currentU) {
+                              let nextUnit = currentU + 1;
+                              db.ref('users/' + currentUser.uid).update({ current_unit: nextUnit });
+                              console.log("System Alert: Đã mở khóa Unit " + nextUnit);
+                          }
+                      }
+                  }
+              });
+          }
+      }
+
+      // Tính thưởng Coin
+      let earnedCoins = 0;
+      if (!isReviewMode) {
+        earnedCoins = correctCount * 20 * currentExamData.levelWeight;
+        document.getElementById('earnedCoins').innerText = earnedCoins;
+        
+        if (earnedCoins > 0) {
+          db.ref('users/' + currentUser.uid).update({ coins: userCoins + earnedCoins });
+        }
+      } else {
+        document.getElementById('rewardBox').innerHTML = `<p class="text-sm font-bold text-rose-500">Review Mode: 0 Coins</p>`;
+      }
+    }
+  </script>
+</body>
+</html>

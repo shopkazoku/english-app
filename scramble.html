@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Word Scramble Pro - Round-Up AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900;1000&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    body { font-family: 'Nunito', sans-serif; background-color: #0f172a; overflow: hidden; user-select: none; }
+    .letter-tile { transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .letter-tile:active { transform: scale(0.9); }
+    .hidden-tile { opacity: 0; pointer-events: none; transform: scale(0.5); }
+    .shake { animation: shakeAnim 0.4s cubic-bezier(.36,.07,.19,.97) both; border-color: #f43f5e !important; background-color: #fff1f2 !important; color: #e11d48 !important; }
+    @keyframes shakeAnim { 10%, 90% { transform: translate3d(-4px, 0, 0); } 20%, 80% { transform: translate3d(4px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-8px, 0, 0); } 40%, 60% { transform: translate3d(8px, 0, 0); } }
+    .bounce-correct { animation: bounceAnim 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; border-color: #10b981 !important; background-color: #ecfdf5 !important; color: #059669 !important; box-shadow: 0 0 20px rgba(16,185,129,0.5) !important; }
+    @keyframes bounceAnim { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+    .time-add { animation: floatUpText 1s ease-out forwards; }
+    @keyframes floatUpText { 0% { opacity: 1; transform: translateY(0) scale(1.5); } 100% { opacity: 0; transform: translateY(-30px) scale(1); } }
+  </style>
+</head>
+<body class="h-screen w-full flex flex-col hidden bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')] bg-slate-900" id="mainBody">
+
+  <div id="startOverlay" class="fixed inset-0 bg-black/95 z-[200] flex flex-col items-center justify-center p-4">
+    <div id="loadingData" class="flex flex-col items-center mb-6">
+        <i class="fa-solid fa-cloud-arrow-down text-4xl text-purple-400 animate-bounce mb-3"></i>
+        <p class="text-purple-300 font-bold animate-pulse">Syncing Word Bank from Google Sheets...</p>
+    </div>
+    
+    <div id="playUI" class="hidden flex-col items-center">
+        <h1 class="text-4xl sm:text-6xl font-black text-white mb-2 uppercase tracking-widest text-center">Survival Scramble</h1>
+        <p class="text-emerald-400 font-bold mb-2 text-lg sm:text-xl text-center max-w-lg">Solve words to gain time. Solve 5+ words to earn Coins!</p>
+        <p class="text-slate-400 font-bold mb-8 text-sm uppercase tracking-wider"><i class="fa-solid fa-ticket text-amber-500 mr-1"></i> Entry: 20 Coins</p>
+        <button onclick="startGame()" class="bg-purple-600 hover:bg-purple-500 text-white font-black text-2xl px-12 py-4 rounded-3xl shadow-[0_8px_0_#7e22ce] active:shadow-[0_0px_0_#7e22ce] active:translate-y-[8px] transition-all border-4 border-purple-300 uppercase tracking-widest">PLAY NOW</button>
+    </div>
+  </div>
+
+  <audio id="bgmAudio" src="https://assets.mixkit.co/music/download/mixkit-puzzle-game-music-706.mp3" loop></audio>
+  <audio id="sfxClick" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
+  <audio id="sfxCorrect" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
+  <audio id="sfxWrong" src="https://assets.mixkit.co/active_storage/sfx/2955/2955-preview.mp3"></audio>
+
+  <header class="bg-slate-900/90 backdrop-blur-md border-b-2 border-slate-700 p-2 sm:p-3 flex justify-between items-center z-50 shrink-0">
+    <div class="flex items-center space-x-3">
+      <button onclick="window.location.href='home.html'" class="w-10 h-10 bg-slate-800 hover:bg-slate-700 rounded-xl flex justify-center items-center text-slate-300 border border-slate-600"><i class="fa-solid fa-arrow-left"></i></button>
+      <div><h1 class="font-black text-lg sm:text-xl text-white tracking-wide uppercase leading-none">Survival Mode</h1></div>
+    </div>
+    <div class="flex items-center space-x-2 sm:space-x-4">
+      <div class="bg-slate-800 px-3 py-1 rounded-xl border-2 border-slate-600 flex flex-col items-center min-w-[70px]">
+        <span class="text-[9px] font-bold text-slate-400 uppercase">Solved</span>
+        <span id="scoreDisplay" class="font-black text-emerald-400 text-lg leading-none">0</span>
+      </div>
+      <div id="timerBox" class="bg-slate-800 px-3 py-1 rounded-xl border-2 border-slate-600 flex flex-col items-center min-w-[70px] relative">
+        <span class="text-[9px] font-bold text-slate-400 uppercase">Time</span>
+        <span id="timerDisplay" class="font-black text-amber-400 text-lg leading-none">40s</span>
+        <span id="timeAddEffect" class="absolute -top-4 font-black text-emerald-400 text-sm hidden">+10s</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 w-full p-4 flex flex-col items-center justify-center relative overflow-hidden">
+    <div class="mb-6 flex flex-col items-center">
+        <div id="hintIcon" class="w-24 h-24 sm:w-32 sm:h-32 bg-slate-800 border-4 border-slate-600 rounded-full flex items-center justify-center text-6xl shadow-2xl mb-4">🤔</div>
+        <p id="hintText" class="text-slate-300 font-bold text-center bg-slate-800 px-6 py-2 rounded-full border border-slate-700 max-w-sm">Loading hint...</p>
+    </div>
+    <div id="answerArea" class="flex flex-wrap justify-center gap-2 sm:gap-3 mb-12 min-h-[60px]"></div>
+    <div id="scrambleArea" class="flex flex-wrap justify-center gap-2 sm:gap-3 max-w-xl"></div>
+  </main>
+
+  <div id="resultModal" class="fixed inset-0 bg-slate-900/95 z-[300] hidden flex-col items-center justify-center p-4 text-center">
+    <div class="bg-slate-800 border-4 border-slate-600 rounded-3xl p-6 max-w-sm w-full shadow-2xl relative">
+        <div id="resultIcon" class="text-[80px] mb-2 drop-shadow-2xl">🏆</div>
+        <h1 id="resultTitle" class="text-4xl font-black text-white uppercase tracking-widest mb-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-purple-500">TIME'S UP!</h1>
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-4 mb-6 shadow-inner mt-4">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-slate-400 text-sm">Words Survived:</span>
+            <span class="font-black text-3xl text-white"><span id="finalScore">0</span></span>
+          </div>
+        </div>
+        <div id="rewardBox" class="bg-slate-900 border-2 border-slate-700 p-4 rounded-2xl flex items-center justify-center space-x-3 mb-6">
+          <i class="fa-solid fa-coins text-3xl text-amber-500"></i>
+          <div class="text-left">
+            <p class="text-[10px] font-bold text-amber-600 uppercase tracking-wider" id="rewardLabel">Reward</p>
+            <p class="text-2xl font-black text-amber-500" id="rewardAmount">+0 Coins</p>
+          </div>
+        </div>
+        <button onclick="window.location.href='home.html'" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black text-lg py-4 rounded-xl shadow-[0_5px_0_#2563eb] active:translate-y-[5px] transition-all uppercase tracking-widest">RETURN TO HUB</button>
+    </div>
+  </div>
+
+  <script>
+
+    // ==========================================
+    // 1. LINK GOOGLE SHEETS CSV (ĐÃ ĐƯỢC R&D TỐI ƯU HÓA)
+    // ==========================================
+    const googleSheetCSV = "https://docs.google.com/spreadsheets/d/1dIJhG6EAr-9qrfFFBmAXCp9rolUDZHN-Bd881EY56Jo/export?format=csv";
+
+    // ==========================================
+    // 2. FIREBASE CONFIG
+    // ==========================================
+    const firebaseConfig = {
+  apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
+  authDomain: "roundup-ai-academy.firebaseapp.com",
+  projectId: "roundup-ai-academy",
+  storageBucket: "roundup-ai-academy.firebasestorage.app",
+  messagingSenderId: "723976989630",
+  appId: "1:723976989630:web:45f3de91269e70f604e7ef"
+};
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    let currentUser = null;
+    let userCoins = 0;
+
+    const ENTRY_FEE = 20;
+    const TARGET_MIN_WIN = 5; // Cần giải tối thiểu 5 từ để hòa vốn và có lãi
+    let timeLeft = 40; 
+    let wordsSolved = 0;
+    
+    let timerInterval;
+    let gameActive = false;
+    let wordBank = [];
+    
+    let currentWordObj = null;
+    let currentScrambled = [];
+    let selectedLetters = [];
+
+    // TẢI DỮ LIỆU TỪ GOOGLE SHEETS
+    function fetchGoogleSheetsData() {
+        // Nếu Boss chưa điền link, dùng Data gốc Demo
+        if (googleSheetCSV === "LINK_GOOGLE_SHEETS_CSV_CUA_BOSS") {
+            wordBank = [
+                { word: 'APPLE', hint: 'A red or green fruit', icon: '🍎' },
+                { word: 'TIGER', hint: 'A wild cat with stripes', icon: '🐯' },
+                { word: 'ROCKET', hint: 'Travel to space', icon: '🚀' }
+            ];
+            showStartUI();
+            return;
+        }
+
+        fetch(googleSheetCSV)
+            .then(res => res.text())
+            .then(csvText => {
+                const rows = csvText.split('\n');
+                // Bỏ qua dòng tiêu đề (Dòng 1)
+                for (let i = 1; i < rows.length; i++) {
+                    const columns = rows[i].split(',');
+                    if (columns.length >= 3) {
+                        wordBank.push({
+                            word: columns[0].trim().toUpperCase(),
+                            hint: columns[1].trim(),
+                            icon: columns[2].trim()
+                        });
+                    }
+                }
+                showStartUI();
+            })
+            .catch(err => {
+                alert("Lỗi tải Google Sheets. Vui lòng kiểm tra link CSV!");
+            });
+    }
+
+    function showStartUI() {
+        document.getElementById('loadingData').style.display = 'none';
+        document.getElementById('playUI').style.display = 'flex';
+    }
+
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        currentUser = user;
+        document.getElementById('mainBody').classList.remove('hidden');
+        db.ref('users/' + user.uid).once('value').then((snapshot) => {
+          if (snapshot.val()) userCoins = snapshot.val().coins || 0;
+        });
+        fetchGoogleSheetsData(); // Kích hoạt kéo dữ liệu Sheets
+      } else { window.location.href = "login.html"; }
+    });
+
+    function startGame() {
+      if (userCoins < ENTRY_FEE) { alert("Not enough coins! (Need 20 Coins)"); return; }
+      userCoins -= ENTRY_FEE;
+      db.ref('users/' + currentUser.uid).update({ coins: userCoins });
+      
+      document.getElementById('startOverlay').style.display = 'none';
+      document.getElementById('bgmAudio').volume = 0.4; 
+      document.getElementById('bgmAudio').play().catch(e => {});
+
+      wordsSolved = 0;
+      timeLeft = 40;
+      gameActive = true;
+      document.getElementById('scoreDisplay').innerText = wordsSolved;
+      document.getElementById('timerDisplay').innerText = timeLeft + "s";
+      
+      loadNextWord();
+      timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    function updateTimer() {
+      timeLeft--;
+      document.getElementById('timerDisplay').innerText = timeLeft + "s";
+      
+      if (timeLeft <= 10) {
+        document.getElementById('timerBox').classList.replace('border-slate-600', 'border-rose-500');
+        document.getElementById('timerDisplay').classList.replace('text-amber-400', 'text-rose-500');
+      } else {
+        document.getElementById('timerBox').classList.replace('border-rose-500', 'border-slate-600');
+        document.getElementById('timerDisplay').classList.replace('text-rose-500', 'text-amber-400');
+      }
+
+      if (timeLeft <= 0) endGame();
+    }
+
+    function loadNextWord() {
+        currentWordObj = wordBank[Math.floor(Math.random() * wordBank.length)];
+        document.getElementById('hintIcon').innerText = currentWordObj.icon;
+        document.getElementById('hintText').innerText = currentWordObj.hint;
+        
+        let letters = currentWordObj.word.split('');
+        if (letters.length > 1) {
+            do { letters.sort(() => Math.random() - 0.5); } while (letters.join('') === currentWordObj.word);
+        }
+        
+        currentScrambled = letters;
+        selectedLetters = [];
+        renderBoard();
+    }
+
+    function renderBoard() {
+        const answerArea = document.getElementById('answerArea');
+        const scrambleArea = document.getElementById('scrambleArea');
+        answerArea.innerHTML = ''; scrambleArea.innerHTML = '';
+
+        for (let i = 0; i < currentWordObj.word.length; i++) {
+            const slot = document.createElement('div');
+            if (i < selectedLetters.length) {
+                const char = currentScrambled[selectedLetters[i]];
+                slot.className = "letter-tile w-12 h-14 sm:w-16 sm:h-20 bg-white text-slate-800 font-black text-2xl sm:text-4xl rounded-xl flex items-center justify-center border-b-[4px] border-slate-300 cursor-pointer border-2 shadow-sm";
+                slot.innerText = char;
+                slot.onclick = () => removeLetter(i);
+            } else {
+                slot.className = "w-12 h-14 sm:w-16 sm:h-20 bg-slate-800/50 rounded-xl flex items-center justify-center border-2 border-dashed border-slate-600 text-slate-600";
+            }
+            answerArea.appendChild(slot);
+        }
+
+        currentScrambled.forEach((char, index) => {
+            const tile = document.createElement('div');
+            const isSelected = selectedLetters.includes(index);
+            tile.className = `letter-tile w-12 h-14 sm:w-16 sm:h-20 bg-indigo-500 text-white font-black text-2xl sm:text-4xl rounded-xl flex items-center justify-center border-b-[4px] border-indigo-700 cursor-pointer border-2 border-indigo-400 shadow-sm ${isSelected ? 'hidden-tile' : ''}`;
+            tile.innerText = char;
+            if (!isSelected) tile.onclick = () => selectLetter(index);
+            scrambleArea.appendChild(tile);
+        });
+    }
+
+    function selectLetter(index) {
+        if (!gameActive || selectedLetters.length >= currentWordObj.word.length) return;
+        document.getElementById('sfxClick').play();
+        selectedLetters.push(index);
+        renderBoard();
+        if (selectedLetters.length === currentWordObj.word.length) checkAnswer();
+    }
+
+    function removeLetter(position) {
+        if (!gameActive) return;
+        document.getElementById('sfxClick').play();
+        selectedLetters.splice(position, 1);
+        renderBoard();
+    }
+
+    function checkAnswer() {
+        const currentGuess = selectedLetters.map(idx => currentScrambled[idx]).join('');
+        const slots = document.getElementById('answerArea').children;
+
+        if (currentGuess === currentWordObj.word) {
+            document.getElementById('sfxCorrect').play();
+            Array.from(slots).forEach(slot => slot.classList.add('bounce-correct'));
+            
+            wordsSolved++;
+            document.getElementById('scoreDisplay').innerText = wordsSolved;
+            
+            // CƠ CHẾ SINH TỒN: Cộng thêm 10s cho mỗi từ giải đúng
+            timeLeft += 10;
+            const timeFx = document.getElementById('timeAddEffect');
+            timeFx.classList.remove('hidden');
+            timeFx.classList.add('time-add');
+            setTimeout(() => { timeFx.classList.add('hidden'); timeFx.classList.remove('time-add'); }, 1000);
+            
+            setTimeout(loadNextWord, 800);
+        } else {
+            document.getElementById('sfxWrong').play();
+            Array.from(slots).forEach(slot => slot.classList.add('shake'));
+            setTimeout(() => {
+                Array.from(slots).forEach(slot => slot.classList.remove('shake'));
+                selectedLetters = [];
+                renderBoard();
+            }, 600);
+        }
+    }
+
+    function endGame() {
+      gameActive = false;
+      clearInterval(timerInterval);
+      document.getElementById('bgmAudio').pause();
+
+      const modal = document.getElementById('resultModal');
+      const icon = document.getElementById('resultIcon');
+      const title = document.getElementById('resultTitle');
+      const rewardAmount = document.getElementById('rewardAmount');
+      const rewardBox = document.getElementById('rewardBox');
+      
+      document.getElementById('finalScore').innerText = wordsSolved;
+
+      // Kinh tế: Tính Coin dựa trên số từ giải được. >= 5 từ thì mới có lãi (10 coins/từ).
+      let totalEarned = wordsSolved * 10;
+
+      if (wordsSolved >= TARGET_MIN_WIN) {
+        document.getElementById('sfxCorrect').play();
+        icon.innerText = '🔥'; icon.classList.add('animate-bounce');
+        title.innerText = 'GREAT RUN!';
+        title.className = "text-4xl font-black uppercase tracking-widest mb-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-purple-500";
+        
+        rewardAmount.innerText = `+${totalEarned} Coins`;
+        rewardAmount.className = "text-2xl font-black text-purple-400";
+        rewardBox.className = "bg-slate-900 border-2 border-purple-500/50 p-4 rounded-2xl flex items-center justify-center space-x-3 shadow-[0_0_30px_rgba(168,85,247,0.3)]";
+        
+        confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 }, colors: ['#a855f7', '#d8b4fe', '#fbbf24'] });
+      } else {
+        document.getElementById('sfxWrong').play();
+        icon.innerText = '🛑'; icon.classList.remove('animate-bounce');
+        title.innerText = 'TIME OUT';
+        title.className = "text-4xl font-black uppercase tracking-widest mb-2 text-rose-500";
+        
+        rewardAmount.innerText = `+${totalEarned} Coins`; // Vẫn trả về số xu lẻ tẻ kiếm được
+        rewardAmount.className = "text-2xl font-black text-slate-500";
+        rewardBox.className = "bg-slate-900 border-2 border-slate-700 p-4 rounded-2xl flex items-center justify-center space-x-3";
+      }
+
+      if (totalEarned > 0) {
+          db.ref('users/' + currentUser.uid).update({ coins: userCoins + totalEarned });
+      }
+      modal.classList.remove('hidden'); modal.classList.add('flex');
+    }
+  </script>
+</body>
+</html>

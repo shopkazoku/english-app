@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Classroom - Round-Up AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    body { font-family: 'Nunito', sans-serif; background: #f8fafc; overflow: hidden; }
+    .custom-scroll::-webkit-scrollbar { width: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+    
+    audio { width: 100%; height: 44px; outline: none; border-radius: 12px; }
+    audio::-webkit-media-controls-panel { background-color: #f1f5f9; border-radius: 12px; }
+    audio::-webkit-media-controls-play-button, audio::-webkit-media-controls-mute-button { background-color: #e2e8f0; border-radius: 50%; }
+  </style>
+</head>
+<body class="h-screen w-full flex flex-col hidden bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')]" id="mainBody">
+
+  <!-- TOPBAR -->
+  <header class="bg-white border-b-2 border-indigo-100 p-3 sm:p-4 flex justify-between items-center shadow-sm z-50 shrink-0">
+    <div class="flex items-center space-x-3">
+      <button onclick="window.location.href='dashboard.html'" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center justify-center text-slate-600 transition shadow-sm border border-slate-200">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+      <div class="flex flex-col">
+        <h1 class="font-black text-lg sm:text-xl text-indigo-900 leading-tight">Smart Classroom</h1>
+        
+        <!-- TRÌNH CHỌN LEVEL ĐÃ ĐƯỢC NÂNG CẤP -->
+        <select id="courseSelect" onchange="switchLevel(this.value)" class="mt-0.5 bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold px-2 py-0.5 rounded-lg focus:outline-none focus:border-indigo-500 text-[10px] sm:text-xs uppercase tracking-wider cursor-pointer shadow-inner">
+            <option>Loading...</option>
+        </select>
+        
+      </div>
+    </div>
+    
+    <div class="flex items-center bg-amber-50 px-3 sm:px-4 py-2 rounded-full border border-amber-200 shadow-sm">
+      <i class="fa-solid fa-coins text-amber-500 mr-1 sm:mr-2 text-lg animate-bounce"></i>
+      <span id="displayCoins" class="font-black text-amber-700 text-lg sm:text-xl">...</span>
+    </div>
+  </header>
+
+  <!-- LOADING OVERLAY -->
+  <div id="loadingOverlay" class="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-white mt-16">
+      <i class="fa-solid fa-cloud-arrow-down fa-bounce text-5xl text-indigo-500 mb-4"></i>
+      <p class="font-black text-slate-500 animate-pulse uppercase tracking-widest text-sm" id="loadingText">Syncing Curriculum Data...</p>
+  </div>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="flex-1 w-full max-w-6xl mx-auto p-4 flex flex-col gap-4 overflow-hidden relative">
+    
+    <!-- SÁCH PDF TỪ GITHUB -->
+    <div class="w-full flex-1 bg-white rounded-3xl border-4 border-indigo-50 shadow-xl overflow-hidden relative group">
+        <div class="absolute top-0 left-0 bg-indigo-600 text-white text-[10px] font-black px-3 py-1 rounded-br-2xl shadow-sm z-10 flex items-center">
+            <i class="fa-solid fa-file-pdf mr-1"></i> E-Book Viewer
+        </div>
+        <object id="pdfViewer" data="" type="application/pdf" class="w-full h-full">
+            <p class="text-center mt-20 text-slate-500 font-bold">Your browser does not support PDFs. <a id="pdfFallback" href="" class="text-blue-500 underline">Download the PDF</a>.</p>
+        </object>
+    </div>
+
+    <!-- AUDIO TỪ GITHUB & ACTIONS -->
+    <div class="w-full bg-white rounded-3xl border-4 border-slate-100 shadow-lg p-3 sm:p-4 flex flex-col lg:flex-row items-center gap-4 shrink-0">
+        
+        <div class="flex items-center justify-center w-12 h-12 bg-indigo-50 text-indigo-500 rounded-full shrink-0 shadow-inner hidden sm:flex">
+            <i class="fa-solid fa-headphones text-xl"></i>
+        </div>
+        
+        <!-- BỘ LỌC ĐỘNG: CHỌN UNIT VÀ CHỌN TRACK -->
+        <div class="flex-1 w-full flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            
+            <div class="flex gap-2 w-full sm:w-auto shrink-0">
+                <!-- Chọn Unit -->
+                <div class="flex flex-col flex-1 sm:w-28">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 ml-1">Select Unit</label>
+                    <select id="unitSelect" onchange="updateTrackList()" class="bg-slate-100 border border-slate-300 text-slate-700 font-bold px-2 py-2 rounded-xl focus:outline-none focus:border-indigo-500 w-full shadow-inner cursor-pointer text-sm">
+                        <!-- Gen bằng JS -->
+                    </select>
+                </div>
+                
+                <!-- Chọn Track trong Unit đó -->
+                <div class="flex flex-col flex-1 sm:w-36">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 ml-1">Select Track</label>
+                    <select id="trackSelect" onchange="changeTrack(this.value)" class="bg-slate-100 border border-slate-300 text-slate-700 font-bold px-2 py-2 rounded-xl focus:outline-none focus:border-indigo-500 w-full shadow-inner cursor-pointer text-sm">
+                        <!-- Gen bằng JS -->
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Trình Phát -->
+            <div class="flex-1 w-full mt-2 sm:mt-0">
+                <audio id="audioPlayer" controls controlsList="nodownload" class="w-full">
+                    <source id="audioSource" src="" type="audio/mpeg">
+                </audio>
+            </div>
+        </div>
+
+        <!-- Nút Action -->
+        <div class="w-full lg:w-auto flex gap-2 shrink-0">
+            <button id="btnComplete" onclick="completeLesson()" class="flex-1 lg:w-auto bg-emerald-500 hover:bg-emerald-400 text-white font-black px-4 py-3 rounded-xl shadow-[0_4px_0_#059669] active:translate-y-[4px] active:shadow-[0_0px_0_#059669] transition-all flex items-center justify-center whitespace-nowrap text-sm">
+                <i class="fa-solid fa-check-circle mr-1"></i> CLAIM +50
+            </button>
+            <button onclick="window.location.href='arena.html'" class="flex-1 lg:w-auto bg-rose-500 hover:bg-rose-400 text-white font-black px-4 py-3 rounded-xl shadow-[0_4px_0_#be123c] active:translate-y-[4px] active:shadow-[0_0px_0_#be123c] transition-all flex items-center justify-center whitespace-nowrap text-sm">
+                <i class="fa-solid fa-swords mr-1"></i> ARENA
+            </button>
+        </div>
+    </div>
+  </main>
+
+  <script>
+    // ==========================================
+    // 1. CẤU HÌNH GITHUB BASE URL CỦA BOSS
+    // ==========================================
+    const GITHUB_BASE_URL = "https://shopkazoku.github.io/roundup-audio";
+
+    // HỆ THỐNG PHÂN CẤP LEVEL (R&D Logic Mới)
+    const LEVEL_HIERARCHY = ['starter', 'level_1', 'level_2', 'level_3', 'level_4', 'level_5', 'level_6'];
+
+    // ==========================================
+    // 2. MAPPING UNIT TỚI TRACK
+    // ==========================================
+    const unitMapping = [
+        { unit: 1, name: "Unit 1", startTrack: 1, endTrack: 6 },
+        { unit: 2, name: "Unit 2", startTrack: 7, endTrack: 11 },
+        { unit: 3, name: "Unit 3", startTrack: 12, endTrack: 17 },
+        { unit: 4, name: "Unit 4", startTrack: 18, endTrack: 23 },
+        { unit: 5, name: "Unit 5", startTrack: 24, endTrack: 29 },
+        { unit: 6, name: "Unit 6", startTrack: 30, endTrack: 35 },
+        { unit: 7, name: "Unit 7", startTrack: 36, endTrack: 41 },
+        { unit: 8, name: "Unit 8", startTrack: 42, endTrack: 47 },
+        { unit: 9, name: "Unit 9", startTrack: 48, endTrack: 52 },
+        { unit: 10, name: "Unit 10", startTrack: 53, endTrack: 58 },
+        { unit: 11, name: "Unit 11", startTrack: 59, endTrack: 64 },
+        { unit: 12, name: "Unit 12", startTrack: 65, endTrack: 70 },
+        { unit: 13, name: "Unit 13", startTrack: 71, endTrack: 76 },
+        { unit: 14, name: "Unit 14", startTrack: 77, endTrack: 81 },
+        { unit: 15, name: "Unit 15", startTrack: 82, endTrack: 88 }
+    ];
+
+    // ==========================================
+    // 3. FIREBASE CONFIG
+    // ==========================================
+    const firebaseConfig = {
+  apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
+  authDomain: "roundup-ai-academy.firebaseapp.com",
+  projectId: "roundup-ai-academy",
+  storageBucket: "roundup-ai-academy.firebasestorage.app",
+  messagingSenderId: "723976989630",
+  appId: "1:723976989630:web:45f3de91269e70f604e7ef"
+};
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    let currentUser = null;
+    let userCoins = 0;
+    let userMaxLevel = "starter"; // Level cao nhất học viên đạt được
+    let currentlyViewingLevel = "starter"; // Level đang mở xem hiện tại
+
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        currentUser = user;
+        document.getElementById('mainBody').classList.remove('hidden');
+        
+        db.ref('users/' + user.uid).once('value').then((snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            userCoins = data.coins || 0;
+            userMaxLevel = data.current_level || 'starter'; 
+            currentlyViewingLevel = userMaxLevel; // Mặc định vào lớp là xem sách ở Level cao nhất
+            
+            document.getElementById('displayCoins').innerText = userCoins;
+            
+            buildCourseDropdown(); // Tạo menu chọn khóa học
+            buildClassroom(currentlyViewingLevel); 
+          }
+        });
+      } else { window.location.href = "login.html"; }
+    });
+
+    // 1. TẠO MENU CHỌN KHÓA HỌC DỰA TRÊN LEVEL CAO NHẤT
+    function buildCourseDropdown() {
+        const select = document.getElementById('courseSelect');
+        select.innerHTML = '';
+        
+        // Tìm vị trí Index của Level người dùng. VD: level_3 là index 3.
+        let maxIndex = LEVEL_HIERARCHY.indexOf(userMaxLevel);
+        if (maxIndex === -1) maxIndex = 0; // Đề phòng lỗi
+
+        // Lặp từ 0 đến maxIndex để tạo option
+        for (let i = 0; i <= maxIndex; i++) {
+            let lvl = LEVEL_HIERARCHY[i];
+            let opt = document.createElement('option');
+            opt.value = lvl;
+            opt.innerText = lvl.replace('_', ' ').toUpperCase() + ' CLASS';
+            
+            // Chọn mặc định là Level cao nhất
+            if (lvl === currentlyViewingLevel) opt.selected = true;
+            
+            select.appendChild(opt);
+        }
+    }
+
+    // 2. CHUYỂN LEVEL KHI HỌC VIÊN CHỌN
+    function switchLevel(newLevel) {
+        currentlyViewingLevel = newLevel;
+        document.getElementById('loadingOverlay').style.display = 'flex';
+        buildClassroom(currentlyViewingLevel);
+    }
+
+    // 3. KHỞI TẠO LỚP HỌC (PDF + UNIT)
+    // 3. KHỞI TẠO LỚP HỌC (PDF + UNIT) - ĐÃ TÍCH HỢP ĐỌC THAM SỐ TỪ DASHBOARD
+    function buildClassroom(levelToLoad) {
+        // Tải Sách PDF tĩnh từ Github theo Level đang xem
+        const pdfUrl = `${GITHUB_BASE_URL}/${levelToLoad}/student_book.pdf`;
+        document.getElementById('pdfViewer').data = pdfUrl;
+        document.getElementById('pdfFallback').href = pdfUrl;
+
+        // BẮT THAM SỐ UNIT TỪ URL DASHBOARD TRUYỀN SANG (Nếu có)
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetUnit = urlParams.get('unit');
+
+        // Sinh ra Danh sách các Unit
+        const unitSelect = document.getElementById('unitSelect');
+        unitSelect.innerHTML = '';
+        unitMapping.forEach((item, index) => {
+            let opt = document.createElement('option');
+            opt.value = index; 
+            opt.innerText = item.name;
+            
+            // Logic tự động: Nếu URL có truyền unit=3 (thì index là 2), tự động Focus vào Unit đó
+            if (targetUnit && index === (parseInt(targetUnit) - 1)) {
+                opt.selected = true;
+            }
+            
+            unitSelect.appendChild(opt);
+        });
+
+        // Tự động load Track List cho Unit vừa được chọn
+        updateTrackList();
+
+        setTimeout(() => { document.getElementById('loadingOverlay').style.display = 'none'; }, 800);
+    }
+    // 4. CẬP NHẬT DANH SÁCH TRACK KHI CHỌN UNIT
+    function updateTrackList() {
+        const unitIndex = document.getElementById('unitSelect').value;
+        const selectedUnit = unitMapping[unitIndex];
+        
+        const trackSelect = document.getElementById('trackSelect');
+        trackSelect.innerHTML = '';
+        
+        for(let i = selectedUnit.startTrack; i <= selectedUnit.endTrack; i++) {
+            let trackNum = i < 10 ? '0' + i : i.toString();
+            let opt = document.createElement('option');
+            opt.value = `${GITHUB_BASE_URL}/${currentlyViewingLevel}/track_${trackNum}.mp3`;
+            opt.innerText = `Track ${trackNum}`;
+            trackSelect.appendChild(opt);
+        }
+
+        changeTrack(trackSelect.value);
+    }
+
+    // 5. ĐỔI NHẠC
+    function changeTrack(trackUrl) {
+        const audioEl = document.getElementById('audioPlayer');
+        document.getElementById('audioSource').src = trackUrl;
+        audioEl.load();
+        audioEl.play().catch(e => { console.log("Auto-play paused"); });
+    }
+
+    let hasClaimed = false;
+    function completeLesson() {
+        if (hasClaimed) return;
+        
+        userCoins += 50;
+        db.ref('users/' + currentUser.uid).update({ coins: userCoins }).then(() => {
+            document.getElementById('displayCoins').innerText = userCoins;
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.8 }, colors: ['#10b981', '#fbbf24'] });
+            
+            const btn = document.getElementById('btnComplete');
+            btn.innerHTML = "<i class='fa-solid fa-check mr-1'></i> CLAIMED!";
+            btn.classList.replace('bg-emerald-500', 'bg-slate-300');
+            btn.classList.replace('hover:bg-emerald-400', 'hover:bg-slate-300');
+            btn.classList.replace('text-white', 'text-slate-500');
+            btn.classList.replace('shadow-[0_4px_0_#059669]', 'shadow-[0_4px_0_#cbd5e1]');
+            btn.classList.add('pointer-events-none');
+            hasClaimed = true;
+        });
+    }
+  </script>
+</body>
+</html>

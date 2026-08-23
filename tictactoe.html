@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic-Tac-Toe - Round-Up AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900;1000&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    body { font-family: 'Nunito', sans-serif; background-color: #0f172a; overflow: hidden; }
+    
+    /* Hiệu ứng ô cờ */
+    .cell { transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .cell:active { transform: scale(0.9); }
+    
+    /* Hoạt ảnh khi đánh X hoặc O */
+    .pop-in { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+    /* Hiệu ứng đường kẻ khi chiến thắng */
+    .win-cell { background-color: #ecfdf5 !important; border-color: #10b981 !important; transform: scale(1.05); z-index: 10; box-shadow: 0 10px 25px rgba(16,185,129,0.4); }
+    .lose-cell { background-color: #fff1f2 !important; border-color: #f43f5e !important; transform: scale(1.05); z-index: 10; box-shadow: 0 10px 25px rgba(244,63,94,0.4); }
+  </style>
+</head>
+<body class="h-screen w-full flex flex-col hidden bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] bg-slate-900" id="mainBody">
+
+  <!-- OVERLAY BẮT ĐẦU -->
+  <div id="startOverlay" class="fixed inset-0 bg-black/90 z-[200] flex flex-col items-center justify-center">
+    <div class="text-7xl mb-6">❌⭕</div>
+    <h1 class="text-5xl sm:text-7xl font-black text-white mb-4 uppercase tracking-widest text-center">Tic-Tac-Toe</h1>
+    <p class="text-blue-400 font-bold mb-8 text-xl">Defeat COM to double your Coins!</p>
+    <button onclick="startGame()" class="bg-blue-600 hover:bg-blue-500 text-white font-black text-3xl px-16 py-6 rounded-3xl shadow-[0_10px_0_#2563eb] active:shadow-[0_0px_0_#2563eb] active:translate-y-[10px] transition-all border-4 border-blue-300">
+      START GAME
+    </button>
+  </div>
+
+  <!-- BGM & SFX -->
+  <audio id="bgmAudio" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_12b0c7443c.mp3" loop></audio>
+  <audio id="sfxClickX" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
+  <audio id="sfxClickO" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+  <audio id="sfxWin" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
+  <audio id="sfxLose" src="https://assets.mixkit.co/active_storage/sfx/2955/2955-preview.mp3"></audio>
+
+  <!-- TOPBAR -->
+  <header class="bg-slate-900/90 backdrop-blur-md border-b-2 border-slate-700 p-3 sm:p-4 flex justify-between items-center z-50 shrink-0">
+    <div class="flex items-center space-x-3">
+      <button onclick="window.location.href='home.html'" class="w-10 h-10 bg-slate-800 hover:bg-slate-700 rounded-xl flex justify-center items-center text-slate-300 transition border border-slate-600 shadow-lg">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+      <div>
+        <h1 class="font-black text-xl sm:text-2xl text-white tracking-wide uppercase leading-tight">Mini Game</h1>
+        <p class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Tic-Tac-Toe</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center bg-slate-800 px-4 py-2 rounded-full border border-slate-600 shadow-inner">
+      <i class="fa-solid fa-coins text-amber-400 mr-2 text-lg"></i>
+      <span id="displayCoins" class="font-black text-amber-500 text-xl">...</span>
+    </div>
+  </header>
+
+  <!-- MAIN BOARD -->
+  <main class="flex-1 w-full relative flex flex-col items-center justify-center p-4">
+    
+    <!-- PLAYER VS COM STATUS -->
+    <div class="w-full max-w-md flex justify-between items-center mb-8 px-4">
+      <div class="flex flex-col items-center">
+        <div class="w-16 h-16 rounded-full bg-emerald-100 border-4 border-emerald-500 flex items-center justify-center text-4xl shadow-[0_0_15px_rgba(16,185,129,0.5)] mb-2">
+          <i class="fa-solid fa-xmark text-emerald-600"></i>
+        </div>
+        <p class="text-white font-black uppercase tracking-widest">YOU</p>
+      </div>
+      
+      <div class="text-2xl font-black text-slate-500">VS</div>
+      
+      <div class="flex flex-col items-center">
+        <div class="w-16 h-16 rounded-full bg-rose-100 border-4 border-rose-500 flex items-center justify-center text-3xl shadow-[0_0_15px_rgba(244,63,94,0.5)] mb-2">
+          <i class="fa-solid fa-o text-rose-600"></i>
+        </div>
+        <p class="text-slate-400 font-black uppercase tracking-widest">COM</p>
+      </div>
+    </div>
+
+    <!-- THÔNG BÁO LƯỢT ĐI -->
+    <div id="turnIndicator" class="bg-slate-800 text-white font-black px-6 py-2 rounded-full mb-6 border border-slate-600 shadow-lg tracking-widest uppercase">
+      YOUR TURN
+    </div>
+
+    <!-- BÀN CỜ 3x3 -->
+    <div class="bg-slate-800 p-3 sm:p-4 rounded-3xl border-4 border-slate-600 shadow-2xl">
+      <div class="grid grid-cols-3 gap-2 sm:gap-3 w-[260px] h-[260px] sm:w-[320px] sm:h-[320px]" id="board">
+        <!-- 9 Ô Cờ (Sinh ra bằng JS) -->
+      </div>
+    </div>
+  </main>
+
+  <!-- KẾT QUẢ TRẬN ĐẤU (VICTORY / DEFEAT MODAL) -->
+  <div id="resultModal" class="fixed inset-0 bg-slate-900/95 z-[300] hidden flex-col items-center justify-center backdrop-blur-sm">
+    
+    <div id="resultIcon" class="text-[120px] sm:text-[140px] mb-4 drop-shadow-2xl animate-bounce">👑</div>
+    <h1 id="resultTitle" class="text-5xl sm:text-7xl font-black text-white uppercase tracking-widest mb-6 text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-500 text-center">YOU WIN</h1>
+    
+    <div id="rewardBox" class="bg-slate-800 border-2 border-amber-400/50 p-5 rounded-2xl mb-8 flex items-center space-x-4 shadow-[0_0_30px_rgba(251,191,36,0.3)]">
+      <div class="text-4xl">💰</div>
+      <div class="text-left">
+        <p class="text-xs font-bold text-amber-200 uppercase tracking-wider" id="rewardLabel">Loot Earned</p>
+        <p class="text-3xl font-black text-amber-400" id="rewardAmount">+20 Coins</p>
+      </div>
+    </div>
+
+    <button onclick="window.location.href='home.html'" class="bg-blue-600 hover:bg-blue-500 text-white font-black text-xl px-10 py-4 rounded-2xl shadow-[0_6px_0_#2563eb] active:shadow-[0_0px_0_#2563eb] active:translate-y-[6px] transition-all border-2 border-blue-400">
+      RETURN TO HUB
+    </button>
+  </div>
+
+  <script>
+    // ==========================================
+    // BOSS DÁN ĐOẠN FIREBASE CONFIG VÀO ĐÂY
+    // ==========================================
+    const firebaseConfig = {
+  apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
+  authDomain: "roundup-ai-academy.firebaseapp.com",
+  projectId: "roundup-ai-academy",
+  storageBucket: "roundup-ai-academy.firebasestorage.app",
+  messagingSenderId: "723976989630",
+  appId: "1:723976989630:web:45f3de91269e70f604e7ef"
+};
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    let currentUser = null;
+    let userCoins = 0;
+
+    // LOGIC GAME
+    let boardState = ["", "", "", "", "", "", "", "", ""];
+    let gameActive = false;
+    const WIN_CONDITIONS = [
+      [0,1,2], [3,4,5], [6,7,8], // Ngang
+      [0,3,6], [1,4,7], [2,5,8], // Dọc
+      [0,4,8], [2,4,6]           // Chéo
+    ];
+
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        currentUser = user;
+        document.getElementById('mainBody').classList.remove('hidden');
+        db.ref('users/' + user.uid).once('value').then((snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            userCoins = data.coins || 0;
+            document.getElementById('displayCoins').innerText = userCoins;
+          }
+        });
+      } else { window.location.href = "login.html"; }
+    });
+
+    function startGame() {
+      document.getElementById('startOverlay').style.display = 'none';
+      const bgm = document.getElementById('bgmAudio');
+      bgm.volume = 0.3;
+      bgm.play().catch(e => console.log("BGM Blocked"));
+      
+      initBoard();
+      gameActive = true;
+    }
+
+    function initBoard() {
+      const boardEl = document.getElementById('board');
+      boardEl.innerHTML = "";
+      for(let i = 0; i < 9; i++) {
+        const cell = document.createElement('div');
+        cell.className = "cell bg-slate-700 rounded-xl sm:rounded-2xl flex items-center justify-center cursor-pointer border-b-4 border-slate-900";
+        cell.setAttribute('data-index', i);
+        cell.onclick = () => playerMove(i, cell);
+        boardEl.appendChild(cell);
+      }
+    }
+
+    // NGƯỜI CHƠI ĐÁNH (X)
+    function playerMove(index, cellEl) {
+      if (!gameActive || boardState[index] !== "") return;
+      
+      document.getElementById('sfxClickX').play();
+      boardState[index] = "X";
+      
+      cellEl.innerHTML = '<i class="fa-solid fa-xmark text-5xl sm:text-7xl text-emerald-500 pop-in drop-shadow-[0_0_10px_rgba(16,185,129,0.8)]"></i>';
+      cellEl.classList.replace('bg-slate-700', 'bg-slate-800');
+      cellEl.classList.replace('border-slate-900', 'border-slate-700');
+      
+      checkResult();
+      
+      if (gameActive) {
+        document.getElementById('turnIndicator').innerText = "COM IS THINKING...";
+        document.getElementById('turnIndicator').classList.replace('text-white', 'text-rose-400');
+        gameActive = false; // Khóa bàn cờ trong lúc COM nghĩ
+        setTimeout(comMove, 800);
+      }
+    }
+
+    // COM ĐÁNH (O) - AI Thông minh nhẹ (Minimax rút gọn)
+    function comMove() {
+      if(boardState.filter(x => x === "").length === 0) return;
+
+      let move = -1;
+      // 1. Kiểm tra xem COM có thể thắng luôn không
+      move = findWinningMove("O");
+      // 2. Nếu không, kiểm tra xem Player có sắp thắng không để chặn
+      if(move === -1) move = findWinningMove("X");
+      // 3. Nếu chiếm được ô trung tâm (số 4) thì chiếm
+      if(move === -1 && boardState[4] === "") move = 4;
+      // 4. Nếu không, đánh ngẫu nhiên vào ô trống
+      if(move === -1) {
+        const emptyCells = boardState.map((val, idx) => val === "" ? idx : null).filter(val => val !== null);
+        move = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+      }
+
+      document.getElementById('sfxClickO').play();
+      boardState[move] = "O";
+      
+      const cellEl = document.querySelector(`[data-index="${move}"]`);
+      cellEl.innerHTML = '<i class="fa-solid fa-o text-4xl sm:text-6xl text-rose-500 pop-in drop-shadow-[0_0_10px_rgba(244,63,94,0.8)]"></i>';
+      cellEl.classList.replace('bg-slate-700', 'bg-slate-800');
+      cellEl.classList.replace('border-slate-900', 'border-slate-700');
+      
+      gameActive = true; // Mở khóa bàn cờ
+      document.getElementById('turnIndicator').innerText = "YOUR TURN";
+      document.getElementById('turnIndicator').classList.replace('text-rose-400', 'text-white');
+      
+      checkResult();
+    }
+
+    // Thuật toán tìm bước đi quyết định
+    function findWinningMove(player) {
+      for (let condition of WIN_CONDITIONS) {
+        const [a, b, c] = condition;
+        const vals = [boardState[a], boardState[b], boardState[c]];
+        if (vals.filter(v => v === player).length === 2 && vals.includes("")) {
+          return condition[vals.indexOf("")];
+        }
+      }
+      return -1;
+    }
+
+    // KIỂM TRA THẮNG - THUA - HÒA
+    function checkResult() {
+      let roundWon = false;
+      let winner = "";
+      let winningLine = [];
+
+      for (let condition of WIN_CONDITIONS) {
+        const [a, b, c] = condition;
+        if (boardState[a] && boardState[a] === boardState[b] && boardState[a] === boardState[c]) {
+          roundWon = true;
+          winner = boardState[a];
+          winningLine = condition;
+          break;
+        }
+      }
+
+      if (roundWon) {
+        gameActive = false;
+        highlightWin(winningLine, winner);
+        setTimeout(() => showEndGame(winner), 1000);
+        return;
+      }
+
+      if (!boardState.includes("")) {
+        gameActive = false;
+        setTimeout(() => showEndGame("DRAW"), 500);
+      }
+    }
+
+    // HIỆU ỨNG ĐƯỜNG KẺ THẮNG
+    function highlightWin(line, winner) {
+      line.forEach(index => {
+        const cell = document.querySelector(`[data-index="${index}"]`);
+        if(winner === "X") cell.classList.add('win-cell');
+        else cell.classList.add('lose-cell');
+      });
+    }
+
+    // SHOW KẾT QUẢ & CỘNG TRỪ TIỀN
+    function showEndGame(result) {
+      document.getElementById('bgmAudio').pause();
+      
+      const modal = document.getElementById('resultModal');
+      const icon = document.getElementById('resultIcon');
+      const title = document.getElementById('resultTitle');
+      const rewardAmount = document.getElementById('rewardAmount');
+      const rewardLabel = document.getElementById('rewardLabel');
+      const rewardBox = document.getElementById('rewardBox');
+
+      let coinChange = 0;
+
+      if (result === "X") {
+        // Player Thắng
+        document.getElementById('sfxWin').play();
+        icon.innerHTML = '👑';
+        icon.classList.add('animate-bounce'); icon.classList.remove('animate-pulse');
+        title.innerText = 'YOU WIN';
+        title.className = "text-5xl sm:text-7xl font-black uppercase tracking-widest mb-6 text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-emerald-500 text-center";
+        rewardLabel.innerText = "Double Reward!";
+        rewardAmount.innerText = "+20 Coins";
+        rewardAmount.className = "text-3xl font-black text-emerald-400";
+        rewardBox.className = "bg-slate-800 border-2 border-emerald-400/50 p-5 rounded-2xl mb-8 flex items-center space-x-4 shadow-[0_0_30px_rgba(16,185,129,0.3)]";
+        coinChange = 20;
+        
+        confetti({ particleCount: 150, spread: 100, origin: { y: 0.5 }, colors: ['#10b981', '#34d399'] });
+
+      } else if (result === "O") {
+        // COM Thắng
+        document.getElementById('sfxLose').play();
+        icon.innerHTML = '💔';
+        icon.classList.remove('animate-bounce'); icon.classList.add('animate-pulse');
+        title.innerText = 'YOU LOSE';
+        title.className = "text-5xl sm:text-7xl font-black uppercase tracking-widest mb-6 text-rose-500 text-center";
+        rewardLabel.innerText = "Ticket Lost";
+        rewardAmount.innerText = "0 Coins";
+        rewardAmount.className = "text-3xl font-black text-slate-500";
+        rewardBox.className = "bg-slate-800 border-2 border-slate-700 p-5 rounded-2xl mb-8 flex items-center space-x-4";
+        coinChange = 0;
+
+      } else {
+        // Hòa
+        icon.innerHTML = '🤝';
+        icon.classList.remove('animate-bounce'); icon.classList.add('animate-pulse');
+        title.innerText = 'DRAW';
+        title.className = "text-5xl sm:text-7xl font-black uppercase tracking-widest mb-6 text-blue-400 text-center";
+        rewardLabel.innerText = "Ticket Refunded";
+        rewardAmount.innerText = "+10 Coins";
+        rewardAmount.className = "text-3xl font-black text-blue-400";
+        rewardBox.className = "bg-slate-800 border-2 border-blue-400/50 p-5 rounded-2xl mb-8 flex items-center space-x-4 shadow-[0_0_30px_rgba(59,130,246,0.3)]";
+        coinChange = 10;
+      }
+
+      // Cập nhật Firebase
+      if (coinChange > 0) {
+        db.ref('users/' + currentUser.uid).update({ coins: userCoins + coinChange });
+      }
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+  </script>
+</body>
+</html>

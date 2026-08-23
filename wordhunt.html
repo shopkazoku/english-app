@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audio Word Hunt - Round-Up AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900;1000&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    body { font-family: 'Nunito', sans-serif; background-color: #0f172a; overflow: hidden; user-select: none; }
+    
+    .word-btn { transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .word-btn:active:not(.locked) { transform: scale(0.9); }
+    
+    .word-correct { background-color: #10b981 !important; color: white !important; border-color: #059669 !important; box-shadow: 0 0 15px rgba(16,185,129,0.5) !important; pointer-events: none; }
+    .word-wrong { background-color: #f43f5e !important; color: white !important; border-color: #be123c !important; pointer-events: none; animation: shakeAnim 0.3s forwards; }
+    .locked { pointer-events: none; }
+
+    @keyframes shakeAnim { 10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+    
+    /* Radar Scan Effect */
+    .radar-effect { position: relative; overflow: hidden; }
+    .radar-effect::after {
+      content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+      background: conic-gradient(transparent, transparent, rgba(56, 189, 248, 0.3), transparent 30%);
+      animation: scan 4s linear infinite; pointer-events: none; z-index: 0;
+    }
+    @keyframes scan { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="h-screen w-full flex flex-col hidden bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')] bg-slate-900" id="mainBody">
+
+  <!-- OVERLAY BẮT ĐẦU -->
+  <div id="startOverlay" class="fixed inset-0 bg-black/95 z-[200] flex flex-col items-center justify-center p-4">
+    <div id="loadingData" class="flex flex-col items-center mb-6">
+        <i class="fa-solid fa-cloud-arrow-down text-4xl text-teal-400 animate-bounce mb-3"></i>
+        <p class="text-teal-300 font-bold animate-pulse">Syncing Word Bank from Google Sheets...</p>
+    </div>
+    
+    <div id="playUI" class="hidden flex-col items-center">
+        <div class="text-7xl mb-4 text-teal-400 animate-pulse"><i class="fa-solid fa-headphones-simple"></i></div>
+        <h1 class="text-4xl sm:text-6xl font-black text-white mb-2 uppercase tracking-widest text-center">Audio Word Hunt</h1>
+        <p class="text-teal-400 font-bold mb-2 text-lg sm:text-xl text-center max-w-lg">Listen carefully! Find the 10 spoken words among 40 decoys.</p>
+        <p class="text-rose-400 font-bold mb-2 text-sm text-center">You can only play the audio 3 times.</p>
+        <p class="text-slate-400 font-bold mb-8 text-sm uppercase tracking-wider"><i class="fa-solid fa-ticket text-amber-500 mr-1"></i> Entry: 20 Coins</p>
+        
+        <button onclick="startGame()" class="bg-teal-600 hover:bg-teal-500 text-white font-black text-2xl px-12 py-4 rounded-3xl shadow-[0_8px_0_#0f766e] active:shadow-[0_0px_0_#0f766e] active:translate-y-[8px] transition-all border-4 border-teal-300 uppercase tracking-widest">
+          START HUNT
+        </button>
+    </div>
+  </div>
+
+  <!-- ÂM THANH -->
+  <audio id="bgmAudio" src="https://assets.mixkit.co/music/download/mixkit-puzzle-game-music-706.mp3" loop></audio>
+  <audio id="sfxTap" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
+  <audio id="sfxCorrect" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
+  <audio id="sfxWrong" src="https://assets.mixkit.co/active_storage/sfx/2955/2955-preview.mp3"></audio>
+
+  <!-- TOPBAR -->
+  <header class="bg-slate-900/90 backdrop-blur-md border-b-2 border-slate-700 p-2 sm:p-3 flex justify-between items-center z-50 shrink-0">
+    <div class="flex items-center space-x-3">
+      <button onclick="window.location.href='home.html'" class="w-10 h-10 bg-slate-800 hover:bg-slate-700 rounded-xl flex justify-center items-center text-slate-300 transition border border-slate-600 shadow-lg">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+      <div>
+        <h1 class="font-black text-lg sm:text-xl text-white tracking-wide uppercase leading-none">Word Hunt</h1>
+      </div>
+    </div>
+    
+    <div class="flex items-center space-x-2 sm:space-x-4">
+      <div class="bg-slate-800 px-3 py-1 rounded-xl border-2 border-slate-600 shadow-inner flex flex-col items-center min-w-[70px]">
+        <span class="text-[9px] font-bold text-slate-400 uppercase">Found</span>
+        <span class="font-black text-emerald-400 text-lg leading-none"><span id="scoreDisplay">0</span>/10</span>
+      </div>
+      <div id="timerBox" class="bg-slate-800 px-3 py-1 rounded-xl border-2 border-slate-600 shadow-inner flex flex-col items-center min-w-[70px] transition-colors duration-300">
+        <span class="text-[9px] font-bold text-slate-400 uppercase">Time</span>
+        <span id="timerDisplay" class="font-black text-amber-400 text-lg leading-none">90s</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- KHU VỰC CHƠI GAME -->
+  <main class="flex-1 w-full flex flex-col items-center p-2 sm:p-4 relative overflow-hidden">
+    
+    <!-- TRUNG TÂM ĐIỀU KHIỂN ÂM THANH -->
+    <div class="w-full max-w-3xl mb-4 flex justify-center z-10">
+        <button id="btnPlayAudio" onclick="playTargetWords()" class="group bg-slate-800 border-2 border-teal-500 text-teal-400 px-6 py-3 rounded-2xl font-black text-lg sm:text-xl uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(20,184,166,0.3)] flex items-center hover:bg-teal-900 active:scale-95 w-full sm:w-auto justify-center">
+            <i class="fa-solid fa-volume-high mr-3 group-hover:animate-bounce"></i>
+            <span id="btnAudioText">LISTEN (3 LƯỢT)</span>
+        </button>
+    </div>
+
+    <!-- MA TRẬN TỪ VỰNG KÍN MÀN HÌNH -->
+    <div class="radar-effect w-full max-w-5xl flex-1 bg-slate-800/80 border-4 border-slate-700 rounded-3xl p-3 sm:p-5 flex flex-wrap justify-center content-start gap-2 sm:gap-3 overflow-y-auto custom-scroll" id="wordGrid">
+        <!-- Render 40 từ vựng ngẫu nhiên bằng JS -->
+    </div>
+
+  </main>
+
+  <!-- KẾT QUẢ TRẬN ĐẤU -->
+  <div id="resultModal" class="fixed inset-0 bg-slate-900/95 z-[300] hidden flex-col items-center justify-center backdrop-blur-sm p-4 text-center">
+    <div class="bg-slate-800 border-4 border-slate-600 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl relative">
+        
+        <div id="resultIcon" class="text-[80px] sm:text-[100px] mb-2 drop-shadow-2xl">🏆</div>
+        <h1 id="resultTitle" class="text-4xl sm:text-5xl font-black text-white uppercase tracking-widest mb-2 text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-teal-500">TIME'S UP!</h1>
+        <p id="resultDesc" class="text-slate-400 font-bold text-sm mb-6">Hunter evaluation complete.</p>
+        
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-4 mb-6 shadow-inner">
+          <div class="flex justify-between items-center mb-2">
+            <span class="font-bold text-slate-400 text-sm">Targets Found:</span>
+            <span class="font-black text-3xl text-white"><span id="finalScore">0</span> / 10</span>
+          </div>
+        </div>
+        
+        <div id="rewardBox" class="bg-slate-900 border-2 border-slate-700 p-4 rounded-2xl flex items-center justify-center space-x-3 mb-6">
+          <i class="fa-solid fa-coins text-3xl text-amber-500"></i>
+          <div class="text-left">
+            <p class="text-[10px] font-bold text-amber-600 uppercase tracking-wider" id="rewardLabel">Reward</p>
+            <p class="text-2xl font-black text-amber-500" id="rewardAmount">+0 Coins</p>
+          </div>
+        </div>
+
+        <button onclick="window.location.href='home.html'" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black text-lg py-4 rounded-xl shadow-[0_5px_0_#2563eb] active:translate-y-[5px] transition-all uppercase tracking-widest">
+          RETURN TO HUB
+        </button>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // 1. LINK GOOGLE SHEETS CSV (DÙNG CHUNG VỚI GAME 4 VÀ 5)
+    // ==========================================
+    const googleSheetCSV = "https://docs.google.com/spreadsheets/d/1dIJhG6EAr-9qrfFFBmAXCp9rolUDZHN-Bd881EY56Jo/export?format=csv";
+
+    // ==========================================
+    // 2. FIREBASE CONFIG CỦA BOSS SƠN MARKI
+    // ==========================================
+    const firebaseConfig = {
+  apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
+  authDomain: "roundup-ai-academy.firebaseapp.com",
+  projectId: "roundup-ai-academy",
+  storageBucket: "roundup-ai-academy.firebasestorage.app",
+  messagingSenderId: "723976989630",
+  appId: "1:723976989630:web:45f3de91269e70f604e7ef"
+};
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    let currentUser = null;
+    let userCoins = 0;
+
+    // THÔNG SỐ TRÒ CHƠI
+    const ENTRY_FEE = 20;
+    const WIN_REWARD = 100; // Thưởng rất to vì game này khó
+    const TIME_LIMIT = 90; // 90 giây để tìm 10 từ
+    const TARGET_COUNT = 10;
+    const TOTAL_GRID_SIZE = 40; // Tổng số từ xuất hiện trên màn hình tung hỏa mù
+
+    let timeLeft = TIME_LIMIT;
+    let wordsFound = 0;
+    let audioPlaysLeft = 3; // AI chỉ đọc 3 lần
+    let timerInterval;
+    let gameActive = false;
+    
+    // Lưu trữ Dữ liệu
+    let fullWordBank = [];
+    let targetWords = [];
+    let decoyWords = [];
+
+    // TỪ VỰNG DỰ PHÒNG (MỒI NHỬ) NẾU GOOGLE SHEETS CỦA BOSS CHƯA ĐỦ 40 TỪ
+    const genericDecoys = ["HELLO", "WORLD", "COMPUTER", "WATER", "PENCIL", "BOTTLE", "WINDOW", "GARDEN", "FLOWER", "SUMMER", "WINTER", "PAPER", "BREAD", "RABBIT", "TURTLE", "BICYCLE", "AIRPLANE", "MARKET", "YELLOW", "PURPLE", "MONKEY", "GUITAR", "PIZZA", "CAMERA", "JACKET", "STREET", "SQUARE", "BASKET", "CHEESE", "DOCTOR", "POLICE", "SCHOOL"];
+
+    // 1. TẢI DỮ LIỆU TỪ GOOGLE SHEETS
+    function fetchGoogleSheetsData() {
+        fetch(googleSheetCSV)
+            .then(res => res.text())
+            .then(csvText => {
+                const rows = csvText.split('\n');
+                for (let i = 1; i < rows.length; i++) {
+                    const columns = rows[i].split(',');
+                    if (columns.length >= 1) {
+                        let w = columns[0].trim().toUpperCase();
+                        if(w !== "") fullWordBank.push(w);
+                    }
+                }
+                
+                if (fullWordBank.length > 0) {
+                    document.getElementById('loadingData').style.display = 'none';
+                    document.getElementById('playUI').style.display = 'flex';
+                    // Khởi tạo giọng đọc AI sẵn sàng
+                    if ('speechSynthesis' in window) window.speechSynthesis.getVoices();
+                }
+            })
+            .catch(err => { alert("Lỗi tải Google Sheets!"); });
+    }
+
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        currentUser = user;
+        document.getElementById('mainBody').classList.remove('hidden');
+        db.ref('users/' + user.uid).once('value').then((snapshot) => {
+          if (snapshot.val()) userCoins = snapshot.val().coins || 0;
+        });
+        fetchGoogleSheetsData();
+      } else { window.location.href = "login.html"; }
+    });
+
+    // 2. KHỞI TẠO GAME
+    function startGame() {
+      if (userCoins < ENTRY_FEE) { alert("Not enough coins! (Need 20 Coins)"); return; }
+      userCoins -= ENTRY_FEE;
+      db.ref('users/' + currentUser.uid).update({ coins: userCoins });
+      
+      document.getElementById('startOverlay').style.display = 'none';
+      document.getElementById('bgmAudio').volume = 0.3; 
+      document.getElementById('bgmAudio').play().catch(e => {});
+
+      wordsFound = 0;
+      timeLeft = TIME_LIMIT;
+      audioPlaysLeft = 3;
+      gameActive = true;
+      
+      document.getElementById('scoreDisplay').innerText = wordsFound;
+      document.getElementById('timerDisplay').innerText = timeLeft + "s";
+      document.getElementById('btnAudioText').innerText = `LISTEN (${audioPlaysLeft}/3)`;
+      document.getElementById('btnPlayAudio').classList.remove('opacity-50', 'pointer-events-none');
+
+      prepareWordGrid();
+      timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    // 3. THUẬT TOÁN SINH MA TRẬN TỪ VỰNG TUNG HỎA MÙ
+    function prepareWordGrid() {
+        const grid = document.getElementById('wordGrid');
+        grid.innerHTML = '';
+        
+        targetWords = [];
+        let tempBank = [...fullWordBank].sort(() => Math.random() - 0.5); // Xáo trộn DB
+        
+        // 3.1 Bốc 10 từ Mục Tiêu (Nếu DB không đủ 10, bốc tối đa có thể)
+        const targetAmount = Math.min(TARGET_COUNT, tempBank.length);
+        targetWords = tempBank.splice(0, targetAmount);
+
+        // 3.2 Gom các từ còn lại làm Mồi Nhử (Decoys)
+        decoyWords = [...tempBank];
+        
+        // 3.3 Nếu chưa đủ 40 từ trên màn hình, bơm thêm mồi nhử dự phòng vào
+        let neededDecoys = TOTAL_GRID_SIZE - targetWords.length;
+        while (decoyWords.length < neededDecoys) {
+            let randomDecoy = genericDecoys[Math.floor(Math.random() * genericDecoys.length)];
+            decoyWords.push(randomDecoy);
+        }
+        decoyWords = decoyWords.slice(0, neededDecoys); // Cắt chuẩn 30 mồi
+
+        // 3.4 Gộp Mục Tiêu và Mồi Nhử, sau đó xáo trộn toàn bộ
+        let allWordsForScreen = [...targetWords, ...decoyWords];
+        allWordsForScreen.sort(() => Math.random() - 0.5);
+
+        // 3.5 Vẽ lên màn hình
+        allWordsForScreen.forEach(word => {
+            const btn = document.createElement('button');
+            btn.className = "word-btn bg-slate-900 border-2 border-slate-600 text-slate-300 px-3 py-2 sm:px-4 sm:py-3 rounded-xl font-black text-sm sm:text-base tracking-wider shadow-sm hover:border-teal-500 z-10 relative";
+            btn.innerText = word;
+            btn.onclick = () => checkWordClick(btn, word);
+            grid.appendChild(btn);
+        });
+    }
+
+    // 4. GIÁO VIÊN AI ĐỌC 10 TỪ LIÊN TỤC
+    function playTargetWords() {
+        if (!gameActive || audioPlaysLeft <= 0) return;
+        
+        audioPlaysLeft--;
+        const btnAudio = document.getElementById('btnPlayAudio');
+        document.getElementById('btnAudioText').innerText = `LISTEN (${audioPlaysLeft}/3)`;
+        
+        if (audioPlaysLeft <= 0) {
+            btnAudio.classList.add('opacity-50', 'pointer-events-none');
+            document.getElementById('btnAudioText').innerText = "NO LISTENS LEFT";
+        }
+
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            
+            // Ép AI đọc chậm và ngắt quãng bằng cách nhét dấu phẩy và chấm
+            const textToRead = targetWords.join('. , '); 
+            
+            const utterance = new SpeechSynthesisUtterance(textToRead);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.65; // Đọc rất chậm để học viên kịp nghe
+            utterance.pitch = 1;
+            
+            window.speechSynthesis.speak(utterance);
+        } else {
+            alert("Trình duyệt không hỗ trợ đọc âm thanh.");
+        }
+    }
+
+    // 5. KIỂM TRA CLICK
+    function checkWordClick(btn, word) {
+        if (!gameActive) return;
+
+        if (targetWords.includes(word)) {
+            // ĐÚNG MỤC TIÊU
+            document.getElementById('sfxCorrect').currentTime = 0;
+            document.getElementById('sfxCorrect').play();
+            btn.classList.add('word-correct');
+            
+            wordsFound++;
+            document.getElementById('scoreDisplay').innerText = wordsFound;
+            
+            // Xóa khỏi mảng target để không click trùng
+            targetWords = targetWords.filter(w => w !== word);
+            
+            if (wordsFound >= TARGET_COUNT) {
+                setTimeout(() => endGame(true), 500);
+            }
+        } else {
+            // BẤM NHẦM MỒI NHỬ
+            document.getElementById('sfxWrong').currentTime = 0;
+            document.getElementById('sfxWrong').play();
+            btn.classList.add('word-wrong');
+            
+            // Trừ 2 giây thời gian để phạt tội bấm bừa
+            timeLeft = Math.max(0, timeLeft - 2);
+            document.getElementById('timerDisplay').innerText = timeLeft + "s";
+            
+            // Reset trạng thái nút sau nửa giây để có thể bị lừa tiếp
+            setTimeout(() => {
+                if(gameActive) btn.classList.remove('word-wrong');
+            }, 500);
+        }
+    }
+
+    function updateTimer() {
+      timeLeft--;
+      document.getElementById('timerDisplay').innerText = timeLeft + "s";
+      
+      if (timeLeft <= 15) {
+        document.getElementById('timerBox').classList.replace('border-slate-600', 'border-rose-500');
+        document.getElementById('timerDisplay').classList.replace('text-amber-400', 'text-rose-500');
+        document.getElementById('timerDisplay').classList.add('animate-ping');
+      }
+      if (timeLeft <= 0) endGame(false);
+    }
+
+    // 6. KẾT THÚC
+    function endGame(isWin) {
+      gameActive = false;
+      clearInterval(timerInterval);
+      window.speechSynthesis.cancel(); // Tắt đọc nếu hết giờ
+      document.getElementById('bgmAudio').pause();
+
+      const modal = document.getElementById('resultModal');
+      const icon = document.getElementById('resultIcon');
+      const title = document.getElementById('resultTitle');
+      const rewardAmount = document.getElementById('rewardAmount');
+      const rewardBox = document.getElementById('rewardBox');
+      
+      document.getElementById('finalScore').innerText = wordsFound;
+
+      if (isWin) {
+        document.getElementById('sfxCorrect').play();
+        icon.innerText = '🎯'; icon.classList.add('animate-bounce');
+        title.innerText = 'MISSION CLEAR!';
+        title.className = "text-4xl sm:text-5xl font-black uppercase tracking-widest mb-2 text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-teal-500";
+        
+        rewardAmount.innerText = `+${WIN_REWARD} Coins`;
+        rewardAmount.className = "text-2xl font-black text-teal-400";
+        rewardBox.className = "bg-slate-900 border-2 border-teal-500/50 p-4 rounded-2xl flex items-center justify-center space-x-3 shadow-[0_0_30px_rgba(20,184,166,0.3)]";
+        
+        db.ref('users/' + currentUser.uid).update({ coins: userCoins + WIN_REWARD });
+        confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 }, colors: ['#2dd4bf', '#0f766e', '#fbbf24'] });
+      } else {
+        document.getElementById('sfxWrong').play();
+        icon.innerText = '⏰'; icon.classList.remove('animate-bounce');
+        title.innerText = 'TIME OUT!';
+        title.className = "text-4xl sm:text-5xl font-black uppercase tracking-widest mb-2 text-rose-500";
+        
+        rewardAmount.innerText = "0 Coins";
+        rewardAmount.className = "text-2xl font-black text-slate-500";
+        rewardBox.className = "bg-slate-900 border-2 border-slate-700 p-4 rounded-2xl flex items-center justify-center space-x-3";
+      }
+
+      modal.classList.remove('hidden'); modal.classList.add('flex');
+    }
+  </script>
+</body>
+</html>
