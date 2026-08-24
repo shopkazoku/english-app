@@ -186,16 +186,16 @@
 
   <script>
     // ==========================================
-    // BOSS DÁN ĐOẠN FIREBASE CONFIG VÀO ĐÂY (BẮT BUỘC)
+    // CẤU HÌNH FIREBASE ĐÃ ĐƯỢC GIỮ NGUYÊN BẢN GỐC
     // ==========================================
     const firebaseConfig = {
-  apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
-  authDomain: "roundup-ai-academy.firebaseapp.com",
-  projectId: "roundup-ai-academy",
-  storageBucket: "roundup-ai-academy.firebasestorage.app",
-  messagingSenderId: "723976989630",
-  appId: "1:723976989630:web:45f3de91269e70f604e7ef"
-};
+      apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
+      authDomain: "roundup-ai-academy.firebaseapp.com",
+      projectId: "roundup-ai-academy",
+      storageBucket: "roundup-ai-academy.firebasestorage.app",
+      messagingSenderId: "723976989630",
+      appId: "1:723976989630:web:45f3de91269e70f604e7ef"
+    };
 
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
@@ -226,8 +226,10 @@
       if (user) {
         currentUser = user;
         
-        document.getElementById('userEmail').innerText = user.email;
-        const namePart = user.email.split('@')[0];
+        // Cơ chế bảo vệ: Đảm bảo user có email hợp lệ
+        const userEmailStr = user.email || "student@studydaily.net";
+        document.getElementById('userEmail').innerText = userEmailStr;
+        const namePart = userEmailStr.split('@')[0];
         document.getElementById('userName').innerText = namePart;
 
         db.ref('users/' + user.uid).once('value').then((snapshot) => {
@@ -261,7 +263,10 @@
           console.error("Lỗi lấy dữ liệu từ Firebase:", error);
           document.getElementById('loadingOverlay').innerHTML = `<p class="text-rose-500 font-bold">Lỗi kết nối CSDL. Vui lòng thử lại.</p>`;
         });
-      } else { window.location.href = "login.html"; }
+      } else { 
+          // FIX R&D: Đổi từ login.html sang index.html để không bị lỗi 404
+          window.location.href = "index.html"; 
+      }
     });
 
     // ==========================================
