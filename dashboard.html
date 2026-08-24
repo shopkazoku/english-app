@@ -35,17 +35,16 @@
     .theme-option.selected { border-color: #6366f1; transform: scale(1.1); }
   </style>
 </head>
-<!-- FIX: Đã gỡ bỏ class 'hidden' khỏi body để đảm bảo màn hình Loading luôn hiện -->
 <body id="appBody" class="h-screen w-full flex flex-col theme-light relative">
 
   <!-- MÀN HÌNH LOADING BẢO VỆ CHỐNG TRẮNG TRANG -->
-  <div id="loadingOverlay" class="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-slate-50/95 backdrop-blur-sm transition-opacity duration-500">
+  <div id="loadingOverlay" class="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-slate-50">
       <i class="fa-solid fa-spinner fa-spin text-5xl text-indigo-500 mb-4"></i>
       <p class="font-black text-slate-500 animate-pulse uppercase tracking-widest text-sm">Loading Your Profile...</p>
   </div>
 
-  <!-- NỘI DUNG CHÍNH (Sẽ ẩn đi cho đến khi Firebase tải xong) -->
-  <div id="mainContent" class="h-full w-full flex flex-col opacity-0 transition-opacity duration-500">
+  <!-- NỘI DUNG CHÍNH ĐƯỢC BẢO ĐẢM HIỂN THỊ -->
+  <div id="mainContent" class="h-full w-full flex flex-col">
       
       <!-- TOPBAR -->
       <header class="bg-white/80 backdrop-blur-md border-b-2 border-slate-200/50 p-4 flex justify-between items-center shadow-sm z-40 shrink-0">
@@ -190,8 +189,13 @@
     // BOSS DÁN ĐOẠN FIREBASE CONFIG VÀO ĐÂY (BẮT BUỘC)
     // ==========================================
     const firebaseConfig = {
-      // DÁN ĐOẠN MÃ FIREBASE CỦA BOSS VÀO GIỮA 2 DẤU NGOẶC NHỌN NÀY
-    };
+  apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
+  authDomain: "roundup-ai-academy.firebaseapp.com",
+  projectId: "roundup-ai-academy",
+  storageBucket: "roundup-ai-academy.firebasestorage.app",
+  messagingSenderId: "723976989630",
+  appId: "1:723976989630:web:45f3de91269e70f604e7ef"
+};
 
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
@@ -250,15 +254,12 @@
 
           renderUnitList();
           
-          // Khi Firebase kết nối thành công, tắt Overlay và hiển thị nội dung chính
-          setTimeout(() => { 
-              document.getElementById('loadingOverlay').style.opacity = '0';
-              setTimeout(() => {
-                  document.getElementById('loadingOverlay').style.display = 'none';
-                  const main = document.getElementById('mainContent');
-                  main.style.opacity = '1';
-              }, 500);
-          }, 800);
+          // An toàn 100%: Ẩn Loading khi lấy xong dữ liệu
+          document.getElementById('loadingOverlay').style.display = 'none';
+          
+        }).catch((error) => {
+          console.error("Lỗi lấy dữ liệu từ Firebase:", error);
+          document.getElementById('loadingOverlay').innerHTML = `<p class="text-rose-500 font-bold">Lỗi kết nối CSDL. Vui lòng thử lại.</p>`;
         });
       } else { window.location.href = "login.html"; }
     });
