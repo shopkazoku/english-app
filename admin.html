@@ -25,7 +25,7 @@
   <!-- ========================================== -->
   <!-- 1. MÀN HÌNH BẢO MẬT (SECURITY GATEWAY) -->
   <!-- ========================================== -->
-  <div id="securityGate" class="fixed inset-0 z-[200] bg-slate-900 flex flex-col items-center justify-center p-4">
+  <div id="securityGate" class="fixed inset-0 z-[200] bg-slate-900 flex flex-col items-center justify-center p-4 transition-all duration-300">
       <div class="glass-panel rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl border-t-4 border-t-indigo-500">
           <i class="fa-solid fa-shield-halved text-6xl text-indigo-500 mb-6 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]"></i>
           <h2 class="font-black text-2xl text-white mb-2">Restricted Area</h2>
@@ -43,14 +43,14 @@
   <!-- ========================================== -->
   <!-- 2. GIAO DIỆN ACP CHÍNH (Chỉ hiện khi đúng PIN) -->
   <!-- ========================================== -->
-  <div id="adminPanel" class="hidden h-full flex-col">
+  <div id="adminPanel" class="hidden h-full flex-col opacity-0 transition-opacity duration-500">
       <!-- Header -->
       <header class="glass-panel p-4 flex justify-between items-center shadow-md z-50 shrink-0">
           <div class="flex items-center space-x-3">
               <i class="fa-solid fa-server text-indigo-400 text-2xl"></i>
               <div>
                   <h1 class="font-black text-xl text-white tracking-widest uppercase">Round-Up AI</h1>
-                  <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Admin Control Panel v2.0</p>
+                  <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Admin Control Panel v2.1</p>
               </div>
           </div>
           <button onclick="window.location.reload()" class="bg-rose-500/20 text-rose-400 border border-rose-500 hover:bg-rose-500 hover:text-white font-bold px-4 py-2 rounded-lg transition text-xs uppercase tracking-wider">
@@ -158,37 +158,49 @@
 
   <script>
     // ==========================================
-    // BOSS DÁN ĐOẠN FIREBASE CONFIG VÀO ĐÂY BẮT BUỘC
+    // R&D FIREBASE TỰ ĐỘNG CHỐNG LỖI CÚ PHÁP
     // ==========================================
     const firebaseConfig = {
-  apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
-  authDomain: "roundup-ai-academy.firebaseapp.com",
-  projectId: "roundup-ai-academy",
-  storageBucket: "roundup-ai-academy.firebasestorage.app",
-  messagingSenderId: "723976989630",
-  appId: "1:723976989630:web:45f3de91269e70f604e7ef"
-};
+      apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
+      authDomain: "roundup-ai-academy.firebaseapp.com",
+      projectId: "roundup-ai-academy",
+      storageBucket: "roundup-ai-academy.firebasestorage.app",
+      messagingSenderId: "723976989630",
+      appId: "1:723976989630:web:45f3de91269e70f604e7ef"
+    };
 
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // HỆ THỐNG BẢO MẬT BẰNG PIN 6 SỐ
+    // MÃ BẢO MẬT 6 SỐ
     const ADMIN_PIN = "108491"; 
 
-    // Lắng nghe sự kiện Enter
+    // Lắng nghe sự kiện phím Enter
     document.getElementById("pinInput").addEventListener("keypress", function(event) {
         if (event.key === "Enter") {
             verifyPin();
         }
     });
 
+    // Hàm xác thực cổng bảo mật (Đã sửa logic Tailwind CSS)
     function verifyPin() {
         const input = document.getElementById('pinInput').value;
         const err = document.getElementById('pinError');
         
         if(input === ADMIN_PIN) {
-            document.getElementById('securityGate').style.display = 'none';
-            document.getElementById('adminPanel').style.display = 'flex';
+            // Ẩn Màn hình khóa
+            document.getElementById('securityGate').classList.add('hidden');
+            document.getElementById('securityGate').classList.remove('flex');
+            
+            // Hiện Trang quản trị
+            const adminPanel = document.getElementById('adminPanel');
+            adminPanel.classList.remove('hidden');
+            adminPanel.classList.add('flex');
+            
+            // Tạo hiệu ứng mượt mà
+            setTimeout(() => {
+                adminPanel.style.opacity = '1';
+            }, 50);
         } else {
             err.style.opacity = '1';
             document.getElementById('pinInput').value = "";
@@ -231,7 +243,6 @@
             alert("Please fill all fields!"); return;
         }
 
-        // Ánh xạ Option A, B, C, D ra text thực tế để lưu làm đáp án chuẩn
         let answerText = "";
         if(correctOpt === "A") answerText = a;
         if(correctOpt === "B") answerText = b;
@@ -245,7 +256,6 @@
             timestamp: Date.now()
         };
 
-        // Đẩy 1 câu hỏi vào list của Exam đó
         db.ref('exams/' + examId).push(newQuestion).then(() => {
             document.getElementById('examQuestion').value = "";
             document.getElementById('ansA').value = "";
@@ -270,7 +280,6 @@
             alert("Reading text cannot be empty!"); return;
         }
 
-        // Lưu trực tiếp Text vào Node Reading của Level đó
         db.ref('readings/' + level).set({
             text: textContent,
             updated_at: Date.now()
