@@ -65,10 +65,11 @@
       <p class="font-black text-slate-500 animate-pulse uppercase tracking-widest text-sm">Loading Your Profile...</p>
   </div>
 
-  <main class="flex-1 w-full max-w-6xl mx-auto p-4 sm:p-6 flex flex-col lg:flex-row gap-6 overflow-hidden">
+  <!-- FIX MOBILE: Đổi overflow-hidden thành overflow-y-auto trên điện thoại -->
+  <main class="flex-1 w-full max-w-6xl mx-auto p-4 sm:p-6 flex flex-col lg:flex-row gap-6 overflow-y-auto lg:overflow-hidden custom-scroll">
     
-    <!-- CỘT TRÁI: PROFILE & SHOP (CỐ ĐỊNH) -->
-    <aside class="w-full lg:w-1/3 flex flex-col gap-6 shrink-0 overflow-y-auto custom-scroll pb-20 lg:pb-0">
+    <!-- CỘT TRÁI: PROFILE & SHOP -->
+    <aside class="w-full lg:w-1/3 flex flex-col gap-6 shrink-0 lg:overflow-y-auto custom-scroll pb-2 lg:pb-0">
         
         <!-- PROFILE CARD -->
         <div class="card-bg bg-white rounded-3xl p-6 shadow-xl border border-slate-100 relative group text-center">
@@ -95,7 +96,7 @@
             </div>
         </div>
 
-        <!-- SHOP MINI (TRÍCH XUẤT) -->
+        <!-- SHOP MINI -->
         <div class="card-bg bg-white rounded-3xl p-6 shadow-xl border border-slate-100 flex-1">
             <div class="flex items-center mb-6">
                 <i class="fa-solid fa-store text-indigo-500 text-xl mr-2"></i>
@@ -123,8 +124,8 @@
         </div>
     </aside>
 
-    <!-- CỘT PHẢI: LỘ TRÌNH HỌC (DYNAMIC UNIT LIST) -->
-    <section class="w-full lg:w-2/3 flex flex-col h-full bg-white card-bg rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
+    <!-- CỘT PHẢI: LỘ TRÌNH HỌC -->
+    <section class="w-full lg:w-2/3 flex flex-col min-h-[600px] lg:min-h-0 lg:h-full bg-white card-bg rounded-3xl shadow-xl border border-slate-100 overflow-hidden shrink-0">
         <div class="p-6 border-b border-slate-100 shrink-0 bg-slate-50/50">
             <h2 class="font-black text-xl text-slate-800 mb-1">Learning Path</h2>
             <p class="text-sm font-bold text-slate-500">Select a unit to start studying. Pass the final test to unlock the next unit.</p>
@@ -135,6 +136,13 @@
         </div>
     </section>
   </main>
+
+  <!-- BẢN QUYỀN FOOTER -->
+  <footer class="w-full text-center py-4 shrink-0 z-40 bg-transparent">
+      <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+          &copy; 2026 Son Nguyen. All rights reserved.
+      </p>
+  </footer>
 
   <!-- ========================================== -->
   <!-- BẢNG TÙY BIẾN NHÂN VẬT (AVATAR & THEME) -->
@@ -185,29 +193,23 @@
     // ==========================================
     // BOSS DÁN ĐOẠN FIREBASE CONFIG VÀO ĐÂY
     // ==========================================
-   const firebaseConfig = {
-  apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
-  authDomain: "roundup-ai-academy.firebaseapp.com",
-  projectId: "roundup-ai-academy",
-  storageBucket: "roundup-ai-academy.firebasestorage.app",
-  messagingSenderId: "723976989630",
-  appId: "1:723976989630:web:45f3de91269e70f604e7ef"
-};
+    const firebaseConfig = {
+      // DÁN FIREBASE Ở ĐÂY
+    };
+
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
 
     let currentUser = null;
     let userData = {};
-    const totalUnits = 15; // Giả sử sách có 15 Unit
+    const totalUnits = 15; 
 
-    // Dữ liệu mẫu tên Unit
     const unitTitles = [
         "Hello! Vocabulary & Grammar", "My Family", "My House", "My Toys", "My Face", "Animals", "Food", 
         "Clothes", "My Room", "Action Verbs", "I can jump", "Feelings", "Jobs", "Transportation", "Review"
     ];
 
-    // Kho Avatar miễn phí
     const avatars = [
         "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=e2e8f0",
         "https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka&backgroundColor=e2e8f0",
@@ -224,7 +226,6 @@
       if (user) {
         currentUser = user;
         
-        // R&D: FIX CHÍNH XÁC ID THẺ BODY THÀNH appBody
         document.getElementById('appBody').classList.remove('hidden');
         
         document.getElementById('userEmail').innerText = user.email;
@@ -260,8 +261,8 @@
       } else { window.location.href = "login.html"; }
     });
 
-        // ==========================================
-    // R&D: LOGIC RENDER LỘ TRÌNH HỌC (ĐÃ FIX LINK EXAM & THÊM ENTRY TEST)
+    // ==========================================
+    // LOGIC RENDER LỘ TRÌNH HỌC (ĐÃ TÍCH HỢP ĐỀ THI ĐẦU VÀO)
     // ==========================================
     function renderUnitList() {
         const container = document.getElementById('unitListContainer');
@@ -290,7 +291,6 @@
             let cardHtml = '';
 
             if (i < currentUnit) {
-                // ĐÃ PASS
                 cardHtml = `
                 <div class="border-2 border-slate-200 bg-slate-50/80 rounded-2xl p-4 sm:p-5 flex items-center justify-between transition-all">
                     <div class="flex items-center space-x-4">
@@ -304,7 +304,6 @@
                 </div>`;
             } 
             else if (i === currentUnit) {
-                // ĐANG HỌC (Link Exam đã trỏ đúng định dạng ID bài thi trên Firebase)
                 const examId = `${currentLevel}_unit_${i}`;
                 cardHtml = `
                 <div class="border-4 border-indigo-200 bg-indigo-50/50 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all transform hover:-translate-y-1 hover:shadow-lg">
@@ -322,7 +321,6 @@
                 </div>`;
             } 
             else {
-                // BỊ KHÓA
                 cardHtml = `
                 <div class="border-2 border-slate-100 bg-slate-50/40 rounded-2xl p-4 sm:p-5 flex items-center justify-between opacity-60 grayscale transition-all">
                     <div class="flex items-center space-x-4">
