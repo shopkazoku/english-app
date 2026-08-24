@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Smart Exam v2.0 - Round-Up AI</title>
+  <title>Smart Exam v3.0 - Round-Up AI</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
@@ -21,12 +21,13 @@
     .choice-wrong { background-color: #f43f5e !important; color: white !important; border-color: #be123c !important; box-shadow: 0 4px 0 #be123c !important; }
   </style>
 </head>
-<body class="min-h-screen flex flex-col hidden bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" id="mainBody">
+<!-- FIX: Bỏ class hidden để tránh trắng màn hình -->
+<body class="min-h-screen flex flex-col bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] relative" id="mainBody">
 
   <!-- TOPBAR -->
   <header class="bg-white border-b-2 border-indigo-100 p-3 sm:p-4 flex justify-between items-center shadow-sm z-50 shrink-0">
     <div class="flex items-center space-x-3">
-      <button onclick="window.location.href='classroom.html'" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-xl flex justify-center items-center text-slate-600 transition shadow-sm border border-slate-200">
+      <button onclick="window.location.href='dashboard.html'" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-xl flex justify-center items-center text-slate-600 transition shadow-sm border border-slate-200">
         <i class="fa-solid fa-arrow-left"></i>
       </button>
       <div>
@@ -51,7 +52,7 @@
   <main class="flex-1 flex flex-col items-center justify-center p-4 w-full max-w-4xl mx-auto relative">
     
     <!-- Màn hình chờ tải dữ liệu -->
-    <div id="loadingOverlay" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#f8fafc]">
+    <div id="loadingOverlay" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#f8fafc] transition-opacity duration-500">
         <i class="fa-solid fa-circle-notch fa-spin text-5xl text-indigo-500 mb-4"></i>
         <p class="font-black text-slate-500 animate-pulse">Fetching Exam from Database...</p>
     </div>
@@ -89,6 +90,13 @@
     </div>
   </main>
 
+  <!-- BẢN QUYỀN FOOTER CHÍNH THỨC -->
+  <footer class="w-full text-center py-4 shrink-0 z-40 bg-transparent">
+      <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+          &copy; 2026 Son Nguyen. All rights reserved.
+      </p>
+  </footer>
+
   <!-- Result Modal -->
   <div id="resultModal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-sm z-[100] hidden flex-col items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-md w-full p-8 text-center shadow-2xl border-4 border-emerald-400 relative">
@@ -100,7 +108,7 @@
       
       <div class="bg-slate-50 rounded-2xl p-6 border border-slate-200 mb-6">
         <p class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">Total Score</p>
-        <p class="text-5xl font-black text-emerald-500"><span id="finalScore">0</span> / 20</p>
+        <p class="text-5xl font-black text-emerald-500"><span id="finalScore">0</span> / 10</p>
       </div>
 
       <div id="rewardBox" class="bg-amber-50 rounded-xl p-4 border border-amber-200 mb-6 flex items-center justify-center space-x-3">
@@ -122,9 +130,9 @@
 
   <script>
     // ==========================================
-    // BOSS DÁN ĐOẠN FIREBASE CONFIG VÀO ĐÂY
+    // BOSS DÁN ĐOẠN FIREBASE CONFIG VÀO ĐÂY BẮT BUỘC
     // ==========================================
-    const firebaseConfig = {
+   const firebaseConfig = {
   apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
   authDomain: "roundup-ai-academy.firebaseapp.com",
   projectId: "roundup-ai-academy",
@@ -166,7 +174,6 @@
     auth.onAuthStateChanged((user) => {
       if (user) {
         currentUser = user;
-        document.getElementById('mainBody').classList.remove('hidden');
         
         db.ref('users/' + user.uid).once('value').then((snapshot) => {
           const data = snapshot.val();
@@ -177,67 +184,101 @@
             userMaxLevelWeight = levelWeights[currentLevel] || 1;
             
             document.getElementById('displayCoins').innerText = userCoins;
-            fetchExamFromCloud(); // Gọi hàm lấy đề thi
+            fetchExamFromCloud(); 
           }
         });
-      } else { window.location.href = "login.html"; }
+      } else { 
+          // FIX LỖI ĐIỀU HƯỚNG TRẮNG MÀN HÌNH
+          window.location.href = "index.html"; 
+      }
     });
 
-    // 2. KÉO DỮ LIỆU ĐỀ THI TỪ FIREBASE CLOUD
+    // 2. KÉO DỮ LIỆU ĐỀ THI TỪ FIREBASE CLOUD VÀ TRỘN NGẪU NHIÊN 20 CÂU
     function fetchExamFromCloud() {
       const urlParams = new URLSearchParams(window.location.search);
-      const examId = urlParams.get('id') || 'level_1_entry'; // Lấy ID bài thi từ link (Mặc định lấy bài Boss vừa tạo)
+      const examId = urlParams.get('id') || 'level_1_entry'; 
 
       db.ref('exams/' + examId).once('value').then((snapshot) => {
           const data = snapshot.val();
-          if (data && data.questions) {
-              currentExamData = data;
-              document.getElementById('loadingOverlay').style.display = 'none';
+          if (data) {
+              // Xử lý dữ liệu Firebase (có thể trả về Array hoặc Object tùy cách Boss Add lúc trước)
+              let questionsArray = [];
               
-              // Khởi tạo thông tin
-              document.getElementById('examTitle').innerText = data.title;
-              document.getElementById('qTotal').innerText = data.questions.length;
-              
-              // Bật đồng hồ đếm ngược
-              timeRemaining = data.timeLimit * 60; // Đổi phút ra giây
-              startTimer();
-
-              // Check Anti-Cheat (Gian lận Level)
-              if (data.levelWeight < userMaxLevelWeight) {
-                isReviewMode = true;
-                document.getElementById('cheatWarning').classList.remove('hidden');
+              // Nếu data chứa mảng câu hỏi bên trong (cấu trúc cũ)
+              if (data.questions) {
+                  questionsArray = Array.isArray(data.questions) ? data.questions : Object.values(data.questions);
+              } 
+              // Nếu data chính là danh sách câu hỏi (do đẩy trực tiếp node con)
+              else {
+                  questionsArray = Object.values(data);
               }
 
-              loadVoices(); // Nạp sẵn bộ giọng đọc
-              loadQuestion();
-          } else {
-              document.getElementById('loadingOverlay').innerHTML = `<p class="font-black text-rose-500 text-2xl">Exam not found in Database!</p><button onclick="window.location.href='dashboard.html'" class="mt-4 bg-slate-200 px-4 py-2 rounded-lg font-bold">Go Back</button>`;
+              if (questionsArray.length > 0) {
+                  // ===============================================
+                  // THUẬT TOÁN R&D: TRỘN NGẪU NHIÊN VÀ CẮT 20 CÂU
+                  // ===============================================
+                  questionsArray.sort(() => 0.5 - Math.random()); // Trộn bài
+                  const selectedQuestions = questionsArray.slice(0, 20); // Cắt 20 câu (nếu ít hơn 20 thì lấy hết)
+
+                  // Cấu trúc lại bộ dữ liệu thi
+                  currentExamData = {
+                      title: examId.replace(/_/g, ' ').toUpperCase(),
+                      questions: selectedQuestions,
+                      timeLimit: 15, // Mặc định 15 phút
+                      levelWeight: parseInt(examId.split('_')[1]) || 1
+                  };
+                  
+                  // Ẩn Màn hình Loading
+                  document.getElementById('loadingOverlay').style.opacity = '0';
+                  setTimeout(() => { document.getElementById('loadingOverlay').style.display = 'none'; }, 500);
+                  
+                  // Khởi tạo thông tin UI
+                  document.getElementById('examTitle').innerText = currentExamData.title;
+                  document.getElementById('qTotal').innerText = currentExamData.questions.length;
+                  
+                  // Bật đồng hồ đếm ngược
+                  timeRemaining = currentExamData.timeLimit * 60; 
+                  startTimer();
+
+                  // Check Anti-Cheat (Gian lận Level)
+                  if (currentExamData.levelWeight < userMaxLevelWeight) {
+                    isReviewMode = true;
+                    document.getElementById('cheatWarning').classList.remove('hidden');
+                  }
+
+                  loadVoices(); 
+                  loadQuestion();
+                  return;
+              }
           }
+          
+          // BÁO LỖI NẾU KHÔNG CÓ DATA
+          document.getElementById('loadingOverlay').innerHTML = `<div class="bg-white p-8 rounded-3xl shadow-xl text-center"><i class="fa-solid fa-triangle-exclamation text-5xl text-rose-500 mb-4"></i><p class="font-black text-slate-700 text-xl mb-6">No questions found in this Exam Bank.</p><button onclick="window.location.href='dashboard.html'" class="bg-slate-800 text-white px-8 py-3 rounded-xl font-bold hover:bg-slate-700 transition">Go Back</button></div>`;
+          
       }).catch(err => {
-          alert("Lỗi tải đề thi: " + err.message);
+          alert("Error fetching exam: " + err.message);
       });
     }
 
-   // 3. ĐỌC CÂU HỎI HIỆN TẠI BẰNG AI (ĐÃ FIX LỖI ĐỌC DẤU GẠCH DƯỚI)
+   // 3. ĐỌC CÂU HỎI HIỆN TẠI BẰNG AI
     function readCurrentQuestion() {
         if (!currentExamData) return;
         
-        // R&D Regex: Tìm tất cả các cụm dấu gạch dưới (___) và thay bằng từ "blank"
         let textToRead = currentExamData.questions[currentQIndex].q;
         textToRead = textToRead.replace(/_+/g, " blank ");
         
         if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel(); // Ngắt giọng cũ nếu đang đọc dở
+            window.speechSynthesis.cancel(); 
             if (!britishFemaleVoice) loadVoices();
             
             const utterance = new SpeechSynthesisUtterance(textToRead);
             if (britishFemaleVoice) utterance.voice = britishFemaleVoice; else utterance.lang = 'en-US'; 
-            utterance.rate = 0.9; // Tốc độ đọc vừa phải để học viên nghe rõ
+            utterance.rate = 0.9; 
             utterance.pitch = 1.0;    
             
             window.speechSynthesis.speak(utterance);
         } else {
-            alert("Trình duyệt của bạn không hỗ trợ tính năng đọc giọng nói.");
+            alert("Your browser does not support Voice features.");
         }
     }
 
@@ -250,14 +291,14 @@
             let s = timeRemaining % 60;
             timerDisplay.innerText = `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
             
-            if(timeRemaining <= 300) { // Dưới 5 phút báo đỏ
+            if(timeRemaining <= 300) { 
                 timerDisplay.parentElement.classList.replace('bg-slate-800', 'bg-rose-600');
                 timerDisplay.parentElement.classList.replace('border-slate-700', 'border-rose-400');
             }
 
             if(timeRemaining <= 0) {
                 clearInterval(timerInterval);
-                finishExam(); // Hết giờ tự động nộp bài
+                finishExam(); 
             }
         }, 1000);
     }
@@ -293,7 +334,7 @@
     function checkAnswer(btnEl, selected, correct) {
       if (isClickLocked) return;
       isClickLocked = true; 
-      window.speechSynthesis.cancel(); // Nếu đang đọc câu hỏi mà bấm chọn thì tắt tiếng luôn
+      window.speechSynthesis.cancel(); 
 
       const allBtns = document.getElementById('answersGrid').children;
 
@@ -315,7 +356,7 @@
       }, 1500);
     }
 
-    // KẾT THÚC BÀI THI & TÍNH ĐIỂM HỆ 20 (TÍCH HỢP MỞ KHÓA UNIT)
+    // KẾT THÚC BÀI THI & TÍNH ĐIỂM THANG ĐIỂM 10
     function finishExam() {
       clearInterval(timerInterval);
       document.getElementById('progressBar').style.width = `100%`;
@@ -324,36 +365,42 @@
       
       confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
 
-      // Tính điểm theo thang 20
+      // Tính điểm theo thang điểm 10 (chứ không phải 20)
       const totalQs = currentExamData.questions.length;
-      const pointsPerQ = 20 / totalQs;
+      const pointsPerQ = 10 / totalQs;
       const finalScore = Math.round(correctCount * pointsPerQ * 10) / 10; 
       
       document.getElementById('finalScore').innerText = finalScore;
 
       // ====================================================
-      // R&D LOGIC: MỞ KHÓA UNIT TIẾP THEO KHI THI ĐẬU (>= 10 ĐIỂM)
+      // R&D LOGIC: MỞ KHÓA UNIT HOẶC LEVEL MỚI
       // ====================================================
-      if (finalScore >= 10) {
+      if (finalScore >= 5) { // Qua môn với 5/10 điểm
           if (currentUser) {
               db.ref('users/' + currentUser.uid).once('value').then((snapshot) => {
                   const userData = snapshot.val();
-                  if (userData && userData.current_unit) {
-                      let currentU = parseInt(userData.current_unit);
-                      
-                      // Lấy ID bài thi hiện tại từ URL (Ví dụ: level_1_unit_1)
-                      const urlParams = new URLSearchParams(window.location.search);
+                  if (userData) {
+                      const urlParams = newSearchParams(window.location.search);
                       const examId = urlParams.get('id');
                       
+                      // Nếu thi đậu Unit Exam
                       if (examId && examId.includes('_unit_')) {
+                          let currentU = parseInt(userData.current_unit) || 1;
                           const examUnitNum = parseInt(examId.split('_unit_')[1]);
                           
-                          // Tuyệt chiêu chống Hack: Chỉ mở khóa nếu học viên thi đúng Unit cao nhất của mình
                           if (examUnitNum === currentU) {
                               let nextUnit = currentU + 1;
                               db.ref('users/' + currentUser.uid).update({ current_unit: nextUnit });
-                              console.log("System Alert: Đã mở khóa Unit " + nextUnit);
                           }
+                      }
+                      
+                      // Nếu thi đậu Entry Test của Level mới
+                      if (examId && examId.includes('_entry')) {
+                          const targetLevelStr = examId.replace('_entry', '');
+                          db.ref('users/' + currentUser.uid).update({ 
+                              current_level: targetLevelStr,
+                              current_unit: 1
+                          });
                       }
                   }
               });
