@@ -15,140 +15,131 @@
     .custom-scroll::-webkit-scrollbar { width: 6px; }
     .custom-scroll::-webkit-scrollbar-track { background: #1e293b; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 8px; }
-    
     .tab-btn.active { background-color: #6366f1; color: white; border-color: #818cf8; }
     .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
   </style>
 </head>
 <body class="h-screen w-full flex flex-col relative overflow-hidden">
 
-  <!-- ========================================== -->
-  <!-- 1. MÀN HÌNH BẢO MẬT (SECURITY GATEWAY) -->
-  <!-- ========================================== -->
+  <!-- SECURITY GATEWAY -->
   <div id="securityGate" class="fixed inset-0 z-[200] bg-slate-900 flex flex-col items-center justify-center p-4 transition-all duration-300">
       <div class="glass-panel rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl border-t-4 border-t-indigo-500">
           <i class="fa-solid fa-shield-halved text-6xl text-indigo-500 mb-6 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]"></i>
           <h2 class="font-black text-2xl text-white mb-2">Restricted Area</h2>
-          <p class="text-sm font-bold text-slate-400 mb-6 uppercase tracking-widest">Authorized Personnel Only</p>
-          
-          <input type="password" id="pinInput" placeholder="Enter 6-digit PIN" class="w-full bg-slate-800 border-2 border-slate-600 text-center text-white font-black text-2xl tracking-[0.5em] px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500 mb-4 transition-all">
-          <p id="pinError" class="text-rose-500 font-bold text-sm h-6 mb-2 transition-opacity opacity-0">Incorrect PIN. Intrusion Logged.</p>
-          
-          <button onclick="verifyPin()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black text-lg py-3 rounded-xl shadow-[0_4px_0_#4f46e5] active:translate-y-[4px] active:shadow-[0_0px_0_#4f46e5] transition-all uppercase tracking-widest">
-              Access ACP
-          </button>
+          <input type="password" id="pinInput" placeholder="Enter 6-digit PIN" class="w-full bg-slate-800 border-2 border-slate-600 text-center text-white font-black text-2xl tracking-[0.5em] px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500 mb-4 mt-6 transition-all">
+          <p id="pinError" class="text-rose-500 font-bold text-sm h-6 mb-2 transition-opacity opacity-0">Incorrect PIN.</p>
+          <button onclick="verifyPin()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black text-lg py-3 rounded-xl shadow-[0_4px_0_#4f46e5] transition-all uppercase tracking-widest active:translate-y-[4px] active:shadow-[0_0px_0_#4f46e5]">Access ACP</button>
       </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- 2. GIAO DIỆN ACP CHÍNH (Chỉ hiện khi đúng PIN) -->
-  <!-- ========================================== -->
+  <!-- MAIN ADMIN PANEL -->
   <div id="adminPanel" class="hidden h-full flex-col opacity-0 transition-opacity duration-500">
-      <!-- Header -->
       <header class="glass-panel p-4 flex justify-between items-center shadow-md z-50 shrink-0">
           <div class="flex items-center space-x-3">
               <i class="fa-solid fa-server text-indigo-400 text-2xl"></i>
               <div>
                   <h1 class="font-black text-xl text-white tracking-widest uppercase">Round-Up AI</h1>
-                  <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Admin Control Panel v2.1</p>
+                  <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Admin Control Panel v3.0</p>
               </div>
           </div>
           <button onclick="window.location.reload()" class="bg-rose-500/20 text-rose-400 border border-rose-500 hover:bg-rose-500 hover:text-white font-bold px-4 py-2 rounded-lg transition text-xs uppercase tracking-wider">
-              <i class="fa-solid fa-lock mr-2"></i> Lock System
+              Lock System
           </button>
       </header>
 
-      <!-- Main Content -->
       <main class="flex-1 overflow-hidden flex flex-col md:flex-row p-4 gap-4">
-          
-          <!-- SIDEBAR TABS -->
+          <!-- SIDEBAR -->
           <aside class="w-full md:w-64 glass-panel rounded-2xl p-4 shrink-0 flex flex-col gap-2">
               <p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 pl-2">System Modules</p>
-              
               <button onclick="switchTab('examTab')" id="btn_examTab" class="tab-btn active w-full text-left font-bold px-4 py-3 rounded-xl border border-transparent hover:bg-slate-800 transition-all flex items-center">
                   <i class="fa-solid fa-file-signature w-6 text-center mr-2"></i> Exam Manager
               </button>
-              
               <button onclick="switchTab('readingTab')" id="btn_readingTab" class="tab-btn w-full text-left font-bold px-4 py-3 rounded-xl border border-transparent text-slate-400 hover:bg-slate-800 transition-all flex items-center">
                   <i class="fa-solid fa-book-open-reader w-6 text-center mr-2"></i> Reading Manager
               </button>
           </aside>
 
-          <!-- KHU VỰC QUẢN LÝ -->
+          <!-- MODULES -->
           <section class="flex-1 glass-panel rounded-2xl p-6 overflow-y-auto custom-scroll relative">
               
-              <!-- MODULE 1: EXAM MANAGER -->
+              <!-- 1. EXAM MANAGER -->
               <div id="examTab" class="tab-content block">
-                  <h2 class="font-black text-2xl text-white mb-2"><i class="fa-solid fa-file-signature text-indigo-400 mr-2"></i> Exam / Assessment Data</h2>
-                  <p class="text-slate-400 font-bold mb-6 text-sm border-b border-slate-700 pb-4">Create questions for Entry Tests and Unit Exams.</p>
+                  <h2 class="font-black text-2xl text-white mb-2">Exam / Assessment Data</h2>
                   
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <!-- Config -->
-                      <div class="space-y-4">
-                          <div>
-                              <label class="block text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">Exam ID Code</label>
-                              <input type="text" id="examId" placeholder="e.g., level_6_entry OR level_6_unit_1" class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500">
-                          </div>
-                          <div>
-                              <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Question Content</label>
-                              <textarea id="examQuestion" rows="3" placeholder="Enter the question here..." class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500"></textarea>
-                          </div>
-                      </div>
-                      
-                      <!-- Answers -->
-                      <div class="space-y-4">
-                          <div><input type="text" id="ansA" placeholder="Option A" class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-4 py-2 rounded-lg focus:outline-none focus:border-indigo-500"></div>
-                          <div><input type="text" id="ansB" placeholder="Option B" class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-4 py-2 rounded-lg focus:outline-none focus:border-indigo-500"></div>
-                          <div><input type="text" id="ansC" placeholder="Option C" class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-4 py-2 rounded-lg focus:outline-none focus:border-indigo-500"></div>
-                          <div><input type="text" id="ansD" placeholder="Option D" class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-4 py-2 rounded-lg focus:outline-none focus:border-indigo-500"></div>
-                          
-                          <div>
-                              <label class="block text-xs font-black text-emerald-400 uppercase tracking-widest mb-1 mt-4">Correct Answer</label>
-                              <select id="correctAns" class="w-full bg-slate-800 border border-emerald-600/50 text-white font-bold px-4 py-2 rounded-lg focus:outline-none focus:border-emerald-500 cursor-pointer">
-                                  <option value="A">Option A</option><option value="B">Option B</option>
-                                  <option value="C">Option C</option><option value="D">Option D</option>
-                              </select>
+                  <div class="flex flex-col sm:flex-row gap-4 mb-6 border-b border-slate-700 pb-6">
+                      <div class="flex-1">
+                          <label class="block text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">1. Enter Exam ID to Load</label>
+                          <div class="flex gap-2">
+                              <input type="text" id="examId" placeholder="e.g., level_6_entry OR level_6_unit_1" class="flex-1 bg-slate-800 border border-slate-600 text-white font-bold px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500">
+                              <button onclick="loadExamQuestions()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-black px-6 py-3 rounded-xl transition-all">LOAD</button>
                           </div>
                       </div>
                   </div>
-                  <div class="mt-6">
-                      <button onclick="saveExamQuestion()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-black px-8 py-3 rounded-xl shadow-[0_4px_0_#4f46e5] active:translate-y-[4px] active:shadow-[0_0px_0_#4f46e5] transition-all">
-                          <i class="fa-solid fa-cloud-arrow-up mr-2"></i> PUSH QUESTION TO CLOUD
-                      </button>
-                      <span id="examStatus" class="ml-4 font-bold text-emerald-400 opacity-0 transition-opacity">Saved successfully!</span>
+
+                  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <!-- List Loaded Questions -->
+                      <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4 flex flex-col">
+                          <h3 class="font-bold text-amber-400 mb-3"><i class="fa-solid fa-list mr-2"></i>Questions in this Exam:</h3>
+                          <div id="questionList" class="flex-1 overflow-y-auto custom-scroll space-y-2 max-h-[400px]">
+                              <p class="text-slate-500 text-sm italic">Enter Exam ID and click LOAD to view questions...</p>
+                          </div>
+                      </div>
+
+                      <!-- Form Add/Edit -->
+                      <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                          <h3 id="formTitle" class="font-bold text-emerald-400 mb-3"><i class="fa-solid fa-pen-to-square mr-2"></i>Add New Question</h3>
+                          <input type="hidden" id="editKey" value="">
+                          
+                          <div class="space-y-3">
+                              <textarea id="examQuestion" rows="2" placeholder="Question Content" class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-3 py-2 rounded-lg focus:outline-none focus:border-indigo-500"></textarea>
+                              <input type="text" id="ansA" placeholder="Option A" class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-3 py-2 rounded-lg focus:outline-none focus:border-indigo-500">
+                              <input type="text" id="ansB" placeholder="Option B" class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-3 py-2 rounded-lg focus:outline-none focus:border-indigo-500">
+                              <input type="text" id="ansC" placeholder="Option C" class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-3 py-2 rounded-lg focus:outline-none focus:border-indigo-500">
+                              <input type="text" id="ansD" placeholder="Option D" class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-3 py-2 rounded-lg focus:outline-none focus:border-indigo-500">
+                              
+                              <select id="correctAns" class="w-full bg-slate-800 border border-emerald-600/50 text-white font-bold px-3 py-2 rounded-lg focus:outline-none focus:border-emerald-500">
+                                  <option value="A">Correct Answer: Option A</option><option value="B">Correct Answer: Option B</option>
+                                  <option value="C">Correct Answer: Option C</option><option value="D">Correct Answer: Option D</option>
+                              </select>
+                              
+                              <div class="flex gap-2 pt-2">
+                                  <button onclick="saveExamQuestion()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-black py-2 rounded-lg transition-all">SAVE QUESTION</button>
+                                  <button onclick="resetExamForm()" class="bg-slate-600 hover:bg-slate-500 text-white font-bold px-4 py-2 rounded-lg transition-all">CLEAR</button>
+                              </div>
+                          </div>
+                      </div>
                   </div>
               </div>
 
-              <!-- MODULE 2: READING MANAGER -->
+              <!-- 2. READING MANAGER -->
               <div id="readingTab" class="tab-content hidden">
-                  <h2 class="font-black text-2xl text-white mb-2"><i class="fa-solid fa-book-open-reader text-indigo-400 mr-2"></i> Reading Curriculum Manager</h2>
-                  <p class="text-slate-400 font-bold mb-6 text-sm border-b border-slate-700 pb-4">Update texts for the Smart Shadowing AI Teacher.</p>
+                  <h2 class="font-black text-2xl text-white mb-2">Reading Curriculum Manager</h2>
                   
-                  <div class="space-y-6">
-                      <div>
-                          <label class="block text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">Target Level</label>
-                          <select id="readingLevel" class="w-full max-w-sm bg-slate-800 border border-slate-600 text-white font-bold px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500 cursor-pointer uppercase">
-                              <option value="starter">Starter</option>
-                              <option value="level_1">Level 1</option>
-                              <option value="level_2">Level 2</option>
-                              <option value="level_3">Level 3</option>
-                              <option value="level_4">Level 4</option>
-                              <option value="level_5">Level 5</option>
-                              <option value="level_6">Level 6</option>
-                          </select>
+                  <div class="flex flex-col sm:flex-row gap-4 mb-6 border-b border-slate-700 pb-6">
+                      <div class="flex gap-2 items-end">
+                          <div>
+                              <label class="block text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">Target Level</label>
+                              <select id="readingLevel" class="w-32 bg-slate-800 border border-slate-600 text-white font-bold px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500">
+                                  <option value="starter">Starter</option><option value="level_1">Level 1</option><option value="level_2">Level 2</option>
+                                  <option value="level_3">Level 3</option><option value="level_4">Level 4</option><option value="level_5">Level 5</option><option value="level_6">Level 6</option>
+                              </select>
+                          </div>
+                          <div>
+                              <label class="block text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">Unit</label>
+                              <select id="readingUnit" class="w-32 bg-slate-800 border border-slate-600 text-white font-bold px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500">
+                                  <!-- Sẽ gen bằng JS -->
+                              </select>
+                          </div>
+                          <button onclick="loadReadingData()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-black px-6 py-3 rounded-xl transition-all h-[50px]">LOAD</button>
                       </div>
+                  </div>
 
-                      <div>
-                          <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Reading Text Content</label>
-                          <textarea id="readingText" rows="6" placeholder="Paste the English reading paragraph here. Make sure punctuation is correct so the AI can read it properly..." class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-4 py-4 rounded-xl focus:outline-none focus:border-indigo-500 text-lg leading-relaxed"></textarea>
-                      </div>
-
-                      <div>
-                          <button onclick="saveReadingData()" class="bg-violet-600 hover:bg-violet-500 text-white font-black px-8 py-3 rounded-xl shadow-[0_4px_0_#5b21b6] active:translate-y-[4px] active:shadow-[0_0px_0_#5b21b6] transition-all">
-                              <i class="fa-solid fa-cloud-arrow-up mr-2"></i> PUSH READING TO CLOUD
-                          </button>
-                          <span id="readingStatus" class="ml-4 font-bold text-emerald-400 opacity-0 transition-opacity">Saved successfully!</span>
-                      </div>
+                  <div class="space-y-4">
+                      <textarea id="readingText" rows="6" placeholder="Load a unit to edit, or paste new English reading paragraph here..." class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-4 py-4 rounded-xl focus:outline-none focus:border-indigo-500 text-lg leading-relaxed"></textarea>
+                      <button onclick="saveReadingData()" class="bg-violet-600 hover:bg-violet-500 text-white font-black px-8 py-3 rounded-xl transition-all">
+                          <i class="fa-solid fa-cloud-arrow-up mr-2"></i> SAVE READING TO CLOUD
+                      </button>
+                      <span id="readingStatus" class="ml-4 font-bold text-emerald-400 opacity-0 transition-opacity">Saved successfully!</span>
                   </div>
               </div>
 
@@ -158,90 +149,147 @@
 
   <script>
     // ==========================================
-    // R&D FIREBASE TỰ ĐỘNG CHỐNG LỖI CÚ PHÁP
+    // BOSS DÁN ĐOẠN FIREBASE CONFIG VÀO ĐÂY BẮT BUỘC
     // ==========================================
     const firebaseConfig = {
-      apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
-      authDomain: "roundup-ai-academy.firebaseapp.com",
-      projectId: "roundup-ai-academy",
-      storageBucket: "roundup-ai-academy.firebasestorage.app",
-      messagingSenderId: "723976989630",
-      appId: "1:723976989630:web:45f3de91269e70f604e7ef"
-    };
+  apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
+  authDomain: "roundup-ai-academy.firebaseapp.com",
+  projectId: "roundup-ai-academy",
+  storageBucket: "roundup-ai-academy.firebasestorage.app",
+  messagingSenderId: "723976989630",
+  appId: "1:723976989630:web:45f3de91269e70f604e7ef"
+};
 
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-
-    // MÃ BẢO MẬT 6 SỐ
     const ADMIN_PIN = "108491"; 
 
-    // Lắng nghe sự kiện phím Enter
-    document.getElementById("pinInput").addEventListener("keypress", function(event) {
-        if (event.key === "Enter") {
-            verifyPin();
-        }
-    });
+    // Render 15 Units cho Reading
+    const unitSelect = document.getElementById('readingUnit');
+    for(let i=1; i<=15; i++) {
+        let opt = document.createElement('option');
+        opt.value = "unit_" + i; opt.innerText = "Unit " + i;
+        unitSelect.appendChild(opt);
+    }
 
-    // Hàm xác thực cổng bảo mật (Đã sửa logic Tailwind CSS)
+    // LOGIN
+    document.getElementById("pinInput").addEventListener("keypress", (e) => { if (e.key === "Enter") verifyPin(); });
     function verifyPin() {
-        const input = document.getElementById('pinInput').value;
-        const err = document.getElementById('pinError');
-        
-        if(input === ADMIN_PIN) {
-            // Ẩn Màn hình khóa
+        if(document.getElementById('pinInput').value === ADMIN_PIN) {
             document.getElementById('securityGate').classList.add('hidden');
             document.getElementById('securityGate').classList.remove('flex');
-            
-            // Hiện Trang quản trị
             const adminPanel = document.getElementById('adminPanel');
-            adminPanel.classList.remove('hidden');
-            adminPanel.classList.add('flex');
-            
-            // Tạo hiệu ứng mượt mà
-            setTimeout(() => {
-                adminPanel.style.opacity = '1';
-            }, 50);
+            adminPanel.classList.remove('hidden'); adminPanel.classList.add('flex');
+            setTimeout(() => { adminPanel.style.opacity = '1'; }, 50);
         } else {
-            err.style.opacity = '1';
+            document.getElementById('pinError').style.opacity = '1';
             document.getElementById('pinInput').value = "";
-            document.getElementById('pinInput').focus();
-            setTimeout(() => { err.style.opacity = '0'; }, 2000);
+            setTimeout(() => { document.getElementById('pinError').style.opacity = '0'; }, 2000);
         }
     }
 
-    // HỆ THỐNG CHUYỂN TAB
+    // SWITCH TAB
     function switchTab(tabId) {
-        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('block'));
-        
-        document.querySelectorAll('.tab-btn').forEach(el => {
-            el.classList.remove('active', 'bg-indigo-600', 'text-white');
-            el.classList.add('text-slate-400');
-        });
-
-        document.getElementById(tabId).classList.remove('hidden');
-        document.getElementById(tabId).classList.add('block');
-        
+        document.querySelectorAll('.tab-content').forEach(el => { el.classList.add('hidden'); el.classList.remove('block'); });
+        document.querySelectorAll('.tab-btn').forEach(el => { el.classList.remove('active', 'bg-indigo-600', 'text-white'); el.classList.add('text-slate-400'); });
+        document.getElementById(tabId).classList.remove('hidden'); document.getElementById(tabId).classList.add('block');
         const btn = document.getElementById('btn_' + tabId);
-        btn.classList.add('active', 'text-white');
-        btn.classList.remove('text-slate-400');
+        btn.classList.add('active', 'text-white'); btn.classList.remove('text-slate-400');
     }
 
     // ==========================================
-    // MODULE 1: LƯU ĐỀ THI
+    // MODULE 1: CRUD ĐỀ THI
     // ==========================================
+    let currentQuestions = {};
+
+    function loadExamQuestions() {
+        const examId = document.getElementById('examId').value.trim();
+        if(!examId) { alert("Please enter Exam ID to load!"); return; }
+        
+        document.getElementById('questionList').innerHTML = '<i class="fa-solid fa-spinner fa-spin text-indigo-400"></i> Loading...';
+        
+        db.ref('exams/' + examId).once('value').then(snap => {
+            currentQuestions = snap.val() || {};
+            renderQuestionList();
+            resetExamForm();
+        });
+    }
+
+    function renderQuestionList() {
+        const listDiv = document.getElementById('questionList');
+        listDiv.innerHTML = '';
+        const keys = Object.keys(currentQuestions);
+        
+        if(keys.length === 0) {
+            listDiv.innerHTML = '<p class="text-rose-400 text-sm italic">No questions found. Add a new one!</p>';
+            return;
+        }
+
+        keys.forEach((key, index) => {
+            const q = currentQuestions[key];
+            listDiv.innerHTML += `
+            <div class="bg-slate-700/50 p-3 rounded-lg border border-slate-600 flex justify-between items-start gap-2">
+                <div class="flex-1">
+                    <p class="font-bold text-white text-sm">Q${index + 1}: ${q.q}</p>
+                    <p class="text-[10px] text-emerald-400">Ans: ${q.answer}</p>
+                </div>
+                <div class="flex flex-col gap-1 shrink-0">
+                    <button onclick="editQuestion('${key}')" class="bg-sky-600 hover:bg-sky-500 text-white text-xs px-2 py-1 rounded"><i class="fa-solid fa-pen"></i></button>
+                    <button onclick="deleteQuestion('${key}')" class="bg-rose-600 hover:bg-rose-500 text-white text-xs px-2 py-1 rounded"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>`;
+        });
+    }
+
+    function editQuestion(key) {
+        const q = currentQuestions[key];
+        document.getElementById('editKey').value = key;
+        document.getElementById('formTitle').innerHTML = '<i class="fa-solid fa-pen-to-square mr-2"></i>Edit Question';
+        document.getElementById('examQuestion').value = q.q;
+        document.getElementById('ansA').value = q.options[0];
+        document.getElementById('ansB').value = q.options[1];
+        document.getElementById('ansC').value = q.options[2];
+        document.getElementById('ansD').value = q.options[3];
+        
+        // Find correct select value
+        let sel = "A";
+        if(q.answer === q.options[1]) sel = "B";
+        if(q.answer === q.options[2]) sel = "C";
+        if(q.answer === q.options[3]) sel = "D";
+        document.getElementById('correctAns').value = sel;
+    }
+
+    function deleteQuestion(key) {
+        if(confirm("Are you sure you want to delete this question?")) {
+            const examId = document.getElementById('examId').value.trim();
+            db.ref('exams/' + examId + '/' + key).remove().then(() => {
+                loadExamQuestions(); // reload list
+            });
+        }
+    }
+
+    function resetExamForm() {
+        document.getElementById('editKey').value = "";
+        document.getElementById('formTitle').innerHTML = '<i class="fa-solid fa-plus mr-2"></i>Add New Question';
+        document.getElementById('examQuestion').value = "";
+        document.getElementById('ansA').value = "";
+        document.getElementById('ansB').value = "";
+        document.getElementById('ansC').value = "";
+        document.getElementById('ansD').value = "";
+        document.getElementById('correctAns').value = "A";
+    }
+
     function saveExamQuestion() {
         const examId = document.getElementById('examId').value.trim();
-        const question = document.getElementById('examQuestion').value.trim();
+        const editKey = document.getElementById('editKey').value;
+        const qText = document.getElementById('examQuestion').value.trim();
         const a = document.getElementById('ansA').value.trim();
         const b = document.getElementById('ansB').value.trim();
         const c = document.getElementById('ansC').value.trim();
         const d = document.getElementById('ansD').value.trim();
         const correctOpt = document.getElementById('correctAns').value;
 
-        if(!examId || !question || !a || !b || !c || !d) {
-            alert("Please fill all fields!"); return;
-        }
+        if(!examId || !qText || !a || !b || !c || !d) { alert("Please fill all fields and Exam ID!"); return; }
 
         let answerText = "";
         if(correctOpt === "A") answerText = a;
@@ -249,38 +297,53 @@
         if(correctOpt === "C") answerText = c;
         if(correctOpt === "D") answerText = d;
 
-        const newQuestion = {
-            q: question,
+        const questionData = {
+            q: qText,
             options: [a, b, c, d],
             answer: answerText,
             timestamp: Date.now()
         };
 
-        db.ref('exams/' + examId).push(newQuestion).then(() => {
-            document.getElementById('examQuestion').value = "";
-            document.getElementById('ansA').value = "";
-            document.getElementById('ansB').value = "";
-            document.getElementById('ansC').value = "";
-            document.getElementById('ansD').value = "";
-            
-            const status = document.getElementById('examStatus');
-            status.style.opacity = '1';
-            setTimeout(() => { status.style.opacity = '0'; }, 3000);
-        }).catch(err => alert("Error saving to cloud: " + err.message));
+        if(editKey) {
+            // Update
+            db.ref('exams/' + examId + '/' + editKey).set(questionData).then(() => {
+                loadExamQuestions();
+            });
+        } else {
+            // Add new
+            db.ref('exams/' + examId).push(questionData).then(() => {
+                loadExamQuestions();
+            });
+        }
     }
 
     // ==========================================
-    // MODULE 2: LƯU BÀI LUYỆN ĐỌC
+    // MODULE 2: CRUD BÀI LUYỆN ĐỌC
     // ==========================================
+    function loadReadingData() {
+        const level = document.getElementById('readingLevel').value;
+        const unit = document.getElementById('readingUnit').value;
+        
+        document.getElementById('readingText').value = "Loading...";
+        db.ref('readings/' + level + '/' + unit).once('value').then(snap => {
+            const data = snap.val();
+            if(data && data.text) {
+                document.getElementById('readingText').value = data.text;
+            } else {
+                document.getElementById('readingText').value = "";
+                alert("No reading text found for this Unit. You can create a new one.");
+            }
+        });
+    }
+
     function saveReadingData() {
         const level = document.getElementById('readingLevel').value;
+        const unit = document.getElementById('readingUnit').value;
         const textContent = document.getElementById('readingText').value.trim();
 
-        if(!textContent) {
-            alert("Reading text cannot be empty!"); return;
-        }
+        if(!textContent) { alert("Reading text cannot be empty!"); return; }
 
-        db.ref('readings/' + level).set({
+        db.ref('readings/' + level + '/' + unit).set({
             text: textContent,
             updated_at: Date.now()
         }).then(() => {
