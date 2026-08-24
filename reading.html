@@ -147,9 +147,14 @@
     // ==========================================
     // BOSS DÁN ĐOẠN FIREBASE CONFIG VÀO ĐÂY (BẮT BUỘC)
     // ==========================================
-    const firebaseConfig = {
-      // DÁN FIREBASE CỦA BOSS VÀO ĐÂY
-    };
+   const firebaseConfig = {
+  apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
+  authDomain: "roundup-ai-academy.firebaseapp.com",
+  projectId: "roundup-ai-academy",
+  storageBucket: "roundup-ai-academy.firebasestorage.app",
+  messagingSenderId: "723976989630",
+  appId: "1:723976989630:web:45f3de91269e70f604e7ef"
+};
 
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
@@ -159,17 +164,45 @@
     let userCoins = 0;
     let currentLevel = "starter";
 
-    // KHO DỮ LIỆU BÀI ĐỌC (Demo theo Level)
-    const readingDatabase = {
-        "starter": "Hello! My name is Alex. I like apples.",
-        "level_1": "This is my family. My mother is a doctor. My father is a teacher.",
-        "level_2": "I live in a big house. It has three bedrooms and a beautiful garden.",
-        "level_3": "Yesterday, I went to the park with my friends. We played football and had a picnic.",
-        "level_4": "The environment is very important. We must recycle plastic to save the Earth.",
-        "level_5": "Artificial intelligence is changing the way we learn and communicate globally.",
-        "level_6": "Despite the challenges posed by climate change, renewable energy offers a sustainable solution for future generations."
-    };
-
+    // 1. KHỞI TẠO HỆ THỐNG VÀ KÉO DỮ LIỆU TỪ MÂY
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        currentUser = user;
+        db.ref('users/' + user.uid).once('value').then((snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            userCoins = data.coins || 0;
+            currentLevel = data.current_level || 'starter';
+            
+            document.getElementById('displayCoins').innerText = userCoins;
+            document.getElementById('levelTag').innerText = currentLevel.replace('_', ' ');
+            
+            // KÉO BÀI ĐỌC TỪ FIREBASE THAY VÌ CODE CỨNG
+            db.ref('readings/' + currentLevel).once('value').then((readingSnap) => {
+                const readingData = readingSnap.val();
+                
+                // Nếu ACP đã nhập bài thì hiển thị, chưa có thì hiện câu mặc định
+                if(readingData && readingData.text) {
+                    targetText = readingData.text;
+                } else {
+                    targetText = "Hello! Please ask your teacher to add reading text for this level in the Admin Panel.";
+                }
+                
+                document.getElementById('textContent').innerText = targetText;
+                
+                // Ẩn màn hình Loading
+                document.getElementById('loadingOverlay').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                    document.getElementById('mainContent').style.opacity = '1';
+                }, 500);
+            });
+          }
+        });
+      } else { 
+          window.location.href = "index.html"; 
+      }
+    });
     let targetText = "";
 
     // 1. KHỞI TẠO HỆ THỐNG
