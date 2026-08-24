@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Smart Arena v3.2 - Round-Up AI</title>
+  <title>Smart Arena v3.5 - Round-Up AI</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900;1000&display=swap" rel="stylesheet">
@@ -15,6 +15,9 @@
 
   <style>
     body { font-family: 'Nunito', sans-serif; background-color: #0f172a; overflow: hidden; }
+    .custom-scroll::-webkit-scrollbar { width: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 8px; }
     
     /* ANIMATION NÉM GẠCH & DÉP */
     @keyframes flyRight {
@@ -59,14 +62,63 @@
     @keyframes pulseRed { from { background-color: #ef4444; box-shadow: 0 0 10px #ef4444; } to { background-color: #b91c1c; box-shadow: 0 0 30px #ef4444; } }
   </style>
 </head>
-<body class="h-screen w-full flex flex-col hidden bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')] bg-slate-900" id="mainBody">
+<!-- FIX: Bỏ class hidden để không bao giờ bị trắng trang -->
+<body class="h-screen w-full flex flex-col bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')] bg-slate-900 relative" id="mainBody">
 
-  <!-- OVERLAY BẮT ĐẦU -->
-  <div id="startOverlay" class="fixed inset-0 bg-black/90 z-[200] flex flex-col items-center justify-center">
-    <h1 class="text-5xl sm:text-7xl font-black text-white mb-4 uppercase tracking-widest text-center">Are you ready?</h1>
-    <p class="text-amber-400 font-bold mb-8 text-xl">Answer fast. Throw bricks. Survive.</p>
-    <button onclick="startBattleEngine()" class="bg-rose-600 hover:bg-rose-500 text-white font-black text-3xl px-16 py-6 rounded-3xl shadow-[0_10px_0_#9f1239] active:shadow-[0_0px_0_#9f1239] active:translate-y-[10px] transition-all border-4 border-rose-300">
-      FIGHT!
+  <!-- ĐẠI SẢNH CHỌN GAME (ĐÃ KẾT NỐI ĐỦ 6 GAME) -->
+  <div id="startOverlay" class="fixed inset-0 bg-slate-900/95 z-[200] flex flex-col items-center justify-start pt-8 sm:pt-16 p-4 backdrop-blur-md overflow-y-auto custom-scroll">
+    <h1 class="text-4xl sm:text-6xl font-black text-white mb-2 uppercase tracking-widest text-center drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">Smart Arena</h1>
+    <p class="text-amber-400 font-bold mb-8 text-lg sm:text-xl text-center">Choose your battlefield to earn coins!</p>
+    
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 w-full max-w-4xl mb-10">
+      
+      <!-- GAME 1: BUBBLE -->
+      <div onclick="window.location.href='bubble.html'" class="bg-blue-600/20 border-2 border-blue-500 hover:bg-blue-600/40 rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-105 group">
+        <div class="text-5xl mb-2 group-hover:animate-bounce">🫧</div>
+        <h3 class="font-black text-white text-lg">Bubble Pop</h3>
+      </div>
+
+      <!-- GAME 2: MEMORY -->
+      <div onclick="window.location.href='memory.html'" class="bg-emerald-600/20 border-2 border-emerald-500 hover:bg-emerald-600/40 rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-105 group">
+        <div class="text-5xl mb-2 group-hover:animate-bounce">🧠</div>
+        <h3 class="font-black text-white text-lg">Memory Card</h3>
+      </div>
+
+      <!-- GAME 3: SCRAMBLE -->
+      <div onclick="window.location.href='scramble.html'" class="bg-amber-600/20 border-2 border-amber-500 hover:bg-amber-600/40 rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-105 group">
+        <div class="text-5xl mb-2 group-hover:animate-bounce">🔀</div>
+        <h3 class="font-black text-white text-lg">Word Scramble</h3>
+      </div>
+
+      <!-- GAME 4: TICTACTOE -->
+      <div onclick="window.location.href='tictactoe.html'" class="bg-purple-600/20 border-2 border-purple-500 hover:bg-purple-600/40 rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-105 group">
+        <div class="text-5xl mb-2 group-hover:animate-bounce">❌</div>
+        <h3 class="font-black text-white text-lg">Tic-Tac-Toe</h3>
+      </div>
+
+      <!-- GAME 5: HANGMAN -->
+      <div onclick="window.location.href='hangman.html'" class="bg-cyan-600/20 border-2 border-cyan-500 hover:bg-cyan-600/40 rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-105 group">
+        <div class="text-5xl mb-2 group-hover:animate-bounce">🤠</div>
+        <h3 class="font-black text-white text-lg">Hangman</h3>
+      </div>
+
+      <!-- GAME 6: WORD HUNT -->
+      <div onclick="window.location.href='wordhunt.html'" class="bg-pink-600/20 border-2 border-pink-500 hover:bg-pink-600/40 rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-105 group">
+        <div class="text-5xl mb-2 group-hover:animate-bounce">🔎</div>
+        <h3 class="font-black text-white text-lg">Word Hunt</h3>
+      </div>
+
+      <!-- GAME 7: STREET FIGHT (Trận chiến mặc định của file này) -->
+      <div onclick="startBattleEngine()" class="bg-rose-600/20 border-2 border-rose-500 hover:bg-rose-600/50 rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-105 group col-span-2 sm:col-span-3 lg:col-span-2 shadow-[0_0_20px_rgba(225,29,72,0.4)] relative overflow-hidden">
+        <div class="absolute -right-4 -top-4 bg-rose-600 text-white text-[10px] font-black py-1 px-8 rotate-45">PvE BOSS</div>
+        <div class="text-5xl mb-2 group-hover:animate-pulse">🥊</div>
+        <h3 class="font-black text-white text-xl">Street Fight</h3>
+      </div>
+
+    </div>
+
+    <button onclick="window.location.href='dashboard.html'" class="mt-4 mb-8 bg-slate-800 hover:bg-slate-700 text-white font-black px-8 py-4 rounded-xl border-2 border-slate-600 transition shadow-lg active:scale-95">
+      <i class="fa-solid fa-arrow-left mr-2"></i> RETURN TO DASHBOARD
     </button>
   </div>
 
@@ -75,10 +127,10 @@
   <audio id="sfxThrow" src="https://assets.mixkit.co/active_storage/sfx/2679/2679-preview.mp3"></audio>
   <audio id="sfxHit" src="https://assets.mixkit.co/active_storage/sfx/2144/2144-preview.mp3"></audio>
 
-  <!-- TOPBAR -->
+  <!-- TOPBAR TRẬN ĐẤU -->
   <header class="bg-slate-900/90 backdrop-blur-md border-b-2 border-slate-700 p-2 sm:p-3 flex justify-between items-center z-50 shrink-0">
     <div class="flex items-center space-x-3">
-      <button onclick="window.location.href='dashboard.html'" class="w-10 h-10 bg-slate-800 hover:bg-slate-700 rounded-xl flex justify-center items-center text-slate-300 transition border border-slate-600 shadow-lg">
+      <button onclick="window.location.reload()" class="w-10 h-10 bg-slate-800 hover:bg-slate-700 rounded-xl flex justify-center items-center text-slate-300 transition border border-slate-600 shadow-lg">
         <i class="fa-solid fa-arrow-left"></i>
       </button>
       <div>
@@ -87,7 +139,7 @@
       </div>
     </div>
     
-    <!-- Timer Bar (15s) -->
+    <!-- Timer Bar -->
     <div class="flex-1 max-w-lg mx-4 sm:mx-8 hidden md:flex flex-col items-center">
       <div class="flex justify-between w-full text-white font-black text-xs mb-1 px-1">
         <span class="animate-pulse"><i class="fa-solid fa-clock text-amber-400 mr-1"></i> Time Left</span>
@@ -104,10 +156,10 @@
     </div>
   </header>
 
-  <!-- BATTLEFIELD -->
-  <main class="flex-1 w-full relative flex flex-col justify-between pb-4 overflow-hidden">
+  <!-- BATTLEFIELD CHÍNH -->
+  <main class="flex-1 w-full relative flex flex-col justify-between overflow-hidden">
     
-    <!-- KHU VỰC CHIẾN ĐẤU (Tối ưu flex-1 để co giãn) -->
+    <!-- KHU VỰC CHIẾN ĐẤU -->
     <div class="flex-1 min-h-[30vh] flex items-center justify-between px-4 sm:px-20 lg:px-40 relative">
       
       <!-- PLAYER SIDE -->
@@ -125,7 +177,7 @@
         </div>
       </div>
 
-      <!-- TIMER CHO MOBILE -->
+      <!-- TIMER MOBILE -->
       <div class="absolute left-1/2 top-4 transform -translate-x-1/2 z-0 md:hidden flex flex-col items-center">
         <div class="w-16 h-16 rounded-full bg-slate-800 border-4 border-slate-600 flex items-center justify-center shadow-2xl">
           <span id="timerTextMobile" class="text-2xl font-black text-amber-400">15</span>
@@ -149,17 +201,13 @@
 
     </div>
 
-    <!-- BẢNG ĐIỀU KHIỂN & CÂU HỎI (Đã ép nhỏ lại để vừa màn hình) -->
-    <div class="w-full max-w-4xl mx-auto px-4 relative z-20 shrink-0">
+    <!-- BẢNG ĐIỀU KHIỂN & CÂU HỎI -->
+    <div class="w-full max-w-4xl mx-auto px-4 relative z-20 shrink-0 mb-4">
       <div class="bg-slate-800/95 backdrop-blur-md rounded-3xl border-4 border-slate-600 shadow-[0_-10px_40px_rgba(0,0,0,0.6)] p-4 sm:p-6 text-center">
-        
         <div class="bg-slate-900 rounded-xl p-3 sm:p-4 mb-3 sm:mb-4 border border-slate-700 shadow-inner">
           <h2 id="questionText" class="text-lg sm:text-2xl font-black text-white leading-tight">Question will appear here...</h2>
         </div>
-
-        <div id="answersGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
-          <!-- Các nút đáp án sẽ được sinh ở đây -->
-        </div>
+        <div id="answersGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4"></div>
       </div>
     </div>
   </main>
@@ -177,17 +225,18 @@
       </div>
     </div>
 
-    <button onclick="window.location.href='dashboard.html'" class="bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xl px-10 py-4 rounded-2xl shadow-[0_6px_0_#4f46e5] active:shadow-[0_0px_0_#4f46e5] active:translate-y-[6px] transition-all border-2 border-indigo-400">
-      RETURN TO BASE
+    <button onclick="window.location.reload()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xl px-10 py-4 rounded-2xl shadow-[0_6px_0_#4f46e5] active:shadow-[0_0px_0_#4f46e5] active:translate-y-[6px] transition-all border-2 border-indigo-400">
+      BACK TO MENU
     </button>
   </div>
-<!-- BẢN QUYỀN FOOTER CHÍNH THỨC -->
-      <footer class="w-full text-center py-4 shrink-0 z-40 bg-transparent">
-          <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-              &copy; 2026 Son Nguyen. All rights reserved.
-          </p>
-      </footer>
-  </div>
+
+  <!-- BẢN QUYỀN FOOTER CHÍNH THỨC -->
+  <footer class="w-full text-center py-2 shrink-0 z-40 bg-transparent border-t border-slate-800">
+      <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+          &copy; 2026 Son Nguyen. All rights reserved.
+      </p>
+  </footer>
+
   <script>
     const arenaQuestions = [
       { q: "What is the opposite of 'Hot'?", options: ["Cold", "Warm", "Boiling", "Sun"], answer: "Cold" },
@@ -197,16 +246,11 @@
     ];
 
     // ==========================================
-    // BOSS DÁN ĐOẠN FIREBASE CONFIG VÀO ĐÂY
+    // BOSS DÁN ĐOẠN FIREBASE CONFIG VÀO ĐÂY (BẮT BUỘC)
     // ==========================================
     const firebaseConfig = {
-  apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
-  authDomain: "roundup-ai-academy.firebaseapp.com",
-  projectId: "roundup-ai-academy",
-  storageBucket: "roundup-ai-academy.firebasestorage.app",
-  messagingSenderId: "723976989630",
-  appId: "1:723976989630:web:45f3de91269e70f604e7ef"
-};
+      // DÁN FIREBASE CỦA BOSS VÀO ĐÂY
+    };
 
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
@@ -227,7 +271,6 @@
     auth.onAuthStateChanged((user) => {
       if (user) {
         currentUser = user;
-        document.getElementById('mainBody').classList.remove('hidden');
         db.ref('users/' + user.uid).once('value').then((snapshot) => {
           const data = snapshot.val();
           if (data) {
@@ -235,7 +278,10 @@
             document.getElementById('displayCoins').innerText = userCoins;
           }
         });
-      } else { window.location.href = "login.html"; }
+      } else { 
+          // FIX LỖI ĐIỀU HƯỚNG TRẮNG MÀN HÌNH
+          window.location.href = "index.html"; 
+      }
     });
 
     function startBattleEngine() {
@@ -294,7 +340,6 @@
 
       shuffledOptions.forEach(opt => {
         const btn = document.createElement('button');
-        // ÉP NHỎ KÍCH THƯỚC NÚT ĐỂ VỪA MÀN HÌNH (py-3 sm:py-4)
         btn.className = "w-full py-3 sm:py-4 px-4 bg-slate-700 hover:bg-slate-600 rounded-xl border-b-[6px] border-slate-900 text-lg sm:text-xl font-black text-white active:border-b-0 active:translate-y-1.5 transition-all outline-none";
         btn.innerText = opt;
         btn.onclick = () => {
