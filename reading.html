@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Reading AI - Round-Up</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    body { font-family: 'Nunito', sans-serif; background: #f8fafc; overflow-x: hidden; }
+    .custom-scroll::-webkit-scrollbar { width: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+    
+    /* Hiệu ứng sóng âm khi thu âm */
+    .recording-wave { animation: pulseRing 1.5s infinite; }
+    @keyframes pulseRing {
+      0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7); }
+      70% { box-shadow: 0 0 0 20px rgba(139, 92, 246, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+    }
+    
+    /* Hiệu ứng từ bị phát âm sai */
+    .word-wrong { color: #f43f5e; text-decoration: underline; text-decoration-color: #fda4af; cursor: pointer; transition: all 0.2s; }
+    .word-wrong:hover { color: #be123c; background-color: #fff1f2; border-radius: 4px; }
+    .word-correct { color: #10b981; }
+  </style>
+</head>
+<body class="h-screen w-full flex flex-col bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] relative" id="mainBody">
+
+  <!-- TOPBAR -->
+  <header class="bg-white/90 backdrop-blur-md border-b-2 border-violet-100 p-3 sm:p-4 flex justify-between items-center shadow-sm z-50 shrink-0">
+    <div class="flex items-center space-x-3">
+      <button onclick="window.location.href='classroom.html'" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center justify-center text-slate-600 transition shadow-sm border border-slate-200">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+      <div class="flex flex-col">
+        <h1 class="font-black text-lg sm:text-xl text-violet-900 leading-tight">AI Reading Tutor</h1>
+        <p class="text-[10px] font-bold text-violet-500 uppercase tracking-widest mt-0.5">Smart Shadowing</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center bg-amber-50 px-3 sm:px-4 py-2 rounded-full border border-amber-200 shadow-sm">
+      <i class="fa-solid fa-coins text-amber-500 mr-1 sm:mr-2 text-lg"></i>
+      <span id="displayCoins" class="font-black text-amber-700 text-lg sm:text-xl">...</span>
+    </div>
+  </header>
+
+  <!-- LOADING OVERLAY -->
+  <div id="loadingOverlay" class="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-white mt-16 transition-opacity duration-500">
+      <i class="fa-solid fa-robot fa-bounce text-5xl text-violet-500 mb-4"></i>
+      <p class="font-black text-slate-500 animate-pulse uppercase tracking-widest text-sm mb-4">Waking up AI Tutor...</p>
+  </div>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="flex-1 w-full max-w-4xl mx-auto p-4 flex flex-col gap-6 overflow-y-auto custom-scroll relative opacity-0 transition-opacity duration-500 pb-10" id="mainContent">
+    
+    <!-- HEADER BÀI HỌC -->
+    <div class="text-center mt-4">
+        <span class="bg-violet-100 text-violet-600 font-black text-xs px-3 py-1 rounded-full uppercase tracking-widest border border-violet-200" id="levelTag">Level...</span>
+        <h2 class="font-black text-2xl sm:text-3xl text-slate-800 mt-3 mb-1">Shadowing Practice</h2>
+        <p class="text-sm font-bold text-slate-500">Listen carefully, then tap the mic to read aloud.</p>
+    </div>
+
+    <!-- KHU VỰC HIỂN THỊ VĂN BẢN -->
+    <div class="bg-white rounded-3xl border-4 border-slate-100 shadow-xl p-6 sm:p-10 relative">
+        <div class="absolute -top-5 left-1/2 transform -translate-x-1/2 bg-violet-600 text-white font-black px-6 py-2 rounded-full shadow-lg border-4 border-white flex items-center">
+            <i class="fa-solid fa-book-open-reader mr-2"></i> Reading Text
+        </div>
+        
+        <!-- NỘI DUNG BÀI ĐỌC -->
+        <div id="textContent" class="text-2xl sm:text-3xl font-bold text-slate-700 leading-relaxed text-center mt-4 min-h-[120px] flex items-center justify-center">
+            <!-- Render by JS -->
+        </div>
+
+        <!-- VÙNG PHẢN HỒI KẾT QUẢ CỦA AI -->
+        <div id="resultArea" class="hidden mt-8 pt-6 border-t-2 border-dashed border-slate-200">
+            <p class="text-[10px] font-black text-violet-500 uppercase tracking-widest mb-2 text-center">AI Analysis Result</p>
+            <div id="resultText" class="text-xl sm:text-2xl font-bold leading-relaxed text-center">
+                <!-- Render by JS -->
+            </div>
+            <div class="flex justify-center mt-4">
+                <span class="bg-rose-50 text-rose-500 font-bold text-xs px-3 py-1 rounded-lg border border-rose-200 flex items-center animate-pulse">
+                    <i class="fa-solid fa-hand-pointer mr-1"></i> Tap red words to hear AI pronounce them
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- KHU VỰC ĐIỀU KHIỂN -->
+    <div class="flex flex-col sm:flex-row justify-center items-center gap-4 mt-2">
+        
+        <!-- NÚT NGHE AI ĐỌC MẪU -->
+        <button id="btnListen" onclick="playAIAudio()" class="w-full sm:w-auto bg-slate-800 hover:bg-slate-700 text-white font-black text-lg px-8 py-4 rounded-2xl shadow-[0_6px_0_#334155] active:translate-y-[6px] active:shadow-[0_0px_0_#334155] transition-all flex items-center justify-center">
+            <i class="fa-solid fa-ear-listen text-2xl mr-3 text-sky-400"></i> Listen to AI
+        </button>
+
+        <!-- NÚT THU ÂM (MICRO) -->
+        <button id="btnRecord" onclick="toggleRecording()" class="w-full sm:w-auto bg-violet-600 hover:bg-violet-500 text-white font-black text-lg px-8 py-4 rounded-2xl shadow-[0_6px_0_#5b21b6] active:translate-y-[6px] active:shadow-[0_0px_0_#5b21b6] transition-all flex items-center justify-center relative">
+            <i id="micIcon" class="fa-solid fa-microphone text-2xl mr-3 text-violet-200"></i> 
+            <span id="recordText">Tap to Read</span>
+        </button>
+
+    </div>
+
+    <!-- THÔNG BÁO TỪ HỆ THỐNG -->
+    <p id="systemMsg" class="text-center font-bold text-slate-400 text-sm h-6 transition-all"></p>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="w-full text-center py-4 shrink-0 z-40 bg-transparent">
+      <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+          &copy; 2026 Son Nguyen. All rights reserved.
+      </p>
+  </footer>
+
+  <!-- KẾT QUẢ MODAL BẮN PHÁO HOA -->
+  <div id="successModal" class="fixed inset-0 bg-slate-900/90 z-[200] hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
+      <div class="bg-white rounded-3xl max-w-md w-full p-8 text-center shadow-2xl border-4 border-emerald-400 relative transform scale-95 transition-transform duration-300" id="successCard">
+          <div class="absolute -top-12 left-1/2 transform -translate-x-1/2 text-7xl drop-shadow-xl">🌟</div>
+          <h2 class="text-4xl font-black text-slate-800 mt-8 mb-2">Excellent!</h2>
+          <p class="text-slate-500 font-bold mb-6">Your pronunciation is amazing.</p>
+          
+          <div class="bg-amber-50 rounded-xl p-4 border border-amber-200 mb-6 flex items-center justify-center space-x-3">
+              <i class="fa-solid fa-coins text-4xl text-amber-500"></i>
+              <div class="text-left">
+                  <p class="text-xs font-bold text-amber-600 uppercase tracking-wider">Reading Bonus</p>
+                  <p class="text-2xl font-black text-amber-700">+<span id="earnedCoins">20</span> Coins</p>
+              </div>
+          </div>
+
+          <button onclick="closeSuccessModal()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-black py-4 rounded-xl shadow-[0_5px_0_#047857] active:shadow-[0_0px_0_#047857] active:translate-y-[5px] transition-all uppercase tracking-widest">
+              NEXT LESSON
+          </button>
+      </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // BOSS DÁN ĐOẠN FIREBASE CONFIG VÀO ĐÂY (BẮT BUỘC)
+    // ==========================================
+    const firebaseConfig = {
+      // DÁN FIREBASE CỦA BOSS VÀO ĐÂY
+    };
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    let currentUser = null;
+    let userCoins = 0;
+    let currentLevel = "starter";
+
+    // KHO DỮ LIỆU BÀI ĐỌC (Demo theo Level)
+    const readingDatabase = {
+        "starter": "Hello! My name is Alex. I like apples.",
+        "level_1": "This is my family. My mother is a doctor. My father is a teacher.",
+        "level_2": "I live in a big house. It has three bedrooms and a beautiful garden.",
+        "level_3": "Yesterday, I went to the park with my friends. We played football and had a picnic.",
+        "level_4": "The environment is very important. We must recycle plastic to save the Earth.",
+        "level_5": "Artificial intelligence is changing the way we learn and communicate globally.",
+        "level_6": "Despite the challenges posed by climate change, renewable energy offers a sustainable solution for future generations."
+    };
+
+    let targetText = "";
+
+    // 1. KHỞI TẠO HỆ THỐNG
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        currentUser = user;
+        db.ref('users/' + user.uid).once('value').then((snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            userCoins = data.coins || 0;
+            currentLevel = data.current_level || 'starter';
+            
+            document.getElementById('displayCoins').innerText = userCoins;
+            document.getElementById('levelTag').innerText = currentLevel.replace('_', ' ');
+            
+            // Nạp bài đọc theo Level
+            targetText = readingDatabase[currentLevel] || readingDatabase["starter"];
+            document.getElementById('textContent').innerText = targetText;
+            
+            // Ẩn màn hình Loading
+            document.getElementById('loadingOverlay').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('mainContent').style.opacity = '1';
+            }, 500);
+          }
+        });
+      } else { 
+          window.location.href = "index.html"; 
+      }
+    });
+
+    // 2. HỆ THỐNG ĐỌC MẪU BẰNG AI (SPEECH SYNTHESIS)
+    function playAIAudio() {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel(); // Ngắt giọng cũ
+            const utterance = new SpeechSynthesisUtterance(targetText);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.85; // Đọc chậm rãi rõ chữ để học viên dễ nghe
+            utterance.pitch = 1;
+            
+            // Giao diện khi AI đang đọc
+            document.getElementById('btnListen').classList.replace('bg-slate-800', 'bg-sky-600');
+            document.getElementById('systemMsg').innerText = "AI is reading... Please listen.";
+            
+            utterance.onend = function() {
+                document.getElementById('btnListen').classList.replace('bg-sky-600', 'bg-slate-800');
+                document.getElementById('systemMsg').innerText = "Now it's your turn!";
+            };
+            
+            window.speechSynthesis.speak(utterance);
+        } else {
+            alert("Your browser does not support Text-to-Speech.");
+        }
+    }
+
+    // TÍNH NĂNG CHẠM TỪ NÀO ĐỌC TỪ ĐÓ (DÀNH CHO TỪ SAI)
+    function pronounceWord(word) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(word);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.7; // Đọc cực chậm từ bị sai
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+
+    // 3. HỆ THỐNG GHI ÂM & NHẬN DIỆN GIỌNG NÓI (SPEECH RECOGNITION)
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+    let isRecording = false;
+
+    if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
+
+        recognition.onstart = function() {
+            isRecording = true;
+            document.getElementById('btnRecord').classList.add('recording-wave');
+            document.getElementById('micIcon').classList.replace('fa-microphone', 'fa-stop');
+            document.getElementById('micIcon').classList.replace('text-violet-200', 'text-rose-200');
+            document.getElementById('recordText').innerText = "Recording... Tap to Stop";
+            document.getElementById('systemMsg').innerText = "Listening to your voice...";
+            document.getElementById('systemMsg').classList.replace('text-slate-400', 'text-violet-500');
+        };
+
+        recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript;
+            evaluateReading(transcript);
+        };
+
+        recognition.onerror = function(event) {
+            console.error(event.error);
+            resetRecordBtn();
+            document.getElementById('systemMsg').innerText = "Error: Couldn't hear you clearly. Try again.";
+            document.getElementById('systemMsg').classList.replace('text-violet-500', 'text-rose-500');
+        };
+
+        recognition.onend = function() {
+            resetRecordBtn();
+        };
+    } else {
+        alert("Your browser does not support Voice Recognition. Please use Chrome.");
+    }
+
+    function toggleRecording() {
+        if (!SpeechRecognition) return;
+        
+        if (isRecording) {
+            recognition.stop();
+        } else {
+            // Tắt AI đang đọc nếu học viên bấm thu âm
+            if('speechSynthesis' in window) window.speechSynthesis.cancel();
+            document.getElementById('resultArea').classList.add('hidden');
+            recognition.start();
+        }
+    }
+
+    function resetRecordBtn() {
+        isRecording = false;
+        document.getElementById('btnRecord').classList.remove('recording-wave');
+        document.getElementById('micIcon').classList.replace('fa-stop', 'fa-microphone');
+        document.getElementById('micIcon').classList.replace('text-rose-200', 'text-violet-200');
+        document.getElementById('recordText').innerText = "Tap to Read";
+        document.getElementById('systemMsg').classList.replace('text-violet-500', 'text-slate-400');
+        document.getElementById('systemMsg').classList.replace('text-rose-500', 'text-slate-400');
+        document.getElementById('systemMsg').innerText = "Processing analysis...";
+    }
+
+    // 4. HỆ THỐNG ĐÁNH GIÁ (SMART SHADOWING ALGORITHM)
+    function evaluateReading(userTranscript) {
+        // Tách từ, bỏ dấu câu để so sánh
+        const cleanTarget = targetText.toLowerCase().replace(/[.,!?]/g, '');
+        const targetWords = cleanTarget.split(/\s+/);
+        
+        const cleanSpoken = userTranscript.toLowerCase().replace(/[.,!?]/g, '');
+        const spokenWords = cleanSpoken.split(/\s+/);
+        
+        let correctCount = 0;
+        let resultHtml = "";
+        
+        // Mảng chứa các từ gốc để hiển thị (giữ nguyên chữ hoa và dấu câu)
+        const displayWords = targetText.split(/\s+/);
+
+        displayWords.forEach((rawWord, index) => {
+            // Làm sạch từ hiện tại để đối chiếu
+            let cleanWord = rawWord.toLowerCase().replace(/[.,!?]/g, '');
+            
+            // Nếu từ học viên đọc có chứa từ gốc
+            if (spokenWords.includes(cleanWord)) {
+                correctCount++;
+                resultHtml += `<span class="word-correct mx-1">${rawWord}</span>`;
+                
+                // Thuật toán đơn giản: Xóa từ đã khớp để tránh học viên đọc 1 từ tính điểm nhiều lần
+                let spokenIndex = spokenWords.indexOf(cleanWord);
+                if(spokenIndex > -1) spokenWords.splice(spokenIndex, 1);
+            } else {
+                // TỪ ĐỌC SAI: Bôi đỏ và gán sự kiện onclick để AI đọc mẫu
+                resultHtml += `<span class="word-wrong mx-1 font-black" onclick="pronounceWord('${cleanWord}')" title="Tap to listen">${rawWord}</span>`;
+            }
+        });
+
+        // Hiển thị kết quả
+        document.getElementById('resultText').innerHTML = resultHtml;
+        document.getElementById('resultArea').classList.remove('hidden');
+        document.getElementById('systemMsg').innerText = "Analysis Complete!";
+
+        // Tính % điểm
+        const accuracy = (correctCount / targetWords.length) * 100;
+        
+        if (accuracy >= 80) {
+            setTimeout(() => { triggerSuccess(); }, 1000);
+        }
+    }
+
+    // 5. THƯỞNG COIN KHI ĐỌC TỐT
+    function triggerSuccess() {
+        document.getElementById('successModal').classList.remove('hidden');
+        document.getElementById('successModal').classList.add('flex');
+        
+        setTimeout(() => {
+            document.getElementById('successCard').classList.remove('scale-95');
+            document.getElementById('successCard').classList.add('scale-100');
+            confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+            document.getElementById('sfxComplete').play();
+        }, 100);
+
+        // Cộng xu
+        userCoins += 20;
+        db.ref('users/' + currentUser.uid).update({ coins: userCoins }).then(() => {
+            document.getElementById('displayCoins').innerText = userCoins;
+        });
+    }
+
+    function closeSuccessModal() {
+        document.getElementById('successModal').classList.add('hidden');
+        document.getElementById('successModal').classList.remove('flex');
+        // Tự động chuyển câu hoặc quay về Lớp học (Ở đây demo quay về Lớp)
+        window.location.href = "classroom.html";
+    }
+  </script>
+  
+  <!-- Âm thanh hoàn thành -->
+  <audio id="sfxComplete" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
+</body>
+</html>
