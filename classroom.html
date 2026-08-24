@@ -24,7 +24,8 @@
     audio::-webkit-media-controls-play-button, audio::-webkit-media-controls-mute-button { background-color: #e2e8f0; border-radius: 50%; }
   </style>
 </head>
-<body class="h-screen w-full flex flex-col hidden bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')]" id="mainBody">
+<!-- FIX R&D: Bỏ class hidden để chống trắng trang -->
+<body class="h-screen w-full flex flex-col bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')] relative" id="mainBody">
 
   <!-- TOPBAR -->
   <header class="bg-white border-b-2 border-indigo-100 p-3 sm:p-4 flex justify-between items-center shadow-sm z-50 shrink-0">
@@ -49,7 +50,7 @@
     </div>
   </header>
 
-  <!-- LOADING OVERLAY -->
+  <!-- LOADING OVERLAY BẢO ĐẢM HIỂN THỊ -->
   <div id="loadingOverlay" class="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-white mt-16">
       <i class="fa-solid fa-cloud-arrow-down fa-bounce text-5xl text-indigo-500 mb-4"></i>
       <p class="font-black text-slate-500 animate-pulse uppercase tracking-widest text-sm" id="loadingText">Syncing Curriculum Data...</p>
@@ -87,7 +88,7 @@
                     </select>
                 </div>
                 
-                <!-- Chọn Track trong Unit đó -->
+                <!-- Chọn Track -->
                 <div class="flex flex-col flex-1 sm:w-36">
                     <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 ml-1">Select Track</label>
                     <select id="trackSelect" onchange="changeTrack(this.value)" class="bg-slate-100 border border-slate-300 text-slate-700 font-bold px-2 py-2 rounded-xl focus:outline-none focus:border-indigo-500 w-full shadow-inner cursor-pointer text-sm">
@@ -115,38 +116,29 @@
         </div>
     </div>
   </main>
-<!-- BOSS DÁN ĐOẠN BẢN QUYỀN VÀO ĐÚNG KHOẢNG TRỐNG NÀY -->
-  <footer class="w-full text-center py-4 shrink-0 z-40 bg-transparent">
+
+  <!-- BẢN QUYỀN FOOTER CHÍNH THỨC -->
+  <footer class="w-full text-center py-2 shrink-0 z-40 bg-transparent border-t border-slate-200 mt-2">
       <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
           &copy; 2026 Son Nguyen. All rights reserved.
       </p>
   </footer>
 
-  <!-- MỎ NEO ĐỊNH VỊ: Ngay phía trên thẻ script này -->
   <script>
     // ==========================================
-    // BOSS DÁN ĐOẠN FIREBASE CONFIG VÀO ĐÂY
+    // BOSS DÁN ĐOẠN FIREBASE CONFIG VÀO ĐÂY BẮT BUỘC
     // ==========================================
-   const firebaseConfig = {
-  apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
-  authDomain: "roundup-ai-academy.firebaseapp.com",
-  projectId: "roundup-ai-academy",
-  storageBucket: "roundup-ai-academy.firebasestorage.app",
-  messagingSenderId: "723976989630",
-  appId: "1:723976989630:web:45f3de91269e70f604e7ef"
-};
-  <script>
-    // ==========================================
-    // 1. CẤU HÌNH GITHUB BASE URL CỦA BOSS
-    // ==========================================
+    const firebaseConfig = {
+      // DÁN FIREBASE Ở ĐÂY
+    };
+
+    // 1. CẤU HÌNH GITHUB BASE URL
     const GITHUB_BASE_URL = "https://shopkazoku.github.io/roundup-audio";
 
-    // HỆ THỐNG PHÂN CẤP LEVEL (R&D Logic Mới)
+    // HỆ THỐNG PHÂN CẤP LEVEL
     const LEVEL_HIERARCHY = ['starter', 'level_1', 'level_2', 'level_3', 'level_4', 'level_5', 'level_6'];
 
-    // ==========================================
     // 2. MAPPING UNIT TỚI TRACK
-    // ==========================================
     const unitMapping = [
         { unit: 1, name: "Unit 1", startTrack: 1, endTrack: 6 },
         { unit: 2, name: "Unit 2", startTrack: 7, endTrack: 11 },
@@ -165,91 +157,70 @@
         { unit: 15, name: "Unit 15", startTrack: 82, endTrack: 88 }
     ];
 
-    // ==========================================
-    // 3. FIREBASE CONFIG
-    // ==========================================
-    const firebaseConfig = {
-  apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
-  authDomain: "roundup-ai-academy.firebaseapp.com",
-  projectId: "roundup-ai-academy",
-  storageBucket: "roundup-ai-academy.firebasestorage.app",
-  messagingSenderId: "723976989630",
-  appId: "1:723976989630:web:45f3de91269e70f604e7ef"
-};
-
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
 
     let currentUser = null;
     let userCoins = 0;
-    let userMaxLevel = "starter"; // Level cao nhất học viên đạt được
-    let currentlyViewingLevel = "starter"; // Level đang mở xem hiện tại
+    let userMaxLevel = "starter"; 
+    let currentlyViewingLevel = "starter"; 
 
     auth.onAuthStateChanged((user) => {
       if (user) {
         currentUser = user;
-        document.getElementById('mainBody').classList.remove('hidden');
         
         db.ref('users/' + user.uid).once('value').then((snapshot) => {
           const data = snapshot.val();
           if (data) {
             userCoins = data.coins || 0;
             userMaxLevel = data.current_level || 'starter'; 
-            currentlyViewingLevel = userMaxLevel; // Mặc định vào lớp là xem sách ở Level cao nhất
+            currentlyViewingLevel = userMaxLevel; 
             
             document.getElementById('displayCoins').innerText = userCoins;
             
-            buildCourseDropdown(); // Tạo menu chọn khóa học
+            buildCourseDropdown(); 
             buildClassroom(currentlyViewingLevel); 
           }
         });
-      } else { window.location.href = "login.html"; }
+      } else { 
+          // FIX R&D: Điều hướng chuẩn chống 404
+          window.location.href = "index.html"; 
+      }
     });
 
-    // 1. TẠO MENU CHỌN KHÓA HỌC DỰA TRÊN LEVEL CAO NHẤT
     function buildCourseDropdown() {
         const select = document.getElementById('courseSelect');
         select.innerHTML = '';
         
-        // Tìm vị trí Index của Level người dùng. VD: level_3 là index 3.
         let maxIndex = LEVEL_HIERARCHY.indexOf(userMaxLevel);
-        if (maxIndex === -1) maxIndex = 0; // Đề phòng lỗi
+        if (maxIndex === -1) maxIndex = 0; 
 
-        // Lặp từ 0 đến maxIndex để tạo option
         for (let i = 0; i <= maxIndex; i++) {
             let lvl = LEVEL_HIERARCHY[i];
             let opt = document.createElement('option');
             opt.value = lvl;
             opt.innerText = lvl.replace('_', ' ').toUpperCase() + ' CLASS';
             
-            // Chọn mặc định là Level cao nhất
             if (lvl === currentlyViewingLevel) opt.selected = true;
-            
             select.appendChild(opt);
         }
     }
 
-    // 2. CHUYỂN LEVEL KHI HỌC VIÊN CHỌN
     function switchLevel(newLevel) {
         currentlyViewingLevel = newLevel;
         document.getElementById('loadingOverlay').style.display = 'flex';
         buildClassroom(currentlyViewingLevel);
     }
 
-    // 3. KHỞI TẠO LỚP HỌC (PDF + UNIT)
-    // 3. KHỞI TẠO LỚP HỌC (PDF + UNIT) - ĐÃ TÍCH HỢP ĐỌC THAM SỐ TỪ DASHBOARD
     function buildClassroom(levelToLoad) {
-        // Tải Sách PDF tĩnh từ Github theo Level đang xem
         const pdfUrl = `${GITHUB_BASE_URL}/${levelToLoad}/student_book.pdf`;
         document.getElementById('pdfViewer').data = pdfUrl;
         document.getElementById('pdfFallback').href = pdfUrl;
 
-        // BẮT THAM SỐ UNIT TỪ URL DASHBOARD TRUYỀN SANG (Nếu có)
         const urlParams = new URLSearchParams(window.location.search);
         const targetUnit = urlParams.get('unit');
 
-        // Sinh ra Danh sách các Unit
         const unitSelect = document.getElementById('unitSelect');
         unitSelect.innerHTML = '';
         unitMapping.forEach((item, index) => {
@@ -257,20 +228,16 @@
             opt.value = index; 
             opt.innerText = item.name;
             
-            // Logic tự động: Nếu URL có truyền unit=3 (thì index là 2), tự động Focus vào Unit đó
             if (targetUnit && index === (parseInt(targetUnit) - 1)) {
                 opt.selected = true;
             }
-            
             unitSelect.appendChild(opt);
         });
 
-        // Tự động load Track List cho Unit vừa được chọn
         updateTrackList();
-
         setTimeout(() => { document.getElementById('loadingOverlay').style.display = 'none'; }, 800);
     }
-    // 4. CẬP NHẬT DANH SÁCH TRACK KHI CHỌN UNIT
+    
     function updateTrackList() {
         const unitIndex = document.getElementById('unitSelect').value;
         const selectedUnit = unitMapping[unitIndex];
@@ -289,7 +256,6 @@
         changeTrack(trackSelect.value);
     }
 
-    // 5. ĐỔI NHẠC
     function changeTrack(trackUrl) {
         const audioEl = document.getElementById('audioPlayer');
         document.getElementById('audioSource').src = trackUrl;
