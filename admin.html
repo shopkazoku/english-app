@@ -202,8 +202,13 @@
     // BOSS DÁN ĐOẠN FIREBASE CONFIG VÀO ĐÂY BẮT BUỘC
     // ==========================================
     const firebaseConfig = {
-      // DÁN FIREBASE CỦA BOSS VÀO ĐÂY
-    };
+  apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
+  authDomain: "roundup-ai-academy.firebaseapp.com",
+  projectId: "roundup-ai-academy",
+  storageBucket: "roundup-ai-academy.firebasestorage.app",
+  messagingSenderId: "723976989630",
+  appId: "1:723976989630:web:45f3de91269e70f604e7ef"
+};
 
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
