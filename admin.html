@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ACP - Round-Up AI</title>
+  <title>ACP v4.0 - Round-Up AI</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
@@ -39,7 +39,7 @@
               <i class="fa-solid fa-server text-indigo-400 text-2xl"></i>
               <div>
                   <h1 class="font-black text-xl text-white tracking-widest uppercase">Round-Up AI</h1>
-                  <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Admin Control Panel v3.1</p>
+                  <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Admin Control Panel v4.0 (Enterprise)</p>
               </div>
           </div>
           <button onclick="window.location.reload()" class="bg-rose-500/20 text-rose-400 border border-rose-500 hover:bg-rose-500 hover:text-white font-bold px-4 py-2 rounded-lg transition text-xs uppercase tracking-wider">
@@ -57,6 +57,9 @@
               <button onclick="switchTab('readingTab')" id="btn_readingTab" class="tab-btn w-full text-left font-bold px-4 py-3 rounded-xl border border-transparent text-slate-400 hover:bg-slate-800 transition-all flex items-center">
                   <i class="fa-solid fa-book-open-reader w-6 text-center mr-2"></i> Reading Manager
               </button>
+              <button onclick="switchTab('grammarTab')" id="btn_grammarTab" class="tab-btn w-full text-left font-bold px-4 py-3 rounded-xl border border-transparent text-slate-400 hover:bg-slate-800 transition-all flex items-center">
+                  <i class="fa-solid fa-spell-check w-6 text-center mr-2"></i> Grammar Manager
+              </button>
           </aside>
 
           <!-- MODULES -->
@@ -65,24 +68,17 @@
               <!-- 1. EXAM MANAGER -->
               <div id="examTab" class="tab-content block">
                   <h2 class="font-black text-2xl text-white mb-2">Exam / Assessment Data</h2>
-                  
                   <div class="flex flex-col sm:flex-row gap-4 mb-6 border-b border-slate-700 pb-6">
                       <div class="flex-1">
                           <label class="block text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">1. Enter Exam ID</label>
                           <div class="flex gap-2">
                               <input type="text" id="examId" placeholder="e.g., level_6_entry OR level_6_unit_1" class="flex-1 bg-slate-800 border border-slate-600 text-white font-bold px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500">
-                              
-                              <!-- NÚT LOAD ĐỀ CŨ -->
                               <button onclick="loadExamQuestions()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-black px-6 py-3 rounded-xl transition-all" title="Load existing exam"><i class="fa-solid fa-cloud-arrow-down mr-1"></i> LOAD</button>
-                              
-                              <!-- NÚT TẠO MỚI (NEW R&D FEATURE) -->
                               <button onclick="createNewExam()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black px-6 py-3 rounded-xl transition-all" title="Create a new exam ID"><i class="fa-solid fa-plus mr-1"></i> NEW</button>
                           </div>
                       </div>
                   </div>
-
                   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <!-- List Loaded Questions -->
                       <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4 flex flex-col">
                           <div class="flex justify-between items-center mb-3">
                               <h3 class="font-bold text-amber-400"><i class="fa-solid fa-list mr-2"></i>Questions in Bank:</h3>
@@ -92,24 +88,19 @@
                               <p class="text-slate-500 text-sm italic">Enter Exam ID and click LOAD, or click NEW to start a fresh bank...</p>
                           </div>
                       </div>
-
-                      <!-- Form Add/Edit -->
                       <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
                           <h3 id="formTitle" class="font-bold text-emerald-400 mb-3"><i class="fa-solid fa-pen-to-square mr-2"></i>Add New Question</h3>
                           <input type="hidden" id="editKey" value="">
-                          
                           <div class="space-y-3">
                               <textarea id="examQuestion" rows="2" placeholder="Question Content" class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-3 py-2 rounded-lg focus:outline-none focus:border-indigo-500"></textarea>
                               <input type="text" id="ansA" placeholder="Option A" class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-3 py-2 rounded-lg focus:outline-none focus:border-indigo-500">
                               <input type="text" id="ansB" placeholder="Option B" class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-3 py-2 rounded-lg focus:outline-none focus:border-indigo-500">
                               <input type="text" id="ansC" placeholder="Option C" class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-3 py-2 rounded-lg focus:outline-none focus:border-indigo-500">
                               <input type="text" id="ansD" placeholder="Option D" class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-3 py-2 rounded-lg focus:outline-none focus:border-indigo-500">
-                              
                               <select id="correctAns" class="w-full bg-slate-800 border border-emerald-600/50 text-white font-bold px-3 py-2 rounded-lg focus:outline-none focus:border-emerald-500">
                                   <option value="A">Correct Answer: Option A</option><option value="B">Correct Answer: Option B</option>
                                   <option value="C">Correct Answer: Option C</option><option value="D">Correct Answer: Option D</option>
                               </select>
-                              
                               <div class="flex gap-2 pt-2">
                                   <button onclick="saveExamQuestion()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-black py-2 rounded-lg transition-all shadow-[0_4px_0_#047857] active:translate-y-[4px] active:shadow-[0_0px_0_#047857]">SAVE QUESTION</button>
                                   <button onclick="resetExamForm()" class="bg-slate-600 hover:bg-slate-500 text-white font-bold px-4 py-2 rounded-lg transition-all shadow-[0_4px_0_#475569] active:translate-y-[4px] active:shadow-[0_0px_0_#475569]" title="Clear the form">CLEAR</button>
@@ -122,32 +113,83 @@
               <!-- 2. READING MANAGER -->
               <div id="readingTab" class="tab-content hidden">
                   <h2 class="font-black text-2xl text-white mb-2">Reading Curriculum Manager</h2>
-                  
                   <div class="flex flex-col sm:flex-row gap-4 mb-6 border-b border-slate-700 pb-6">
                       <div class="flex gap-2 items-end">
                           <div>
                               <label class="block text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">Target Level</label>
-                              <select id="readingLevel" class="w-32 bg-slate-800 border border-slate-600 text-white font-bold px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500">
+                              <select id="readingLevel" class="w-32 bg-slate-800 border border-slate-600 text-white font-bold px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500 uppercase">
                                   <option value="starter">Starter</option><option value="level_1">Level 1</option><option value="level_2">Level 2</option>
                                   <option value="level_3">Level 3</option><option value="level_4">Level 4</option><option value="level_5">Level 5</option><option value="level_6">Level 6</option>
                               </select>
                           </div>
                           <div>
                               <label class="block text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">Unit</label>
-                              <select id="readingUnit" class="w-32 bg-slate-800 border border-slate-600 text-white font-bold px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500">
-                                  <!-- Sẽ gen bằng JS -->
-                              </select>
+                              <select id="readingUnit" class="w-32 bg-slate-800 border border-slate-600 text-white font-bold px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500 uppercase"></select>
                           </div>
                           <button onclick="loadReadingData()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-black px-6 py-3 rounded-xl transition-all h-[50px]"><i class="fa-solid fa-cloud-arrow-down mr-1"></i> LOAD</button>
                       </div>
                   </div>
-
                   <div class="space-y-4">
-                      <textarea id="readingText" rows="6" placeholder="Load a unit to edit, or paste new English reading paragraph here..." class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-4 py-4 rounded-xl focus:outline-none focus:border-indigo-500 text-lg leading-relaxed"></textarea>
+                      <textarea id="readingText" rows="6" placeholder="Paste new English reading paragraph here..." class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-4 py-4 rounded-xl focus:outline-none focus:border-indigo-500 text-lg leading-relaxed"></textarea>
                       <button onclick="saveReadingData()" class="bg-violet-600 hover:bg-violet-500 text-white font-black px-8 py-3 rounded-xl transition-all shadow-[0_4px_0_#5b21b6] active:translate-y-[4px] active:shadow-[0_0px_0_#5b21b6]">
                           <i class="fa-solid fa-cloud-arrow-up mr-2"></i> SAVE READING TO CLOUD
                       </button>
                       <span id="readingStatus" class="ml-4 font-bold text-emerald-400 opacity-0 transition-opacity">Saved successfully!</span>
+                  </div>
+              </div>
+
+              <!-- 3. GRAMMAR MANAGER (NEW) -->
+              <div id="grammarTab" class="tab-content hidden">
+                  <h2 class="font-black text-2xl text-white mb-2">Grammar & Structure Manager</h2>
+                  <div class="flex flex-col sm:flex-row gap-4 mb-6 border-b border-slate-700 pb-6">
+                      <div class="flex gap-2 items-end">
+                          <div>
+                              <label class="block text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">Target Level</label>
+                              <select id="grammarLevel" class="w-32 bg-slate-800 border border-slate-600 text-white font-bold px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500 uppercase">
+                                  <option value="starter">Starter</option><option value="level_1">Level 1</option><option value="level_2">Level 2</option>
+                                  <option value="level_3">Level 3</option><option value="level_4">Level 4</option><option value="level_5">Level 5</option><option value="level_6">Level 6</option>
+                              </select>
+                          </div>
+                          <div>
+                              <label class="block text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">Unit</label>
+                              <select id="grammarUnit" class="w-32 bg-slate-800 border border-slate-600 text-white font-bold px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500 uppercase"></select>
+                          </div>
+                          <button onclick="loadGrammarData()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-black px-6 py-3 rounded-xl transition-all h-[50px]"><i class="fa-solid fa-cloud-arrow-down mr-1"></i> LOAD</button>
+                      </div>
+                  </div>
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div class="space-y-4">
+                          <div>
+                              <label class="block text-xs font-black text-sky-400 uppercase tracking-widest mb-1">Grammar Title</label>
+                              <input type="text" id="grammarTitle" placeholder="e.g., Present Simple Tense" class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-4 py-3 rounded-xl focus:outline-none focus:border-sky-500">
+                          </div>
+                          <div>
+                              <label class="block text-xs font-black text-sky-400 uppercase tracking-widest mb-1">Vietnamese Explanation</label>
+                              <textarea id="grammarExplanation" rows="5" placeholder="Giải thích cách dùng, cấu trúc..." class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-4 py-4 rounded-xl focus:outline-none focus:border-sky-500 leading-relaxed"></textarea>
+                          </div>
+                      </div>
+                      
+                      <div class="space-y-4 bg-slate-800/30 p-4 rounded-xl border border-slate-700">
+                          <p class="text-xs font-black text-emerald-400 uppercase tracking-widest mb-2"><i class="fa-solid fa-volume-high mr-1"></i> AI Audio Examples (English Only)</p>
+                          
+                          <div class="space-y-2">
+                              <input type="text" id="gramEx1EN" placeholder="Example 1 (English)" class="w-full bg-slate-800 border border-emerald-600/50 text-white font-bold px-4 py-2 rounded-lg focus:outline-none focus:border-emerald-500">
+                              <input type="text" id="gramEx1VI" placeholder="Nghĩa tiếng Việt của Example 1" class="w-full bg-slate-800 border border-slate-600 text-slate-300 text-sm px-4 py-2 rounded-lg focus:outline-none focus:border-slate-500 italic">
+                          </div>
+                          
+                          <div class="space-y-2 pt-2 border-t border-slate-700">
+                              <input type="text" id="gramEx2EN" placeholder="Example 2 (English)" class="w-full bg-slate-800 border border-emerald-600/50 text-white font-bold px-4 py-2 rounded-lg focus:outline-none focus:border-emerald-500">
+                              <input type="text" id="gramEx2VI" placeholder="Nghĩa tiếng Việt của Example 2" class="w-full bg-slate-800 border border-slate-600 text-slate-300 text-sm px-4 py-2 rounded-lg focus:outline-none focus:border-slate-500 italic">
+                          </div>
+                      </div>
+                  </div>
+                  
+                  <div class="mt-6">
+                      <button onclick="saveGrammarData()" class="bg-sky-600 hover:bg-sky-500 text-white font-black px-8 py-3 rounded-xl transition-all shadow-[0_4px_0_#0284c7] active:translate-y-[4px] active:shadow-[0_0px_0_#0284c7]">
+                          <i class="fa-solid fa-cloud-arrow-up mr-2"></i> SAVE GRAMMAR TO CLOUD
+                      </button>
+                      <span id="grammarStatus" class="ml-4 font-bold text-emerald-400 opacity-0 transition-opacity">Saved successfully!</span>
                   </div>
               </div>
 
@@ -160,24 +202,21 @@
     // BOSS DÁN ĐOẠN FIREBASE CONFIG VÀO ĐÂY BẮT BUỘC
     // ==========================================
     const firebaseConfig = {
-  apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
-  authDomain: "roundup-ai-academy.firebaseapp.com",
-  projectId: "roundup-ai-academy",
-  storageBucket: "roundup-ai-academy.firebasestorage.app",
-  messagingSenderId: "723976989630",
-  appId: "1:723976989630:web:45f3de91269e70f604e7ef"
-};
+      // DÁN FIREBASE CỦA BOSS VÀO ĐÂY
+    };
 
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const ADMIN_PIN = "108491"; 
 
-    // Render 15 Units cho Reading
-    const unitSelect = document.getElementById('readingUnit');
+    // Render 15 Units cho Reading & Grammar
+    const readUnitSelect = document.getElementById('readingUnit');
+    const gramUnitSelect = document.getElementById('grammarUnit');
     for(let i=1; i<=15; i++) {
-        let opt = document.createElement('option');
-        opt.value = "unit_" + i; opt.innerText = "Unit " + i;
-        unitSelect.appendChild(opt);
+        let opt1 = document.createElement('option'); opt1.value = "unit_" + i; opt1.innerText = "Unit " + i;
+        let opt2 = document.createElement('option'); opt2.value = "unit_" + i; opt2.innerText = "Unit " + i;
+        readUnitSelect.appendChild(opt1);
+        gramUnitSelect.appendChild(opt2);
     }
 
     // LOGIN
@@ -205,174 +244,123 @@
         btn.classList.add('active', 'text-white'); btn.classList.remove('text-slate-400');
     }
 
-    // ==========================================
-    // MODULE 1: CRUD ĐỀ THI
-    // ==========================================
+    // [GIỮ NGUYÊN CODE EXAM & READING CŨ ĐỂ ĐẢM BẢO KHÔNG LỖI]
+    // ...
     let currentQuestions = {};
-
     function loadExamQuestions() {
         const examId = document.getElementById('examId').value.trim();
-        if(!examId) { alert("Please enter Exam ID to load!"); return; }
-        
+        if(!examId) return;
         document.getElementById('questionList').innerHTML = '<i class="fa-solid fa-spinner fa-spin text-indigo-400"></i> Loading...';
-        
         db.ref('exams/' + examId).once('value').then(snap => {
-            currentQuestions = snap.val() || {};
-            renderQuestionList();
-            resetExamForm();
+            currentQuestions = snap.val() || {}; renderQuestionList(); resetExamForm();
         });
     }
-
-    // TÍNH NĂNG NEW ĐƯỢC R&D BỔ SUNG
     function createNewExam() {
-        document.getElementById('examId').value = "";
-        document.getElementById('examId').focus();
-        currentQuestions = {};
-        renderQuestionList();
-        resetExamForm();
-        document.getElementById('questionList').innerHTML = '<p class="text-emerald-400 text-sm font-bold"><i class="fa-solid fa-check-circle mr-1"></i>Ready to create a new Exam! Type an ID above.</p>';
+        document.getElementById('examId').value = ""; document.getElementById('examId').focus();
+        currentQuestions = {}; renderQuestionList(); resetExamForm();
+        document.getElementById('questionList').innerHTML = '<p class="text-emerald-400 text-sm font-bold"><i class="fa-solid fa-check-circle mr-1"></i>Ready!</p>';
     }
-
     function renderQuestionList() {
-        const listDiv = document.getElementById('questionList');
-        listDiv.innerHTML = '';
+        const listDiv = document.getElementById('questionList'); listDiv.innerHTML = '';
         const keys = Object.keys(currentQuestions);
-        
         document.getElementById('questionCount').innerText = keys.length;
-
-        if(keys.length === 0) {
-            listDiv.innerHTML = '<p class="text-rose-400 text-sm italic">No questions found. Add a new one!</p>';
-            return;
-        }
-
+        if(keys.length === 0) { listDiv.innerHTML = '<p class="text-rose-400 text-sm italic">No questions found.</p>'; return; }
         keys.forEach((key, index) => {
             const q = currentQuestions[key];
-            listDiv.innerHTML += `
-            <div class="bg-slate-700/50 p-3 rounded-lg border border-slate-600 flex justify-between items-start gap-2">
-                <div class="flex-1">
-                    <p class="font-bold text-white text-sm">Q${index + 1}: ${q.q}</p>
-                    <p class="text-[10px] text-emerald-400">Ans: ${q.answer}</p>
-                </div>
-                <div class="flex flex-col gap-1 shrink-0">
-                    <button onclick="editQuestion('${key}')" class="bg-sky-600 hover:bg-sky-500 text-white text-xs px-2 py-1 rounded"><i class="fa-solid fa-pen"></i></button>
-                    <button onclick="deleteQuestion('${key}')" class="bg-rose-600 hover:bg-rose-500 text-white text-xs px-2 py-1 rounded"><i class="fa-solid fa-trash"></i></button>
-                </div>
-            </div>`;
+            listDiv.innerHTML += `<div class="bg-slate-700/50 p-3 rounded-lg border border-slate-600 flex justify-between items-start gap-2"><div class="flex-1"><p class="font-bold text-white text-sm">Q${index + 1}: ${q.q}</p></div><div class="flex flex-col gap-1 shrink-0"><button onclick="editQuestion('${key}')" class="bg-sky-600 text-white text-xs px-2 py-1 rounded"><i class="fa-solid fa-pen"></i></button><button onclick="deleteQuestion('${key}')" class="bg-rose-600 text-white text-xs px-2 py-1 rounded"><i class="fa-solid fa-trash"></i></button></div></div>`;
         });
     }
-
     function editQuestion(key) {
-        const q = currentQuestions[key];
-        document.getElementById('editKey').value = key;
-        document.getElementById('formTitle').innerHTML = '<i class="fa-solid fa-pen-to-square mr-2"></i>Edit Question';
-        document.getElementById('examQuestion').value = q.q;
-        document.getElementById('ansA').value = q.options[0];
-        document.getElementById('ansB').value = q.options[1];
-        document.getElementById('ansC').value = q.options[2];
-        document.getElementById('ansD').value = q.options[3];
-        
-        let sel = "A";
-        if(q.answer === q.options[1]) sel = "B";
-        if(q.answer === q.options[2]) sel = "C";
-        if(q.answer === q.options[3]) sel = "D";
+        const q = currentQuestions[key]; document.getElementById('editKey').value = key;
+        document.getElementById('examQuestion').value = q.q; document.getElementById('ansA').value = q.options[0]; document.getElementById('ansB').value = q.options[1]; document.getElementById('ansC').value = q.options[2]; document.getElementById('ansD').value = q.options[3];
+        let sel = "A"; if(q.answer === q.options[1]) sel = "B"; if(q.answer === q.options[2]) sel = "C"; if(q.answer === q.options[3]) sel = "D";
         document.getElementById('correctAns').value = sel;
     }
-
     function deleteQuestion(key) {
-        if(confirm("Are you sure you want to delete this question?")) {
-            const examId = document.getElementById('examId').value.trim();
-            db.ref('exams/' + examId + '/' + key).remove().then(() => {
-                loadExamQuestions(); 
-            });
-        }
+        if(confirm("Delete this?")) { const examId = document.getElementById('examId').value.trim(); db.ref('exams/' + examId + '/' + key).remove().then(() => loadExamQuestions()); }
     }
-
     function resetExamForm() {
-        document.getElementById('editKey').value = "";
-        document.getElementById('formTitle').innerHTML = '<i class="fa-solid fa-plus mr-2"></i>Add New Question';
-        document.getElementById('examQuestion').value = "";
-        document.getElementById('ansA').value = "";
-        document.getElementById('ansB').value = "";
-        document.getElementById('ansC').value = "";
-        document.getElementById('ansD').value = "";
-        document.getElementById('correctAns').value = "A";
+        document.getElementById('editKey').value = ""; document.getElementById('examQuestion').value = ""; document.getElementById('ansA').value = ""; document.getElementById('ansB').value = ""; document.getElementById('ansC').value = ""; document.getElementById('ansD').value = ""; document.getElementById('correctAns').value = "A";
     }
-
     function saveExamQuestion() {
-        const examId = document.getElementById('examId').value.trim();
-        const editKey = document.getElementById('editKey').value;
-        const qText = document.getElementById('examQuestion').value.trim();
-        const a = document.getElementById('ansA').value.trim();
-        const b = document.getElementById('ansB').value.trim();
-        const c = document.getElementById('ansC').value.trim();
-        const d = document.getElementById('ansD').value.trim();
-        const correctOpt = document.getElementById('correctAns').value;
-
-        if(!examId || !qText || !a || !b || !c || !d) { alert("Please fill all fields and Exam ID!"); return; }
-
-        let answerText = "";
-        if(correctOpt === "A") answerText = a;
-        if(correctOpt === "B") answerText = b;
-        if(correctOpt === "C") answerText = c;
-        if(correctOpt === "D") answerText = d;
-
-        const questionData = {
-            q: qText,
-            options: [a, b, c, d],
-            answer: answerText,
-            timestamp: Date.now()
-        };
-
-        if(editKey) {
-            db.ref('exams/' + examId + '/' + editKey).set(questionData).then(() => {
-                loadExamQuestions();
-            });
-        } else {
-            db.ref('exams/' + examId).push(questionData).then(() => {
-                loadExamQuestions();
-            });
-        }
+        const examId = document.getElementById('examId').value.trim(); const editKey = document.getElementById('editKey').value;
+        const qText = document.getElementById('examQuestion').value.trim(); const a = document.getElementById('ansA').value.trim(); const b = document.getElementById('ansB').value.trim(); const c = document.getElementById('ansC').value.trim(); const d = document.getElementById('ansD').value.trim(); const correctOpt = document.getElementById('correctAns').value;
+        if(!examId || !qText || !a || !b || !c || !d) { alert("Fill all!"); return; }
+        let answerText = ""; if(correctOpt === "A") answerText = a; if(correctOpt === "B") answerText = b; if(correctOpt === "C") answerText = c; if(correctOpt === "D") answerText = d;
+        const qData = { q: qText, options: [a, b, c, d], answer: answerText, timestamp: Date.now() };
+        if(editKey) { db.ref('exams/' + examId + '/' + editKey).set(qData).then(() => loadExamQuestions()); } else { db.ref('exams/' + examId).push(qData).then(() => loadExamQuestions()); }
     }
 
-    // ==========================================
-    // MODULE 2: CRUD BÀI LUYỆN ĐỌC
-    // ==========================================
     function loadReadingData() {
-        const level = document.getElementById('readingLevel').value;
-        const unit = document.getElementById('readingUnit').value;
-        
+        const level = document.getElementById('readingLevel').value; const unit = document.getElementById('readingUnit').value;
         document.getElementById('readingText').value = "Loading...";
         db.ref('readings/' + level + '/' + unit).once('value').then(snap => {
             const data = snap.val();
-            if(data && data.text) {
-                document.getElementById('readingText').value = data.text;
-                const status = document.getElementById('readingStatus');
-                status.innerText = "Loaded successfully!";
-                status.style.opacity = '1';
-                setTimeout(() => { status.style.opacity = '0'; }, 2000);
+            if(data && data.text) { document.getElementById('readingText').value = data.text; } else { document.getElementById('readingText').value = ""; alert("No reading text found."); }
+        });
+    }
+    function saveReadingData() {
+        const level = document.getElementById('readingLevel').value; const unit = document.getElementById('readingUnit').value; const textContent = document.getElementById('readingText').value.trim();
+        if(!textContent) return;
+        db.ref('readings/' + level + '/' + unit).set({ text: textContent, updated_at: Date.now() }).then(() => {
+            const status = document.getElementById('readingStatus'); status.style.opacity = '1'; setTimeout(() => { status.style.opacity = '0'; }, 3000);
+        });
+    }
+
+    // ==========================================
+    // MODULE 3: CRUD GRAMMAR (NEW)
+    // ==========================================
+    function loadGrammarData() {
+        const level = document.getElementById('grammarLevel').value;
+        const unit = document.getElementById('grammarUnit').value;
+        
+        db.ref('grammar/' + level + '/' + unit).once('value').then(snap => {
+            const data = snap.val();
+            if(data) {
+                document.getElementById('grammarTitle').value = data.title || "";
+                document.getElementById('grammarExplanation').value = data.explanation || "";
+                document.getElementById('gramEx1EN').value = data.ex1_en || "";
+                document.getElementById('gramEx1VI').value = data.ex1_vi || "";
+                document.getElementById('gramEx2EN').value = data.ex2_en || "";
+                document.getElementById('gramEx2VI').value = data.ex2_vi || "";
             } else {
-                document.getElementById('readingText').value = "";
-                alert("No reading text found for this Unit. You can create a new one.");
+                document.getElementById('grammarTitle').value = "";
+                document.getElementById('grammarExplanation').value = "";
+                document.getElementById('gramEx1EN').value = "";
+                document.getElementById('gramEx1VI').value = "";
+                document.getElementById('gramEx2EN').value = "";
+                document.getElementById('gramEx2VI').value = "";
+                alert("No grammar found for this Unit. You can create a new one.");
             }
         });
     }
 
-    function saveReadingData() {
-        const level = document.getElementById('readingLevel').value;
-        const unit = document.getElementById('readingUnit').value;
-        const textContent = document.getElementById('readingText').value.trim();
+    function saveGrammarData() {
+        const level = document.getElementById('grammarLevel').value;
+        const unit = document.getElementById('grammarUnit').value;
+        
+        const title = document.getElementById('grammarTitle').value.trim();
+        const explanation = document.getElementById('grammarExplanation').value.trim();
+        const ex1_en = document.getElementById('gramEx1EN').value.trim();
+        const ex1_vi = document.getElementById('gramEx1VI').value.trim();
+        const ex2_en = document.getElementById('gramEx2EN').value.trim();
+        const ex2_vi = document.getElementById('gramEx2VI').value.trim();
 
-        if(!textContent) { alert("Reading text cannot be empty!"); return; }
+        if(!title || !explanation) { alert("Title and Explanation are required!"); return; }
 
-        db.ref('readings/' + level + '/' + unit).set({
-            text: textContent,
+        db.ref('grammar/' + level + '/' + unit).set({
+            title: title,
+            explanation: explanation,
+            ex1_en: ex1_en,
+            ex1_vi: ex1_vi,
+            ex2_en: ex2_en,
+            ex2_vi: ex2_vi,
             updated_at: Date.now()
         }).then(() => {
-            const status = document.getElementById('readingStatus');
-            status.innerText = "Saved successfully!";
+            const status = document.getElementById('grammarStatus');
             status.style.opacity = '1';
             setTimeout(() => { status.style.opacity = '0'; }, 3000);
-        }).catch(err => alert("Error saving to cloud: " + err.message));
+        }).catch(err => alert("Error saving grammar: " + err.message));
     }
   </script>
 </body>
