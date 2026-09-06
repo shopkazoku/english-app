@@ -317,10 +317,27 @@
         }, 1000);
     }
 
-    function buildClassroom(levelToLoad) {
-        const pdfUrl = `${GITHUB_BASE_URL}/${levelToLoad}/student_book.pdf#view=FitH&toolbar=0`;
-        document.getElementById('pdfViewer').src = pdfUrl;
+   function buildClassroom(levelToLoad) {
+        // 1. Lấy đường link gốc của file PDF trên Github
+        const rawPdfUrl = `${GITHUB_BASE_URL}/${levelToLoad}/student_book.pdf`;
 
+        // 2. Tự động nhận diện thiết bị (Mobile hay PC)
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 1024;
+
+        // 3. Xử lý bẻ khóa cuộn trang PDF
+        let finalPdfUrl;
+        if (isMobile) {
+            // Dùng Google Docs Viewer để mở khóa lỗi "đóng băng" trên Điện thoại
+            finalPdfUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(rawPdfUrl)}&embedded=true`;
+        } else {
+            // Máy tính thì dùng Native PDF Viewer để đảm bảo độ nét tối đa
+            finalPdfUrl = `${rawPdfUrl}#view=FitH&toolbar=0`;
+        }
+
+        // 4. Bắn link đã xử lý lên màn hình
+        document.getElementById('pdfViewer').src = finalPdfUrl;
+
+        // 5. Cấu hình danh sách Unit
         const urlParams = new URLSearchParams(window.location.search);
         const targetUnit = urlParams.get('unit');
 
