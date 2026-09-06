@@ -49,16 +49,16 @@
     </div>
   </header>
 
-  <!-- LOADING OVERLAY -->
+  <!-- LOADING OVERLAY CHUYÊN NGHIỆP -->
   <div id="loadingOverlay" class="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-white mt-16 transition-opacity duration-500">
       <i id="loadingIcon" class="fa-solid fa-cloud-arrow-down fa-bounce text-5xl text-indigo-500 mb-4"></i>
-      <p id="loadingText" class="font-black text-slate-500 animate-pulse uppercase tracking-widest text-sm mb-4">Syncing Curriculum Data...</p>
+      <p id="loadingText" class="font-black text-slate-500 animate-pulse uppercase tracking-widest text-sm mb-4 px-6 text-center">Syncing Curriculum Data...</p>
       <button id="loadingBackBtn" onclick="window.location.href='dashboard.html'" class="hidden bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold px-6 py-2 rounded-xl transition">
           <i class="fa-solid fa-arrow-left mr-2"></i> Go Back
       </button>
   </div>
 
-  <!-- MAIN WORKSPACE (R&D RESPONSIVE FIX) -->
+  <!-- MAIN WORKSPACE -->
   <main class="flex-1 w-full max-w-[95%] lg:max-w-7xl mx-auto p-2 sm:p-4 flex flex-col min-h-0 relative opacity-0 transition-opacity duration-500" id="mainContent">
     
     <!-- HỆ THỐNG TABS SƯ PHẠM -->
@@ -71,16 +71,14 @@
         </button>
     </div>
 
-    <!-- KHU VỰC HIỂN THỊ CHÍNH (Đã fix Flex-1 để tự động bù trừ không gian) -->
+    <!-- KHU VỰC HIỂN THỊ CHÍNH -->
     <div class="flex-1 w-full relative min-h-0 mt-3 rounded-3xl overflow-hidden shadow-xl border-4 border-indigo-50 bg-white">
         
-        <!-- WORKSPACE 1: E-BOOK PDF (Đã tối ưu cảm ứng Mobile) -->
-        <!-- Thêm style overscroll để hỗ trợ vuốt mượt mà trên iPhone/Android -->
+        <!-- WORKSPACE 1: E-BOOK PDF -->
         <div id="bookTab" class="workspace-content absolute inset-0 w-full h-full bg-slate-100 overflow-auto" style="-webkit-overflow-scrolling: touch;">
             <div class="absolute top-0 left-0 bg-indigo-600 text-white text-[10px] font-black px-3 py-1 rounded-br-2xl shadow-sm z-10 flex items-center pointer-events-none">
                 <i class="fa-solid fa-file-pdf mr-1"></i> E-Book Viewer
             </div>
-            <!-- Chuyển sang dùng iframe để Mobile dễ tương tác Zoom hơn -->
             <iframe id="pdfViewer" src="" class="w-full h-full border-none" allowfullscreen="true" scrolling="auto"></iframe>
         </div>
 
@@ -99,12 +97,10 @@
                 </div>
             </div>
         </div>
-
     </div>
 
-    <!-- KHU VỰC ĐIỀU KHIỂN DƯỚI CÙNG (Audio - Cố định an toàn không bị cắt) -->
+    <!-- KHU VỰC ĐIỀU KHIỂN DƯỚI CÙNG -->
     <div class="w-full bg-white rounded-3xl border-4 border-slate-100 shadow-[0_-5px_20px_rgba(0,0,0,0.05)] p-3 sm:p-4 flex flex-col lg:flex-row items-center gap-4 shrink-0 mt-3 mb-1">
-        
         <div class="flex items-center justify-center w-12 h-12 bg-indigo-50 text-indigo-500 rounded-full shrink-0 shadow-inner hidden lg:flex">
             <i class="fa-solid fa-headphones text-xl"></i>
         </div>
@@ -113,15 +109,11 @@
             <div class="flex gap-2 w-full sm:w-auto shrink-0">
                 <div class="flex flex-col flex-1 sm:w-28">
                     <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 ml-1">Select Unit</label>
-                    <select id="unitSelect" onchange="changeUnit()" class="bg-slate-100 border border-slate-300 text-slate-700 font-bold px-2 py-2 rounded-xl focus:outline-none focus:border-indigo-500 w-full shadow-inner cursor-pointer text-sm">
-                        <!-- Gen bằng JS -->
-                    </select>
+                    <select id="unitSelect" onchange="changeUnit()" class="bg-slate-100 border border-slate-300 text-slate-700 font-bold px-2 py-2 rounded-xl focus:outline-none focus:border-indigo-500 w-full shadow-inner cursor-pointer text-sm"></select>
                 </div>
                 <div class="flex flex-col flex-1 sm:w-36">
                     <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 ml-1">Select Track</label>
-                    <select id="trackSelect" onchange="changeTrack(this.value)" class="bg-slate-100 border border-slate-300 text-slate-700 font-bold px-2 py-2 rounded-xl focus:outline-none focus:border-indigo-500 w-full shadow-inner cursor-pointer text-sm">
-                        <!-- Gen bằng JS -->
-                    </select>
+                    <select id="trackSelect" onchange="changeTrack(this.value)" class="bg-slate-100 border border-slate-300 text-slate-700 font-bold px-2 py-2 rounded-xl focus:outline-none focus:border-indigo-500 w-full shadow-inner cursor-pointer text-sm"></select>
                 </div>
             </div>
             
@@ -152,13 +144,13 @@
   </footer>
 
   <script>
-   // ==========================================
-    // CẤU HÌNH FIREBASE (R&D ĐÃ TÍCH HỢP URL)
+    // ==========================================
+    // 1. CẤU HÌNH FIREBASE CHUẨN XÁC 100%
     // ==========================================
     const firebaseConfig = {
         apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
         authDomain: "roundup-ai-academy.firebaseapp.com",
-        databaseURL: "https://roundup-ai-academy-default-rtdb.firebaseio.com", // Đã kết nối thành công
+        databaseURL: "https://roundup-ai-academy-default-rtdb.firebaseio.com",
         projectId: "roundup-ai-academy",
         storageBucket: "roundup-ai-academy.firebasestorage.app",
         messagingSenderId: "723976989630",
@@ -194,50 +186,71 @@
     let userMaxLevel = "starter"; 
     let currentlyViewingLevel = "starter"; 
 
-    // BIẾN HỆ THỐNG SMART UNLOCK
     let hasListenedAudio = false;
     let hasViewedGrammar = false;
     let hasClaimed = false;
 
-    // RƠ-LE AN TOÀN
+    // RƠ-LE AN TOÀN (TĂNG LÊN 10S CHO MẠNG CHẬM)
     const safetyTimer = setTimeout(() => {
         document.getElementById('loadingIcon').classList.replace('fa-cloud-arrow-down', 'fa-triangle-exclamation');
         document.getElementById('loadingIcon').classList.replace('text-indigo-500', 'text-rose-500');
-        document.getElementById('loadingText').innerText = "Network Error! Please try again.";
+        document.getElementById('loadingText').innerText = "Network Error! Please check your connection.";
         document.getElementById('loadingText').classList.replace('text-slate-500', 'text-rose-500');
         document.getElementById('loadingBackBtn').classList.remove('hidden');
-    }, 7000);
+    }, 10000);
 
+    // ==========================================
+    // 2. LUỒNG XỬ LÝ DỮ LIỆU THÔNG MINH (BẢN FIX LỖI)
+    // ==========================================
     auth.onAuthStateChanged((user) => {
       if (user) {
         currentUser = user;
+        
         db.ref('users/' + user.uid).once('value').then((snapshot) => {
           clearTimeout(safetyTimer);
-          const data = snapshot.val();
-          if (data) {
-            userCoins = data.coins || 0;
-            userMaxLevel = data.current_level || 'starter'; 
-            currentlyViewingLevel = userMaxLevel; 
-            
-            document.getElementById('displayCoins').innerText = userCoins;
-            buildCourseDropdown(); 
-            buildClassroom(currentlyViewingLevel); 
-            
-            setTimeout(() => {
-                document.getElementById('loadingOverlay').style.opacity = '0';
-                setTimeout(() => {
-                    document.getElementById('loadingOverlay').style.display = 'none';
-                    document.getElementById('mainContent').style.opacity = '1';
-                }, 500);
-            }, 500);
+          let data = snapshot.val();
+          
+          // NẾU LÀ HỌC SINH MỚI TINH -> TỰ ĐỘNG TẠO DỮ LIỆU
+          if (!data) {
+              data = { coins: 0, current_level: 'starter' };
+              db.ref('users/' + user.uid).set(data);
           }
+          
+          userCoins = data.coins || 0;
+          userMaxLevel = data.current_level || 'starter'; 
+          currentlyViewingLevel = userMaxLevel; 
+          
+          document.getElementById('displayCoins').innerText = userCoins;
+          buildCourseDropdown(); 
+          buildClassroom(currentlyViewingLevel); 
+          
+          // Xóa Loading Screen mượt mà
+          setTimeout(() => {
+              document.getElementById('loadingOverlay').style.opacity = '0';
+              setTimeout(() => {
+                  document.getElementById('loadingOverlay').style.display = 'none';
+                  document.getElementById('mainContent').style.opacity = '1';
+              }, 500);
+          }, 500);
+
         }).catch((error) => {
-            document.getElementById('loadingText').innerText = "Database Connection Failed!";
+            // NẾU CÓ LỖI -> IN RA MÀN HÌNH ĐỂ BẮT BỆNH
+            clearTimeout(safetyTimer);
+            console.error("FIREBASE ERROR:", error);
+            document.getElementById('loadingIcon').classList.replace('fa-cloud-arrow-down', 'fa-bug');
+            document.getElementById('loadingIcon').classList.replace('text-indigo-500', 'text-rose-500');
+            document.getElementById('loadingText').innerText = "LỖI KẾT NỐI: " + error.message; 
+            document.getElementById('loadingText').classList.replace('text-slate-500', 'text-rose-500');
             document.getElementById('loadingBackBtn').classList.remove('hidden');
         });
-      } else { window.location.href = "index.html"; }
+      } else { 
+          window.location.href = "index.html"; 
+      }
     });
 
+    // ==========================================
+    // 3. CÁC HÀM XỬ LÝ GIAO DIỆN & BÀI HỌC
+    // ==========================================
     function switchWorkspace(tabId) {
         document.querySelectorAll('.workspace-content').forEach(el => el.classList.add('hidden'));
         document.querySelectorAll('.tab-btn').forEach(el => {
@@ -247,7 +260,6 @@
         });
 
         document.getElementById(tabId).classList.remove('hidden');
-        
         const btn = document.getElementById('btn_' + tabId);
         btn.classList.add('active');
         btn.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
@@ -306,10 +318,8 @@
     }
 
     function buildClassroom(levelToLoad) {
-        // HACK UI TỪ R&D: Ép trình duyệt fit sách vừa khung ngang bằng tham số #view=FitH
         const pdfUrl = `${GITHUB_BASE_URL}/${levelToLoad}/student_book.pdf#view=FitH&toolbar=0`;
-        document.getElementById('pdfViewer').data = pdfUrl;
-        document.getElementById('pdfFallback').href = pdfUrl;
+        document.getElementById('pdfViewer').src = pdfUrl;
 
         const urlParams = new URLSearchParams(window.location.search);
         const targetUnit = urlParams.get('unit');
@@ -393,7 +403,7 @@
                 if(data.ex2_en) examArea.innerHTML += genExampleHTML(data.ex2_en, data.ex2_vi);
             } else {
                 document.getElementById('gramTitle').innerText = "Grammar Note";
-                document.getElementById('gramExplanation').innerText = "Hiện tại chưa có ghi chú ngữ pháp cho Unit này. Vui lòng quay lại sau nhé!";
+                document.getElementById('gramExplanation').innerText = "Đang cập nhật bài giảng cho Unit này. Boss vui lòng thêm trong trang Quản trị nhé!";
             }
         });
     }
