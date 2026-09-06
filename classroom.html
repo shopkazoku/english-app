@@ -318,26 +318,26 @@
     }
 
    function buildClassroom(levelToLoad) {
-        // 1. Lấy đường link gốc của file PDF trên Github
+        // 1. Lấy đường link gốc của file PDF trên Github của Boss
         const rawPdfUrl = `${GITHUB_BASE_URL}/${levelToLoad}/student_book.pdf`;
 
         // 2. Tự động nhận diện thiết bị (Mobile hay PC)
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 1024;
 
-        // 3. Xử lý bẻ khóa cuộn trang PDF
+        // 3. NÂNG CẤP R&D: Áp dụng lõi PDF.js để bẻ khóa giới hạn dung lượng
         let finalPdfUrl;
         if (isMobile) {
-            // Dùng Google Docs Viewer để mở khóa lỗi "đóng băng" trên Điện thoại
-            finalPdfUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(rawPdfUrl)}&embedded=true`;
+            // Dùng lõi Mozilla PDF.js (Render bằng sức mạnh điện thoại, không qua máy chủ)
+            finalPdfUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(rawPdfUrl)}`;
         } else {
-            // Máy tính thì dùng Native PDF Viewer để đảm bảo độ nét tối đa
+            // Máy tính thì dùng Native PDF Viewer mặc định để tốc độ bàn thờ
             finalPdfUrl = `${rawPdfUrl}#view=FitH&toolbar=0`;
         }
 
-        // 4. Bắn link đã xử lý lên màn hình
+        // 4. Bắn link đã xử lý lên màn hình Classroom
         document.getElementById('pdfViewer').src = finalPdfUrl;
 
-        // 5. Cấu hình danh sách Unit
+        // 5. Cấu hình danh sách Unit theo cấp độ
         const urlParams = new URLSearchParams(window.location.search);
         const targetUnit = urlParams.get('unit');
 
