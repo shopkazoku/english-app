@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ACP - Round-Up AI V4.1</title>
+  <title>ACP - Round-Up AI V4.2</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
@@ -47,7 +47,7 @@
               <i class="fa-solid fa-server text-indigo-400 text-2xl"></i>
               <div>
                   <h1 class="font-black text-xl text-white tracking-widest uppercase">Round-Up AI</h1>
-                  <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Admin Control Panel v4.1</p>
+                  <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Admin Control Panel v4.2 (Enterprise)</p>
               </div>
           </div>
           <button onclick="window.location.reload()" class="bg-rose-500/20 text-rose-400 border border-rose-500 hover:bg-rose-500 hover:text-white font-bold px-4 py-2 rounded-lg transition text-xs uppercase tracking-wider">
@@ -57,14 +57,21 @@
 
       <main class="flex-1 overflow-hidden flex flex-col md:flex-row p-4 gap-4">
           <!-- SIDEBAR -->
-          <aside class="w-full md:w-64 glass-panel rounded-2xl p-4 shrink-0 flex flex-col gap-2">
+          <aside class="w-full md:w-64 glass-panel rounded-2xl p-4 shrink-0 flex flex-col gap-2 overflow-y-auto custom-scroll">
               <p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 pl-2">System Modules</p>
+              
               <button onclick="switchTab('examTab')" id="btn_examTab" class="tab-btn w-full text-left font-bold px-4 py-3 rounded-xl border border-transparent text-slate-400 hover:bg-slate-800 transition-all flex items-center">
                   <i class="fa-solid fa-file-signature w-6 text-center mr-2"></i> Exam Manager
               </button>
+              
+              <button onclick="switchTab('grammarTab')" id="btn_grammarTab" class="tab-btn w-full text-left font-bold px-4 py-3 rounded-xl border border-transparent text-slate-400 hover:bg-slate-800 transition-all flex items-center">
+                  <i class="fa-solid fa-spell-check w-6 text-center mr-2"></i> Grammar Manager
+              </button>
+
               <button onclick="switchTab('readingTab')" id="btn_readingTab" class="tab-btn active bg-indigo-600 text-white w-full text-left font-bold px-4 py-3 rounded-xl border border-indigo-400 transition-all flex items-center">
                   <i class="fa-solid fa-book-open-reader w-6 text-center mr-2"></i> Reading Manager
               </button>
+              
               <button onclick="switchTab('auditTab'); runSystemAudit();" id="btn_auditTab" class="tab-btn w-full text-left font-bold px-4 py-3 rounded-xl border border-transparent text-slate-400 hover:bg-slate-800 transition-all flex items-center mt-4 bg-slate-800/50">
                   <i class="fa-solid fa-radar-border w-6 text-center mr-2 text-amber-400"></i> Content Audit
               </button>
@@ -73,20 +80,102 @@
           <!-- MODULES -->
           <section class="flex-1 glass-panel rounded-2xl p-6 overflow-y-auto custom-scroll relative">
               
-              <!-- 1. EXAM MANAGER (Giữ nguyên logic cũ) -->
+              <!-- 1. EXAM MANAGER -->
               <div id="examTab" class="tab-content hidden">
-                  <h2 class="font-black text-2xl text-white mb-2">Exam / Assessment Data</h2>
-                  <div class="flex gap-2 mb-6">
-                      <input type="text" id="examId" placeholder="e.g., level_6_unit_1" class="flex-1 bg-slate-800 border border-slate-600 text-white font-bold px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500">
-                      <button onclick="loadExamQuestions()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-black px-6 py-3 rounded-xl transition-all">LOAD</button>
+                  <h2 class="font-black text-2xl text-white mb-2">Exam Question Bank</h2>
+                  <p class="text-sm font-bold text-slate-400 mb-6">Hệ thống sẽ trộn ngẫu nhiên 20 câu hỏi từ ngân hàng này cho mỗi bài thi.</p>
+                  
+                  <div class="flex flex-col sm:flex-row gap-4 mb-6 border-b border-slate-700 pb-6">
+                      <div>
+                          <label class="block text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">Target Level</label>
+                          <select id="examLevel" class="w-full sm:w-32 bg-slate-800 border border-slate-600 text-white font-bold px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500">
+                              <option value="starter">Starter</option><option value="level_1">Level 1</option>
+                              <option value="level_2">Level 2</option><option value="level_3">Level 3</option>
+                              <option value="level_4">Level 4</option><option value="level_5">Level 5</option>
+                              <option value="level_6">Level 6</option>
+                          </select>
+                      </div>
+                      <div>
+                          <label class="block text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">Exam Type</label>
+                          <select id="examType" class="w-full sm:w-48 bg-slate-800 border border-slate-600 text-white font-bold px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500">
+                              <option value="unit_1">Unit 1 Test</option><option value="unit_2">Unit 2 Test</option>
+                              <option value="unit_3">Unit 3 Test</option><option value="unit_4">Unit 4 Test</option>
+                              <option value="unit_5">Unit 5 Test</option><option value="unit_6">Unit 6 Test</option>
+                              <option value="unit_7">Unit 7 Test</option><option value="unit_8">Unit 8 Test</option>
+                              <option value="unit_9">Unit 9 Test</option><option value="unit_10">Unit 10 Test</option>
+                              <option value="unit_11">Unit 11 Test</option><option value="unit_12">Unit 12 Test</option>
+                              <option value="unit_13">Unit 13 Test</option><option value="unit_14">Unit 14 Test</option>
+                              <option value="unit_15">Unit 15 Test</option>
+                              <option value="entry">Level Entry Test</option>
+                          </select>
+                      </div>
                   </div>
-                  <!-- Khu vực nhập câu hỏi bị làm gọn để tập trung vào Reading & Audit -->
-                  <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4 mb-4">
-                      <p class="text-slate-400 italic text-sm">Giao diện quản lý Exam tương tự bản V3.0...</p>
+
+                  <div class="space-y-4 bg-slate-900/50 p-6 rounded-2xl border border-slate-700">
+                      <div>
+                          <label class="block text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">Question Content</label>
+                          <textarea id="qText" rows="2" placeholder="Nội dung câu hỏi..." class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500"></textarea>
+                      </div>
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <input type="text" id="qOptA" placeholder="Option A" class="w-full bg-slate-800 border border-slate-600 text-white px-4 py-2 rounded-xl">
+                          <input type="text" id="qOptB" placeholder="Option B" class="w-full bg-slate-800 border border-slate-600 text-white px-4 py-2 rounded-xl">
+                          <input type="text" id="qOptC" placeholder="Option C" class="w-full bg-slate-800 border border-slate-600 text-white px-4 py-2 rounded-xl">
+                          <input type="text" id="qOptD" placeholder="Option D" class="w-full bg-slate-800 border border-slate-600 text-white px-4 py-2 rounded-xl">
+                      </div>
+                      <div>
+                          <label class="block text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">Correct Answer</label>
+                          <select id="qCorrect" class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-4 py-3 rounded-xl">
+                              <option value="A">A</option><option value="B">B</option>
+                              <option value="C">C</option><option value="D">D</option>
+                          </select>
+                      </div>
+                      <button onclick="addExamQuestion()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-black px-8 py-4 rounded-xl shadow-[0_4px_0_#4f46e5] active:translate-y-[4px] active:shadow-[0_0px_0_#4f46e5] transition-all w-full flex justify-center items-center mt-4">
+                          <i class="fa-solid fa-plus mr-3 text-xl"></i> THÊM CÂU HỎI VÀO NGÂN HÀNG
+                      </button>
                   </div>
               </div>
 
-              <!-- 2. READING MANAGER -->
+              <!-- 2. GRAMMAR MANAGER -->
+              <div id="grammarTab" class="tab-content hidden">
+                  <h2 class="font-black text-2xl text-white mb-2">Grammar Curriculum Manager</h2>
+                  
+                  <div class="flex flex-col sm:flex-row gap-4 mb-6 border-b border-slate-700 pb-6">
+                      <div class="flex gap-2 items-end">
+                          <div>
+                              <label class="block text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">Target Level</label>
+                              <select id="grammarLevel" class="w-32 bg-slate-800 border border-slate-600 text-white font-bold px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500">
+                                  <option value="starter">Starter</option><option value="level_1">Level 1</option>
+                                  <option value="level_2">Level 2</option><option value="level_3">Level 3</option>
+                                  <option value="level_4">Level 4</option><option value="level_5">Level 5</option>
+                                  <option value="level_6">Level 6</option>
+                              </select>
+                          </div>
+                          <div>
+                              <label class="block text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">Unit</label>
+                              <select id="grammarUnit" class="w-32 bg-slate-800 border border-slate-600 text-white font-bold px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500">
+                                  <!-- Khởi tạo bằng JS -->
+                              </select>
+                          </div>
+                          <button onclick="loadGrammarData()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-black px-6 py-3 rounded-xl transition-all h-[50px]">LOAD</button>
+                      </div>
+                  </div>
+
+                  <div class="space-y-4">
+                      <div>
+                          <label class="block text-xs font-black text-emerald-400 uppercase tracking-widest mb-1">English Structure</label>
+                          <textarea id="grammarEn" rows="4" placeholder="Nội dung ngữ pháp tiếng Anh..." class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-4 py-4 rounded-xl focus:outline-none focus:border-indigo-500 text-lg"></textarea>
+                      </div>
+                      <div>
+                          <label class="block text-xs font-black text-rose-400 uppercase tracking-widest mb-1">Vietnamese Explanation</label>
+                          <textarea id="grammarVi" rows="4" placeholder="Giải thích tiếng Việt..." class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-4 py-4 rounded-xl focus:outline-none focus:border-indigo-500 text-lg"></textarea>
+                      </div>
+                      <button onclick="saveGrammarData()" class="bg-violet-600 hover:bg-violet-500 text-white font-black px-8 py-4 rounded-xl shadow-[0_4px_0_#6d28d9] active:translate-y-[4px] active:shadow-[0_0px_0_#6d28d9] transition-all w-full flex justify-center items-center">
+                          <i class="fa-solid fa-cloud-arrow-up mr-3 text-xl"></i> LƯU NGỮ PHÁP LÊN CLOUD
+                      </button>
+                  </div>
+              </div>
+
+              <!-- 3. READING MANAGER -->
               <div id="readingTab" class="tab-content block">
                   <h2 class="font-black text-2xl text-white mb-2">Reading Curriculum Manager</h2>
                   
@@ -119,7 +208,7 @@
                   </div>
               </div>
 
-              <!-- 3. SYSTEM AUDIT TABS (TÍNH NĂNG MỚI) -->
+              <!-- 4. SYSTEM AUDIT TABS -->
               <div id="auditTab" class="tab-content hidden">
                   <div class="flex justify-between items-center mb-6 border-b border-slate-700 pb-4">
                       <div>
@@ -144,7 +233,7 @@
     // ==========================================
     // BOSS DÁN ĐOẠN FIREBASE CONFIG VÀO ĐÂY BẮT BUỘC
     // ==========================================
-   const firebaseConfig = {
+    const firebaseConfig = {
         apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
         authDomain: "roundup-ai-academy.firebaseapp.com",
         projectId: "roundup-ai-academy",
@@ -155,15 +244,17 @@
 
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const ADMIN_PIN = "108491"; // Mã PIN truy cập ACP
+    const ADMIN_PIN = "108491"; 
 
-    // Render Unit Options
-    const unitSelect = document.getElementById('readingUnit');
-    for(let i=1; i<=15; i++) {
-        let opt = document.createElement('option');
-        opt.value = "unit_" + i; opt.innerText = "Unit " + i;
-        unitSelect.appendChild(opt);
-    }
+    // Build Unit dropdowns for Reading and Grammar
+    ['readingUnit', 'grammarUnit'].forEach(id => {
+        const select = document.getElementById(id);
+        for(let i=1; i<=15; i++) {
+            let opt = document.createElement('option');
+            opt.value = "unit_" + i; opt.innerText = "Unit " + i;
+            select.appendChild(opt);
+        }
+    });
 
     // LOGIN & TAB SWITCH LOGIC
     function verifyPin() {
@@ -188,7 +279,6 @@
         const toast = document.getElementById('toast');
         const icon = document.getElementById('toastIcon');
         
-        // Reset classes
         toast.className = "fixed top-5 right-5 transform transition-transform duration-300 z-[999] px-6 py-4 rounded-xl shadow-2xl flex items-center gap-4 border-2";
         
         if(type === 'success') {
@@ -201,22 +291,93 @@
 
         document.getElementById('toastTitle').innerText = title;
         document.getElementById('toastMsg').innerText = msg;
-
-        // Slide in
         toast.classList.remove('translate-x-[150%]');
-        
-        // Hide after 3 seconds
-        setTimeout(() => {
-            toast.classList.add('translate-x-[150%]');
-        }, 3000);
+        setTimeout(() => { toast.classList.add('translate-x-[150%]'); }, 3000);
     }
 
-    // READING CRUD LOGIC
+    // ==========================================
+    // EXAM MANAGER LOGIC
+    // ==========================================
+    function addExamQuestion() {
+        const level = document.getElementById('examLevel').value;
+        const type = document.getElementById('examType').value;
+        const examId = `${level}_${type}`; 
+
+        const qText = document.getElementById('qText').value.trim();
+        const qOptA = document.getElementById('qOptA').value.trim();
+        const qOptB = document.getElementById('qOptB').value.trim();
+        const qOptC = document.getElementById('qOptC').value.trim();
+        const qOptD = document.getElementById('qOptD').value.trim();
+        const qCorrect = document.getElementById('qCorrect').value;
+
+        if(!qText || !qOptA || !qOptB || !qOptC || !qOptD) {
+            showToast("Lỗi nhập liệu", "Vui lòng điền đủ câu hỏi và 4 đáp án!", "error");
+            return;
+        }
+
+        db.ref('exams/' + examId + '/questions').push({
+            question: qText,
+            options: { A: qOptA, B: qOptB, C: qOptC, D: qOptD },
+            correct: qCorrect
+        }).then(() => {
+            showToast("Thêm Thành Công", `Đã lưu câu hỏi vào ngân hàng ${examId}`, "success");
+            // Clear form
+            document.getElementById('qText').value = '';
+            document.getElementById('qOptA').value = '';
+            document.getElementById('qOptB').value = '';
+            document.getElementById('qOptC').value = '';
+            document.getElementById('qOptD').value = '';
+        }).catch(err => showToast("Lỗi", err.message, "error"));
+    }
+
+    // ==========================================
+    // GRAMMAR MANAGER LOGIC
+    // ==========================================
+    function loadGrammarData() {
+        const level = document.getElementById('grammarLevel').value;
+        const unit = document.getElementById('grammarUnit').value;
+        
+        document.getElementById('grammarEn').value = "Đang tải...";
+        document.getElementById('grammarVi').value = "Đang tải...";
+        
+        db.ref('grammar/' + level + '/' + unit).once('value').then(snap => {
+            const data = snap.val();
+            if(data) {
+                document.getElementById('grammarEn').value = data.en || "";
+                document.getElementById('grammarVi').value = data.vi || "";
+                showToast("Đã tải dữ liệu", `${level.toUpperCase()} - ${unit.toUpperCase()}`, "success");
+            } else {
+                document.getElementById('grammarEn').value = "";
+                document.getElementById('grammarVi').value = "";
+                showToast("Chưa có dữ liệu", `Thêm mới nội dung cho ${unit.toUpperCase()}`, "error");
+            }
+        });
+    }
+
+    function saveGrammarData() {
+        const level = document.getElementById('grammarLevel').value;
+        const unit = document.getElementById('grammarUnit').value;
+        const en = document.getElementById('grammarEn').value.trim();
+        const vi = document.getElementById('grammarVi').value.trim();
+
+        if(!en || !vi) { 
+            showToast("Lỗi", "Vui lòng nhập đủ 2 ngôn ngữ!", "error"); return; 
+        }
+
+        db.ref('grammar/' + level + '/' + unit).set({
+            en: en, vi: vi, updated_at: Date.now()
+        }).then(() => showToast("Lưu Thành Công!", `Grammar ${level} - ${unit} đã lên Cloud.`, "success"))
+          .catch(err => showToast("Lỗi", err.message, "error"));
+    }
+
+    // ==========================================
+    // READING MANAGER LOGIC
+    // ==========================================
     function loadReadingData() {
         const level = document.getElementById('readingLevel').value;
         const unit = document.getElementById('readingUnit').value;
         
-        document.getElementById('readingText').value = "Đang tải dữ liệu...";
+        document.getElementById('readingText').value = "Đang tải...";
         db.ref('readings/' + level + '/' + unit).once('value').then(snap => {
             const data = snap.val();
             if(data && data.text) {
@@ -235,21 +396,18 @@
         const textContent = document.getElementById('readingText').value.trim();
 
         if(!textContent) { 
-            showToast("Lỗi nhập liệu", "Nội dung bài đọc không được để trống!", "error");
-            return; 
+            showToast("Lỗi", "Nội dung bài đọc không được để trống!", "error"); return; 
         }
 
         db.ref('readings/' + level + '/' + unit).set({
-            text: textContent,
-            updated_at: Date.now()
-        }).then(() => {
-            showToast("Lưu Thành Công!", `Dữ liệu ${level.toUpperCase()} - ${unit.toUpperCase()} đã được cập nhật lên Cloud.`, "success");
-        }).catch(err => {
-            showToast("Lỗi Hệ Thống", err.message, "error");
-        });
+            text: textContent, updated_at: Date.now()
+        }).then(() => showToast("Lưu Thành Công!", `Reading ${level} - ${unit} đã lên Cloud.`, "success"))
+          .catch(err => showToast("Lỗi", err.message, "error"));
     }
 
+    // ==========================================
     // SYSTEM AUDIT LOGIC
+    // ==========================================
     function runSystemAudit() {
         const resultsDiv = document.getElementById('auditResults');
         resultsDiv.innerHTML = '<div class="text-center py-10"><i class="fa-solid fa-radar-border fa-spin text-5xl text-indigo-500 mb-4"></i><p class="text-indigo-400 font-bold uppercase tracking-widest">Scanning Database...</p></div>';
@@ -276,9 +434,13 @@
                     if(!readingsDB[lvl] || !readingsDB[lvl][unitKey] || !readingsDB[lvl][unitKey].text) {
                         missingReads.push(i);
                     }
-                    if(!examsDB[examKey]) {
+                    if(!examsDB[examKey] || !examsDB[examKey].questions) {
                         missingExams.push(i);
                     }
+                }
+                
+                if(!examsDB[lvl + '_entry'] || !examsDB[lvl + '_entry'].questions) {
+                    missingExams.push('Entry Test');
                 }
                 
                 if(missingReads.length > 0 || missingExams.length > 0) {
@@ -294,8 +456,8 @@
                                 <p class="text-slate-300 font-bold text-sm leading-relaxed">${missingReads.length > 0 ? missingReads.map(u => `<span class="inline-block bg-rose-500/20 text-rose-300 px-2 py-1 rounded mb-1 mr-1">Unit ${u}</span>`).join('') : '<span class="text-emerald-400"><i class="fa-solid fa-check mr-1"></i> Completed 15/15</span>'}</p>
                             </div>
                             <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50">
-                                <p class="text-[10px] font-black text-amber-400 uppercase tracking-widest mb-2"><i class="fa-solid fa-file-signature mr-1"></i> Missing Exam Units</p>
-                                <p class="text-slate-300 font-bold text-sm leading-relaxed">${missingExams.length > 0 ? missingExams.map(u => `<span class="inline-block bg-amber-500/20 text-amber-300 px-2 py-1 rounded mb-1 mr-1">Unit ${u}</span>`).join('') : '<span class="text-emerald-400"><i class="fa-solid fa-check mr-1"></i> Completed 15/15</span>'}</p>
+                                <p class="text-[10px] font-black text-amber-400 uppercase tracking-widest mb-2"><i class="fa-solid fa-file-signature mr-1"></i> Missing Exam Banks</p>
+                                <p class="text-slate-300 font-bold text-sm leading-relaxed">${missingExams.length > 0 ? missingExams.map(u => `<span class="inline-block bg-amber-500/20 text-amber-300 px-2 py-1 rounded mb-1 mr-1">${u}</span>`).join('') : '<span class="text-emerald-400"><i class="fa-solid fa-check mr-1"></i> Completed All Tests</span>'}</p>
                             </div>
                         </div>
                     </div>`;
