@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ACP - Round-Up AI V4.2</title>
+  <title>ACP - Round-Up AI V4.3</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
@@ -47,7 +47,7 @@
               <i class="fa-solid fa-server text-indigo-400 text-2xl"></i>
               <div>
                   <h1 class="font-black text-xl text-white tracking-widest uppercase">Round-Up AI</h1>
-                  <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Admin Control Panel v4.2 (Enterprise)</p>
+                  <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Admin Control Panel v4.3 (Enterprise)</p>
               </div>
           </div>
           <button onclick="window.location.reload()" class="bg-rose-500/20 text-rose-400 border border-rose-500 hover:bg-rose-500 hover:text-white font-bold px-4 py-2 rounded-lg transition text-xs uppercase tracking-wider">
@@ -83,7 +83,7 @@
               <!-- 1. EXAM MANAGER -->
               <div id="examTab" class="tab-content hidden">
                   <h2 class="font-black text-2xl text-white mb-2">Exam Question Bank</h2>
-                  <p class="text-sm font-bold text-slate-400 mb-6">Hệ thống sẽ trộn ngẫu nhiên 20 câu hỏi từ ngân hàng này cho mỗi bài thi.</p>
+                  <p class="text-sm font-bold text-slate-400 mb-6">System randomly picks 20 questions for each test session.</p>
                   
                   <div class="flex flex-col sm:flex-row gap-4 mb-6 border-b border-slate-700 pb-6">
                       <div>
@@ -98,15 +98,15 @@
                       <div>
                           <label class="block text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">Exam Type</label>
                           <select id="examType" class="w-full sm:w-48 bg-slate-800 border border-slate-600 text-white font-bold px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500">
-                              <option value="unit_1">Unit 1 Test</option><option value="unit_2">Unit 2 Test</option>
-                              <option value="unit_3">Unit 3 Test</option><option value="unit_4">Unit 4 Test</option>
-                              <option value="unit_5">Unit 5 Test</option><option value="unit_6">Unit 6 Test</option>
-                              <option value="unit_7">Unit 7 Test</option><option value="unit_8">Unit 8 Test</option>
-                              <option value="unit_9">Unit 9 Test</option><option value="unit_10">Unit 10 Test</option>
-                              <option value="unit_11">Unit 11 Test</option><option value="unit_12">Unit 12 Test</option>
-                              <option value="unit_13">Unit 13 Test</option><option value="unit_14">Unit 14 Test</option>
-                              <option value="unit_15">Unit 15 Test</option>
-                              <option value="entry">Level Entry Test</option>
+                              <option value="unit_1" class="unit-opt">Unit 1 Test</option><option value="unit_2" class="unit-opt">Unit 2 Test</option>
+                              <option value="unit_3" class="unit-opt">Unit 3 Test</option><option value="unit_4" class="unit-opt">Unit 4 Test</option>
+                              <option value="unit_5" class="unit-opt">Unit 5 Test</option><option value="unit_6" class="unit-opt">Unit 6 Test</option>
+                              <option value="unit_7" class="unit-opt">Unit 7 Test</option><option value="unit_8" class="unit-opt">Unit 8 Test</option>
+                              <option value="unit_9" class="unit-opt">Unit 9 Test</option><option value="unit_10" class="unit-opt">Unit 10 Test</option>
+                              <option value="unit_11" class="unit-opt">Unit 11 Test</option><option value="unit_12" class="unit-opt">Unit 12 Test</option>
+                              <option value="unit_13" class="unit-opt">Unit 13 Test</option><option value="unit_14" class="unit-opt">Unit 14 Test</option>
+                              <option value="unit_15" class="unit-opt">Unit 15 Test</option>
+                              <option value="entry">Level Entry Test (Final)</option>
                           </select>
                       </div>
                   </div>
@@ -114,7 +114,7 @@
                   <div class="space-y-4 bg-slate-900/50 p-6 rounded-2xl border border-slate-700">
                       <div>
                           <label class="block text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">Question Content</label>
-                          <textarea id="qText" rows="2" placeholder="Nội dung câu hỏi..." class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500"></textarea>
+                          <textarea id="qText" rows="2" placeholder="Question content..." class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500"></textarea>
                       </div>
                       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <input type="text" id="qOptA" placeholder="Option A" class="w-full bg-slate-800 border border-slate-600 text-white px-4 py-2 rounded-xl">
@@ -130,7 +130,7 @@
                           </select>
                       </div>
                       <button onclick="addExamQuestion()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-black px-8 py-4 rounded-xl shadow-[0_4px_0_#4f46e5] active:translate-y-[4px] active:shadow-[0_0px_0_#4f46e5] transition-all w-full flex justify-center items-center mt-4">
-                          <i class="fa-solid fa-plus mr-3 text-xl"></i> THÊM CÂU HỎI VÀO NGÂN HÀNG
+                          <i class="fa-solid fa-plus mr-3 text-xl"></i> ADD TO BANK
                       </button>
                   </div>
               </div>
@@ -163,14 +163,14 @@
                   <div class="space-y-4">
                       <div>
                           <label class="block text-xs font-black text-emerald-400 uppercase tracking-widest mb-1">English Structure</label>
-                          <textarea id="grammarEn" rows="4" placeholder="Nội dung ngữ pháp tiếng Anh..." class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-4 py-4 rounded-xl focus:outline-none focus:border-indigo-500 text-lg"></textarea>
+                          <textarea id="grammarEn" rows="4" placeholder="English structure..." class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-4 py-4 rounded-xl focus:outline-none focus:border-indigo-500 text-lg"></textarea>
                       </div>
                       <div>
                           <label class="block text-xs font-black text-rose-400 uppercase tracking-widest mb-1">Vietnamese Explanation</label>
-                          <textarea id="grammarVi" rows="4" placeholder="Giải thích tiếng Việt..." class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-4 py-4 rounded-xl focus:outline-none focus:border-indigo-500 text-lg"></textarea>
+                          <textarea id="grammarVi" rows="4" placeholder="Vietnamese explanation..." class="w-full bg-slate-800 border border-slate-600 text-white font-bold px-4 py-4 rounded-xl focus:outline-none focus:border-indigo-500 text-lg"></textarea>
                       </div>
                       <button onclick="saveGrammarData()" class="bg-violet-600 hover:bg-violet-500 text-white font-black px-8 py-4 rounded-xl shadow-[0_4px_0_#6d28d9] active:translate-y-[4px] active:shadow-[0_0px_0_#6d28d9] transition-all w-full flex justify-center items-center">
-                          <i class="fa-solid fa-cloud-arrow-up mr-3 text-xl"></i> LƯU NGỮ PHÁP LÊN CLOUD
+                          <i class="fa-solid fa-cloud-arrow-up mr-3 text-xl"></i> SAVE GRAMMAR TO CLOUD
                       </button>
                   </div>
               </div>
@@ -256,6 +256,20 @@
         }
     });
 
+    // LOGIC ẨN/HIỆN EXAM THEO LEVEL
+    document.getElementById('examLevel').addEventListener('change', function() {
+        const typeSelect = document.getElementById('examType');
+        const isStarter = this.value === 'starter';
+        
+        document.querySelectorAll('.unit-opt').forEach(opt => {
+            opt.style.display = isStarter ? 'none' : 'block';
+        });
+        
+        if (isStarter && typeSelect.value !== 'entry') {
+            typeSelect.value = 'entry';
+        }
+    });
+
     // LOGIN & TAB SWITCH LOGIC
     function verifyPin() {
         if(document.getElementById('pinInput').value === ADMIN_PIN) {
@@ -263,7 +277,7 @@
             const adminPanel = document.getElementById('adminPanel');
             adminPanel.classList.remove('hidden'); adminPanel.classList.add('flex');
             setTimeout(() => { adminPanel.style.opacity = '1'; }, 50);
-        } else { alert("Sai mã PIN!"); }
+        } else { alert("Incorrect PIN!"); }
     }
 
     function switchTab(tabId) {
@@ -274,7 +288,6 @@
         btn.classList.add('active', 'bg-indigo-600', 'text-white', 'border-indigo-400'); btn.classList.remove('text-slate-400', 'border-transparent');
     }
 
-    // TOAST NOTIFICATION LOGIC
     function showToast(title, msg, type) {
         const toast = document.getElementById('toast');
         const icon = document.getElementById('toastIcon');
@@ -311,8 +324,7 @@
         const qCorrect = document.getElementById('qCorrect').value;
 
         if(!qText || !qOptA || !qOptB || !qOptC || !qOptD) {
-            showToast("Lỗi nhập liệu", "Vui lòng điền đủ câu hỏi và 4 đáp án!", "error");
-            return;
+            showToast("Error", "Please fill all fields!", "error"); return;
         }
 
         db.ref('exams/' + examId + '/questions').push({
@@ -320,14 +332,13 @@
             options: { A: qOptA, B: qOptB, C: qOptC, D: qOptD },
             correct: qCorrect
         }).then(() => {
-            showToast("Thêm Thành Công", `Đã lưu câu hỏi vào ngân hàng ${examId}`, "success");
-            // Clear form
+            showToast("Success", `Saved question to ${examId}`, "success");
             document.getElementById('qText').value = '';
             document.getElementById('qOptA').value = '';
             document.getElementById('qOptB').value = '';
             document.getElementById('qOptC').value = '';
             document.getElementById('qOptD').value = '';
-        }).catch(err => showToast("Lỗi", err.message, "error"));
+        }).catch(err => showToast("Error", err.message, "error"));
     }
 
     // ==========================================
@@ -337,19 +348,19 @@
         const level = document.getElementById('grammarLevel').value;
         const unit = document.getElementById('grammarUnit').value;
         
-        document.getElementById('grammarEn').value = "Đang tải...";
-        document.getElementById('grammarVi').value = "Đang tải...";
+        document.getElementById('grammarEn').value = "Loading...";
+        document.getElementById('grammarVi').value = "Loading...";
         
         db.ref('grammar/' + level + '/' + unit).once('value').then(snap => {
             const data = snap.val();
             if(data) {
                 document.getElementById('grammarEn').value = data.en || "";
                 document.getElementById('grammarVi').value = data.vi || "";
-                showToast("Đã tải dữ liệu", `${level.toUpperCase()} - ${unit.toUpperCase()}`, "success");
+                showToast("Success", `${level.toUpperCase()} - ${unit.toUpperCase()} loaded`, "success");
             } else {
                 document.getElementById('grammarEn').value = "";
                 document.getElementById('grammarVi').value = "";
-                showToast("Chưa có dữ liệu", `Thêm mới nội dung cho ${unit.toUpperCase()}`, "error");
+                showToast("Not Found", `No data for ${unit.toUpperCase()}`, "error");
             }
         });
     }
@@ -361,13 +372,13 @@
         const vi = document.getElementById('grammarVi').value.trim();
 
         if(!en || !vi) { 
-            showToast("Lỗi", "Vui lòng nhập đủ 2 ngôn ngữ!", "error"); return; 
+            showToast("Error", "Please provide both languages!", "error"); return; 
         }
 
         db.ref('grammar/' + level + '/' + unit).set({
             en: en, vi: vi, updated_at: Date.now()
-        }).then(() => showToast("Lưu Thành Công!", `Grammar ${level} - ${unit} đã lên Cloud.`, "success"))
-          .catch(err => showToast("Lỗi", err.message, "error"));
+        }).then(() => showToast("Success", `Grammar ${level} - ${unit} saved.`, "success"))
+          .catch(err => showToast("Error", err.message, "error"));
     }
 
     // ==========================================
@@ -377,15 +388,15 @@
         const level = document.getElementById('readingLevel').value;
         const unit = document.getElementById('readingUnit').value;
         
-        document.getElementById('readingText').value = "Đang tải...";
+        document.getElementById('readingText').value = "Loading...";
         db.ref('readings/' + level + '/' + unit).once('value').then(snap => {
             const data = snap.val();
             if(data && data.text) {
                 document.getElementById('readingText').value = data.text;
-                showToast("Đã tải dữ liệu", `${level.toUpperCase()} - ${unit.toUpperCase()}`, "success");
+                showToast("Success", `${level.toUpperCase()} - ${unit.toUpperCase()} loaded`, "success");
             } else {
                 document.getElementById('readingText').value = "";
-                showToast("Chưa có dữ liệu", `Vui lòng thêm mới nội dung cho ${unit.toUpperCase()}`, "error");
+                showToast("Not Found", `No data for ${unit.toUpperCase()}`, "error");
             }
         });
     }
@@ -396,17 +407,17 @@
         const textContent = document.getElementById('readingText').value.trim();
 
         if(!textContent) { 
-            showToast("Lỗi", "Nội dung bài đọc không được để trống!", "error"); return; 
+            showToast("Error", "Reading content cannot be empty!", "error"); return; 
         }
 
         db.ref('readings/' + level + '/' + unit).set({
             text: textContent, updated_at: Date.now()
-        }).then(() => showToast("Lưu Thành Công!", `Reading ${level} - ${unit} đã lên Cloud.`, "success"))
-          .catch(err => showToast("Lỗi", err.message, "error"));
+        }).then(() => showToast("Success", `Reading ${level} - ${unit} saved.`, "success"))
+          .catch(err => showToast("Error", err.message, "error"));
     }
 
     // ==========================================
-    // SYSTEM AUDIT LOGIC
+    // SYSTEM AUDIT LOGIC (UPDATED FOR STARTER)
     // ==========================================
     function runSystemAudit() {
         const resultsDiv = document.getElementById('auditResults');
@@ -434,13 +445,18 @@
                     if(!readingsDB[lvl] || !readingsDB[lvl][unitKey] || !readingsDB[lvl][unitKey].text) {
                         missingReads.push(i);
                     }
-                    if(!examsDB[examKey] || !examsDB[examKey].questions) {
-                        missingExams.push(i);
+                    
+                    // BỎ QUA KIỂM TRA BÀI THI UNIT NẾU LÀ STARTER LEVEL
+                    if(lvl !== 'starter') {
+                        if(!examsDB[examKey] || !examsDB[examKey].questions) {
+                            missingExams.push(`Unit ${i}`);
+                        }
                     }
                 }
                 
+                // KIỂM TRA BÀI THI ENTRY/FINAL CỦA MỖI LEVEL
                 if(!examsDB[lvl + '_entry'] || !examsDB[lvl + '_entry'].questions) {
-                    missingExams.push('Entry Test');
+                    missingExams.push(lvl === 'starter' ? 'Final Level Test' : 'Entry Test');
                 }
                 
                 if(missingReads.length > 0 || missingExams.length > 0) {
@@ -448,7 +464,7 @@
                     htmlContent += `
                     <div class="bg-slate-800/80 p-5 rounded-2xl border border-slate-700 shadow-md">
                         <h4 class="font-black text-lg text-indigo-400 uppercase tracking-widest mb-3 flex items-center">
-                            <i class="fa-solid fa-layer-group mr-2"></i> ${lvl.replace('_', ' ')}
+                            <i class="fa-solid fa-layer-group mr-2"></i> ${lvl.replace('_', ' ').toUpperCase()}
                         </h4>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50">
