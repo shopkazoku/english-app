@@ -36,7 +36,7 @@
         <i class="fa-solid fa-arrow-left"></i>
       </button>
       <div class="flex flex-col">
-        <h1 class="font-black text-lg sm:text-xl text-indigo-900 leading-tight">AI Reading Tutor</h1>
+        <h1 class="font-black text-lg sm:text-xl text-indigo-900 leading-tight">Reading Tutor</h1>
         <span class="text-xs font-bold text-indigo-500 uppercase tracking-widest" id="levelTag">Loading...</span>
       </div>
     </div>
@@ -46,53 +46,52 @@
     </div>
   </header>
 
-  <!-- MÀN HÌNH LOADING CHỜ FIREBASE -->
+  <!-- LOADING OVERLAY -->
   <div id="loadingOverlay" class="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-white mt-16 transition-opacity duration-500">
       <i id="loadingIcon" class="fa-solid fa-cloud-arrow-down fa-bounce text-5xl text-indigo-500 mb-4"></i>
-      <p id="loadingText" class="font-black text-slate-500 animate-pulse uppercase tracking-widest text-sm mb-4 px-6 text-center">Loading AI Tutor...</p>
+      <p id="loadingText" class="font-black text-slate-500 animate-pulse uppercase tracking-widest text-sm mb-4 px-6 text-center">Loading Content...</p>
   </div>
 
   <!-- MAIN WORKSPACE -->
   <main class="flex-1 w-full max-w-4xl mx-auto p-4 flex flex-col min-h-0 relative">
     
-    <!-- KHU VỰC TRẠNG THÁI & ĐIỀU KHIỂN -->
+    <!-- CONTROLS -->
     <div class="bg-white rounded-3xl border-4 border-indigo-50 shadow-lg p-5 mb-4 shrink-0 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div class="flex items-center gap-3">
             <div id="micStatusBtn" class="w-14 h-14 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center text-2xl shadow-inner transition-colors">
                 <i class="fa-solid fa-microphone-slash"></i>
             </div>
             <div>
-                <h3 class="font-black text-slate-800 text-lg" id="statusTitle">Sẵn sàng học!</h3>
-                <p class="text-sm text-slate-500 font-bold" id="statusMsg">Bấm "AI Đọc Mẫu" hoặc "Bắt Đầu Đọc"</p>
+                <h3 class="font-black text-slate-800 text-lg" id="statusTitle">Ready to read!</h3>
+                <p class="text-sm text-slate-500 font-bold" id="statusMsg">Click 'Teacher Voice' or 'Start Reading'</p>
             </div>
         </div>
         
         <div class="flex gap-2 w-full sm:w-auto">
             <button onclick="playAIFull()" id="btnAIFull" class="flex-1 sm:w-auto bg-violet-100 hover:bg-violet-200 text-violet-700 font-black px-4 py-3 rounded-xl transition-all flex items-center justify-center border border-violet-200">
-                <i class="fa-solid fa-volume-high mr-2"></i> AI ĐỌC MẪU
+                <i class="fa-solid fa-volume-high mr-2"></i> TEACHER VOICE
             </button>
             <button onclick="startKaraokeMode()" id="btnStart" class="flex-1 sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-black px-6 py-3 rounded-xl shadow-[0_4px_0_#4338ca] active:translate-y-[4px] active:shadow-[0_0px_0_#4338ca] transition-all flex items-center justify-center">
-                <i class="fa-solid fa-play mr-2"></i> BẮT ĐẦU ĐỌC
+                <i class="fa-solid fa-play mr-2"></i> START READING
             </button>
         </div>
     </div>
 
-    <!-- KHU VỰC HIỂN THỊ ĐOẠN VĂN BẢN (KARAOKE) -->
+    <!-- READING CONTENT -->
     <div class="flex-1 bg-white rounded-3xl border-4 border-indigo-50 shadow-xl p-6 sm:p-10 overflow-y-auto custom-scroll relative">
         <h2 class="text-2xl sm:text-3xl font-black text-indigo-900 mb-6 border-b-2 border-slate-100 pb-4 text-center">Reading Practice</h2>
         <div id="readingContent" class="text-xl sm:text-2xl text-slate-600 font-bold leading-relaxed space-y-2 text-justify tracking-wide">
-            <!-- Render by JS -->
+            <!-- Rendered by JS -->
         </div>
     </div>
 
-    <!-- NÚT NHẬN THƯỞNG -->
+    <!-- CLAIM BUTTON -->
     <div class="mt-4 shrink-0 flex justify-center">
         <button id="btnComplete" onclick="claimCoins()" class="w-full sm:w-1/2 bg-slate-300 text-slate-500 cursor-not-allowed font-black px-6 py-4 rounded-2xl shadow-[0_4px_0_#cbd5e1] transition-all flex items-center justify-center text-lg relative pointer-events-none">
-            <i class="fa-solid fa-lock mr-2" id="claimIcon"></i> <span id="claimText">HOÀN THÀNH BÀI ĐỌC ĐỂ NHẬN +50 XU</span>
+            <i class="fa-solid fa-lock mr-2" id="claimIcon"></i> <span id="claimText">COMPLETE READING TO CLAIM +50 COINS</span>
         </button>
     </div>
 
-    <!-- BẢN QUYỀN FOOTER -->
     <footer class="w-full text-center py-4 shrink-0 z-40 bg-transparent mt-2">
       <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
           &copy; 2026 Son Nguyen. All rights reserved.
@@ -129,7 +128,7 @@
     let isReadingMode = false;
     let hasClaimed = false;
 
-    // 1. KIỂM TRA ĐĂNG NHẬP VÀ KÉO DỮ LIỆU BÀI ĐỌC
+    // 1. EXTRACT UNIT FROM URL & FETCH DATA
     auth.onAuthStateChanged((user) => {
       if (user) {
         currentUser = user;
@@ -139,17 +138,21 @@
               userCoins = data.coins || 0;
               currentLevel = data.current_level || 'starter';
               document.getElementById('displayCoins').innerText = userCoins;
-              document.getElementById('levelTag').innerText = currentLevel.replace('_', ' ').toUpperCase();
               
-              db.ref('readings/' + currentLevel).once('value').then((readingSnap) => {
+              const urlParams = new URLSearchParams(window.location.search);
+              const unitParam = urlParams.get('unit') || '1';
+              const currentUnit = 'unit_' + unitParam;
+              
+              document.getElementById('levelTag').innerText = `${currentLevel.replace('_', ' ')} - UNIT ${unitParam}`.toUpperCase();
+              
+              db.ref('readings/' + currentLevel + '/' + currentUnit).once('value').then((readingSnap) => {
                   const readingData = readingSnap.val();
                   if(readingData && readingData.text) {
                       targetText = readingData.text;
                   } else {
-                      targetText = "Hello! Please ask your teacher to add reading text for this level in the Admin Panel.";
+                      targetText = "Hello! Please ask your teacher to add reading text for this unit in the Admin Panel.";
                   }
                   
-                  // Tách câu dựa trên dấu chấm, chấm hỏi, chấm than
                   sentences = targetText.match(/[^.!?]+[.!?]+/g) || [targetText];
                   document.getElementById('readingContent').innerHTML = sentences.map((s, index) => `<span id="sent-${index}" class="sentence">${s.trim()}</span> `).join('');
                   
@@ -165,7 +168,6 @@
       } else { window.location.href = "index.html"; }
     });
 
-    // 2. KHỞI TẠO BỘ NHẬN DIỆN GIỌNG NÓI
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     let recognition;
     
@@ -181,7 +183,7 @@
         };
 
         recognition.onerror = (event) => {
-            updateStatus("Lỗi Mic!", "Hãy đảm bảo bạn đã cấp quyền sử dụng Micro.", "rose");
+            updateStatus("Microphone Error!", "Please ensure microphone permissions are granted.", "rose");
             stopMicUI();
         };
 
@@ -191,10 +193,9 @@
             }
         };
     } else {
-        alert("Trình duyệt không hỗ trợ Nhận diện giọng nói. Hãy dùng Google Chrome!");
+        alert("Browser does not support Speech Recognition. Please use Google Chrome!");
     }
 
-    // CÁC HÀM CẬP NHẬT GIAO DIỆN
     function updateStatus(title, msg, color) {
         document.getElementById('statusTitle').innerText = title;
         document.getElementById('statusTitle').className = `font-black text-${color}-600 text-lg`;
@@ -213,7 +214,6 @@
         mic.innerHTML = '<i class="fa-solid fa-microphone-slash"></i>';
     }
 
-    // 3. AI ĐỌC MẪU TOÀN BỘ BÀI
     function playAIFull() {
         if (!('speechSynthesis' in window)) return;
         window.speechSynthesis.cancel();
@@ -221,18 +221,17 @@
         stopMicUI();
         try { recognition.stop(); } catch(e){}
 
-        updateStatus("AI Đang Đọc...", "Hãy lắng nghe kỹ phát âm nhé", "violet");
+        updateStatus("Teacher is reading...", "Listen carefully to the pronunciation", "violet");
         const utterance = new SpeechSynthesisUtterance(targetText);
         utterance.lang = 'en-US';
-        utterance.rate = 0.85; // Đọc chậm rãi
+        utterance.rate = 0.85;
         
         utterance.onend = () => {
-            updateStatus("Sẵn sàng học!", "Bấm Bắt Đầu Đọc để thử sức", "slate");
+            updateStatus("Ready to read!", "Click 'Start Reading' to try", "slate");
         };
         window.speechSynthesis.speak(utterance);
     }
 
-    // 4. BẮT ĐẦU CHẾ ĐỘ KARAOKE (ĐỌC TỪNG CÂU)
     function startKaraokeMode() {
         window.speechSynthesis.cancel();
         isReadingMode = true;
@@ -240,13 +239,13 @@
         mistakesInCurrent = 0;
         
         document.querySelectorAll('.sentence').forEach(el => el.className = 'sentence');
-        document.getElementById('btnStart').innerHTML = '<i class="fa-solid fa-stop mr-2"></i> DỪNG LẠI';
+        document.getElementById('btnStart').innerHTML = '<i class="fa-solid fa-stop mr-2"></i> STOP';
         document.getElementById('btnStart').setAttribute('onclick', 'stopKaraokeMode()');
         document.getElementById('btnStart').classList.replace('bg-indigo-600', 'bg-rose-500');
         document.getElementById('btnStart').classList.replace('shadow-[0_4px_0_#4338ca]', 'shadow-[0_4px_0_#be123c]');
 
         highlightSentence(currentSentenceIndex);
-        updateStatus("Đang lắng nghe...", "Hãy đọc to câu được bôi vàng", "indigo");
+        updateStatus("Listening...", "Read the highlighted sentence aloud", "indigo");
         startMicUI();
         
         try { recognition.start(); } catch(e) { }
@@ -256,10 +255,10 @@
         isReadingMode = false;
         try { recognition.stop(); } catch(e){}
         stopMicUI();
-        updateStatus("Đã dừng", "Bấm Bắt Đầu Đọc để làm lại từ đầu", "slate");
+        updateStatus("Stopped", "Click 'Start Reading' to restart", "slate");
         
         const btn = document.getElementById('btnStart');
-        btn.innerHTML = '<i class="fa-solid fa-play mr-2"></i> BẮT ĐẦU ĐỌC';
+        btn.innerHTML = '<i class="fa-solid fa-play mr-2"></i> START READING';
         btn.setAttribute('onclick', 'startKaraokeMode()');
         btn.classList.replace('bg-rose-500', 'bg-indigo-600');
         btn.classList.replace('shadow-[0_4px_0_#be123c]', 'shadow-[0_4px_0_#4338ca]');
@@ -273,7 +272,6 @@
         }
     }
 
-    // 5. THUẬT TOÁN ĐÁNH GIÁ VÀ NHẮC LỖI (3-STRIKE RULE)
     function checkPronunciation(spokenText) {
         if(!isReadingMode || currentSentenceIndex >= sentences.length) return;
 
@@ -291,24 +289,22 @@
         const matchRate = matchCount / targetWords.length;
 
         if (matchRate >= 0.6) {
-            // ĐỌC ĐÚNG (>60%)
             document.getElementById(`sent-${currentSentenceIndex}`).classList.replace('active', 'passed');
             currentSentenceIndex++;
             mistakesInCurrent = 0;
             
             if (currentSentenceIndex < sentences.length) {
-                updateStatus("Tuyệt vời!", "Tiếp tục đọc câu tiếp theo nhé", "emerald");
+                updateStatus("Excellent!", "Keep reading the next sentence", "emerald");
                 highlightSentence(currentSentenceIndex);
             } else {
                 stopKaraokeMode();
-                updateStatus("Hoàn Thành Xuất Sắc!", "Bạn đã đọc xong bài", "emerald");
+                updateStatus("Outstanding!", "You have completed the reading", "emerald");
                 unlockClaimBtn();
             }
         } else {
-            // ĐỌC SAI
             mistakesInCurrent++;
             if (mistakesInCurrent >= 3) {
-                updateStatus("Chú ý lắng nghe AI!", `Đang đọc mẫu câu này...`, "amber");
+                updateStatus("Listen to the Teacher!", "Reading this sentence...", "amber");
                 try { recognition.stop(); } catch(e){}
                 stopMicUI();
                 
@@ -317,25 +313,24 @@
                 utterance.rate = 0.8;
                 utterance.onend = () => {
                     mistakesInCurrent = 0;
-                    updateStatus("Đang lắng nghe...", "Đọc lại câu bôi vàng nhé", "indigo");
+                    updateStatus("Listening...", "Read the highlighted sentence again", "indigo");
                     startMicUI();
                     try { recognition.start(); } catch(e){}
                 };
                 window.speechSynthesis.speak(utterance);
             } else {
-                updateStatus("Chưa chính xác!", `Phát âm lại nhé. Lỗi: ${mistakesInCurrent}/3`, "rose");
+                updateStatus("Not quite right!", `Please try again. Mistakes: ${mistakesInCurrent}/3`, "rose");
             }
         }
     }
 
-    // 6. LOGIC TRẢ THƯỞNG COIN
     function unlockClaimBtn() {
         if(hasClaimed) return;
         const btn = document.getElementById('btnComplete');
         btn.classList.remove('bg-slate-300', 'text-slate-500', 'cursor-not-allowed', 'pointer-events-none');
         btn.classList.add('bg-emerald-500', 'hover:bg-emerald-400', 'text-white', 'cursor-pointer');
         document.getElementById('claimIcon').classList.replace('fa-lock', 'fa-check-circle');
-        document.getElementById('claimText').innerText = "NHẬN THƯỞNG +50 XU";
+        document.getElementById('claimText').innerText = "CLAIM +50 COINS";
     }
 
     function claimCoins() {
@@ -346,7 +341,7 @@
             confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
             
             const btn = document.getElementById('btnComplete');
-            btn.innerHTML = "<i class='fa-solid fa-check-double mr-2'></i> ĐÃ NHẬN THƯỞNG!";
+            btn.innerHTML = "<i class='fa-solid fa-check-double mr-2'></i> CLAIMED!";
             btn.className = "w-full sm:w-1/2 bg-slate-300 text-slate-500 font-black px-6 py-4 rounded-2xl shadow-[0_4px_0_#cbd5e1] flex items-center justify-center text-lg pointer-events-none";
             hasClaimed = true;
         });
