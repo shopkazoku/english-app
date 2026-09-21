@@ -128,7 +128,7 @@
         <section class="w-full lg:w-2/3 flex flex-col min-h-[600px] lg:min-h-0 lg:h-full bg-white card-bg rounded-3xl shadow-xl border border-slate-100 overflow-hidden shrink-0">
             <div class="p-6 border-b border-slate-100 shrink-0 bg-slate-50/50">
                 <h2 class="font-black text-xl text-slate-800 mb-1">Learning Path</h2>
-                <p class="text-sm font-bold text-slate-500">Select a unit to start studying. Pass the final test to unlock the next unit.</p>
+                <p id="pathDesc" class="text-sm font-bold text-slate-500">Select a unit to start studying. Pass the final test to unlock the next unit.</p>
             </div>
             
             <div id="unitListContainer" class="flex-1 p-6 overflow-y-auto custom-scroll space-y-4">
@@ -226,7 +226,6 @@
       if (user) {
         currentUser = user;
         
-        // Cơ chế bảo vệ: Đảm bảo user có email hợp lệ
         const userEmailStr = user.email || "student@studydaily.net";
         document.getElementById('userEmail').innerText = userEmailStr;
         const namePart = userEmailStr.split('@')[0];
@@ -256,7 +255,6 @@
 
           renderUnitList();
           
-          // An toàn 100%: Ẩn Loading khi lấy xong dữ liệu
           document.getElementById('loadingOverlay').style.display = 'none';
           
         }).catch((error) => {
@@ -264,13 +262,12 @@
           document.getElementById('loadingOverlay').innerHTML = `<p class="text-rose-500 font-bold">Lỗi kết nối CSDL. Vui lòng thử lại.</p>`;
         });
       } else { 
-          // FIX R&D: Đổi từ login.html sang index.html để không bị lỗi 404
           window.location.href = "index.html"; 
       }
     });
 
     // ==========================================
-    // LOGIC RENDER LỘ TRÌNH HỌC 
+    // LOGIC RENDER LỘ TRÌNH HỌC (CẬP NHẬT ẨN EXAM CHO STARTER)
     // ==========================================
     function renderUnitList() {
         const container = document.getElementById('unitListContainer');
@@ -278,14 +275,24 @@
         
         const currentUnit = parseInt(userData.current_unit) || 1;
         const currentLevel = userData.current_level || 'starter';
+        const isStarter = currentLevel === 'starter';
+
+        // Cập nhật câu mô tả lộ trình
+        document.getElementById('pathDesc').innerText = isStarter 
+            ? "Study all units to prepare for the Final Level Test."
+            : "Select a unit to start studying. Pass the final test to unlock the next unit.";
+
+        // Thông tin thẻ test đầu tiên
+        const topTestTitle = isStarter ? "Starter Final Test" : "Level Entry Test";
+        const topTestDesc = isStarter ? "Pass to unlock Level 1" : "Compulsory Assessment";
 
         container.innerHTML += `
         <div class="border-2 border-rose-200 bg-rose-50/80 rounded-2xl p-4 sm:p-5 flex items-center justify-between transition-all mb-4 shadow-sm">
             <div class="flex items-center space-x-4">
                 <div class="w-12 h-12 bg-rose-500 text-white rounded-xl flex items-center justify-center font-black text-xl shadow-md"><i class="fa-solid fa-star"></i></div>
                 <div>
-                    <h3 class="font-black text-rose-700 sm:text-lg">Level Entry Test</h3>
-                    <p class="text-xs font-bold text-rose-500 uppercase tracking-wider">Compulsory Assessment</p>
+                    <h3 class="font-black text-rose-700 sm:text-lg">${topTestTitle}</h3>
+                    <p class="text-xs font-bold text-rose-500 uppercase tracking-wider">${topTestDesc}</p>
                 </div>
             </div>
             <button onclick="window.location.href='exam.html?id=${currentLevel}_entry'" class="bg-rose-500 hover:bg-rose-400 text-white font-black px-6 py-2 rounded-xl transition shadow-[0_4px_0_#be123c] active:translate-y-[4px] active:shadow-[0_0px_0_#be123c]">Take Test</button>
@@ -311,6 +318,14 @@
             } 
             else if (i === currentUnit) {
                 const examId = `${currentLevel}_unit_${i}`;
+                
+                // Nút bấm động: Nếu là Starter thì chỉ có Study, mở rộng full width
+                let actionButtons = `<button onclick="window.location.href='classroom.html?unit=${i}'" class="flex-1 w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black px-6 py-3 rounded-xl shadow-[0_4px_0_#4f46e5] active:translate-y-[4px] active:shadow-[0_0px_0_#4f46e5] transition">Study</button>`;
+                
+                if (!isStarter) {
+                    actionButtons += `<button onclick="window.location.href='exam.html?id=${examId}'" class="flex-1 bg-amber-500 hover:bg-amber-400 text-white font-black px-4 py-3 rounded-xl shadow-[0_4px_0_#d97706] active:translate-y-[4px] active:shadow-[0_0px_0_#d97706] transition" title="Take Exam"><i class="fa-solid fa-file-signature"></i> Exam</button>`;
+                }
+
                 cardHtml = `
                 <div class="border-4 border-indigo-200 bg-indigo-50/50 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all transform hover:-translate-y-1 hover:shadow-lg">
                     <div class="flex items-center space-x-4">
@@ -321,19 +336,21 @@
                         </div>
                     </div>
                     <div class="flex space-x-2 w-full sm:w-auto">
-                        <button onclick="window.location.href='classroom.html?unit=${i}'" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-black px-6 py-3 rounded-xl shadow-[0_4px_0_#4f46e5] active:translate-y-[4px] active:shadow-[0_0px_0_#4f46e5] transition">Study</button>
-                        <button onclick="window.location.href='exam.html?id=${examId}'" class="flex-1 bg-amber-500 hover:bg-amber-400 text-white font-black px-4 py-3 rounded-xl shadow-[0_4px_0_#d97706] active:translate-y-[4px] active:shadow-[0_0px_0_#d97706] transition" title="Take Exam"><i class="fa-solid fa-file-signature"></i> Exam</button>
+                        ${actionButtons}
                     </div>
                 </div>`;
             } 
             else {
+                // Tùy chỉnh tin nhắn khóa cho Starter
+                const lockMsg = isStarter ? `Study Unit ${i-1} to unlock` : `Pass Unit ${i-1} Test to unlock`;
+                
                 cardHtml = `
                 <div class="border-2 border-slate-100 bg-slate-50/40 rounded-2xl p-4 sm:p-5 flex items-center justify-between opacity-60 grayscale transition-all">
                     <div class="flex items-center space-x-4">
                         <div class="w-12 h-12 bg-slate-200 text-slate-400 rounded-xl flex items-center justify-center font-black text-xl"><i class="fa-solid fa-lock"></i></div>
                         <div>
                             <h3 class="font-black text-slate-400 sm:text-lg">${unitTitle}</h3>
-                            <p class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">Pass Unit ${i-1} Test to unlock</p>
+                            <p class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">${lockMsg}</p>
                         </div>
                     </div>
                 </div>`;
