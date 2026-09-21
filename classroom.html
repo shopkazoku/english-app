@@ -278,8 +278,8 @@
         if (!iframe) return;
         
         const rawPdfUrl = `${GITHUB_BASE_URL}/${currentlyViewingLevel}/student_book.pdf`;
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 1024;
         
+        // 1. Tính toán tỷ lệ Zoom
         if (action === 'fit') {
             currentPdfZoom = 'page-width';
         } else {
@@ -287,6 +287,10 @@
             if (action === 'in') currentPdfZoom += 25;
             if (action === 'out') currentPdfZoom = Math.max(50, currentPdfZoom - 25);
         }
+
+        // 2. R&D FIX: Bắn tín hiệu thẳng vào lõi PDF.js, sách sẽ co giãn siêu mượt không cần load lại!
+        iframe.src = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(rawPdfUrl)}#zoom=${currentPdfZoom}`;
+    }
 
         let newSrc = "";
         if (isMobile) {
@@ -372,12 +376,10 @@
 
     function buildClassroom(levelToLoad) {
         const rawPdfUrl = `${GITHUB_BASE_URL}/${levelToLoad}/student_book.pdf`;
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 1024;
         
+        // R&D FIX: Dùng Engine Mozilla PDF.js cho TẤT CẢ thiết bị (PC & Mobile) để đồng bộ trải nghiệm Zoom
         currentPdfZoom = 'page-width'; 
-        let finalPdfUrl = isMobile 
-            ? `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(rawPdfUrl)}#zoom=page-width`
-            : `${rawPdfUrl}#view=FitH&toolbar=0`;
+        const finalPdfUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(rawPdfUrl)}#zoom=${currentPdfZoom}`;
             
         const viewer = document.getElementById('pdfViewer');
         if (viewer) viewer.src = finalPdfUrl;
