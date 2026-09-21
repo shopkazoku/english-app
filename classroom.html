@@ -53,7 +53,7 @@
   <div id="loadingOverlay" class="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-white mt-16 transition-opacity duration-500">
       <i id="loadingIcon" class="fa-solid fa-cloud-arrow-down fa-bounce text-5xl text-indigo-500 mb-4"></i>
       <p id="loadingText" class="font-black text-slate-500 animate-pulse uppercase tracking-widest text-sm mb-4 px-6 text-center">Syncing Curriculum Data...</p>
-      <button id="loadingBackBtn" onclick="window.location.href='dashboard.html'" class="hidden bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold px-6 py-2 rounded-xl transition">
+      <button id="loadingBackBtn" onclick="window.location.href='dashboard.html'" class="hidden mt-4 bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold px-6 py-2 rounded-xl transition">
           <i class="fa-solid fa-arrow-left mr-2"></i> Go Back
       </button>
   </div>
@@ -73,7 +73,7 @@
   <!-- MAIN WORKSPACE -->
   <main class="flex-1 w-full max-w-[95%] lg:max-w-7xl mx-auto p-2 sm:p-4 flex flex-col min-h-0 relative opacity-0 transition-opacity duration-500" id="mainContent">
     
-    <!-- HỆ THỐNG TABS SƯ PHẠM -->
+    <!-- TABS -->
     <div class="flex gap-2 shrink-0">
         <button onclick="switchWorkspace('bookTab')" id="btn_bookTab" class="tab-btn active flex-1 bg-white border-2 border-slate-200 text-slate-600 font-black py-3 rounded-2xl flex items-center justify-center uppercase tracking-widest text-sm shadow-sm">
             <i class="fa-solid fa-book-open mr-2"></i> E-Book
@@ -86,50 +86,28 @@
     <!-- KHU VỰC HIỂN THỊ CHÍNH -->
     <div class="flex-1 w-full relative min-h-0 mt-3 rounded-3xl overflow-hidden shadow-xl border-4 border-indigo-50 bg-white">
         
-        <!-- WORKSPACE 1: E-BOOK PDF (CÓ NÚT ZOOM) -->
+        <!-- WORKSPACE 1: E-BOOK PDF (BẢO VỆ CHỐNG LỖI NULL) -->
         <div id="bookTab" class="workspace-content absolute inset-0 w-full h-full bg-slate-100 overflow-hidden relative">
-            <div class="absolute top-0 left-0 bg-indigo-600 text-white text-[10px] font-black px-3 py-1 rounded-br-2xl shadow-sm z-10 flex items-center pointer-events-none">
+            <div class="absolute top-0 left-0 bg-indigo-600 text-white text-[10px] font-black px-3 py-1 rounded-br-2xl shadow-sm z-30 flex items-center pointer-events-none">
                 <i class="fa-solid fa-file-pdf mr-1"></i> E-Book Viewer
             </div>
             
-            // LOGIC ĐIỀU KHIỂN ZOOM PDF (V2 - TRÁO ĐỔI IFRAME TỪ CACHE)
-    function zoomPdf(action) {
-        const oldIframe = document.getElementById('pdfViewer');
-        const parent = oldIframe.parentNode;
-        const rawPdfUrl = `${GITHUB_BASE_URL}/${currentlyViewingLevel}/student_book.pdf`;
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 1024;
-        
-        // 1. Tính toán mức độ Zoom
-        if (action === 'fit') {
-            currentPdfZoom = 'page-width';
-        } else {
-            if (currentPdfZoom === 'page-width' || typeof currentPdfZoom !== 'number') currentPdfZoom = 100;
-            if (action === 'in') currentPdfZoom += 25;
-            if (action === 'out') currentPdfZoom = Math.max(50, currentPdfZoom - 25);
-        }
+            <!-- TOOLBAR ZOOM -->
+            <div class="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 bg-slate-900/80 backdrop-blur-md p-2 rounded-2xl flex gap-2 z-30 shadow-[0_10px_30px_rgba(0,0,0,0.3)] border border-slate-700">
+                <button onclick="zoomPdf('out')" class="w-10 h-10 flex items-center justify-center bg-slate-800 text-white rounded-xl hover:bg-indigo-500 transition-colors shadow-inner" title="Zoom Out">
+                    <i class="fa-solid fa-minus"></i>
+                </button>
+                <button onclick="zoomPdf('fit')" class="px-4 h-10 flex items-center justify-center bg-slate-800 text-white font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-indigo-500 transition-colors shadow-inner" title="Fit to Screen">
+                    FIT <i class="fa-solid fa-expand ml-2"></i>
+                </button>
+                <button onclick="zoomPdf('in')" class="w-10 h-10 flex items-center justify-center bg-slate-800 text-white rounded-xl hover:bg-indigo-500 transition-colors shadow-inner" title="Zoom In">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
 
-        // 2. Tạo đường link mang tham số Zoom mới
-        let newSrc = "";
-        if (isMobile) {
-            newSrc = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(rawPdfUrl)}#zoom=${currentPdfZoom}`;
-        } else {
-            const hash = (action === 'fit') ? 'view=FitH' : `zoom=${currentPdfZoom}`;
-            newSrc = `${rawPdfUrl}#${hash}&toolbar=0`;
-        }
-
-        // 3. TRICK R&D: Nhân bản iframe và tráo đổi để ép trình duyệt render lại kích thước ngay lập tức
-        const newIframe = oldIframe.cloneNode(true);
-        newIframe.src = newSrc;
-        
-        // Làm mờ nhẹ 0.2s để tạo cảm giác mượt mà cho mắt (Transition)
-        newIframe.style.opacity = '0.5';
-        parent.replaceChild(newIframe, oldIframe);
-        
-        setTimeout(() => {
-            newIframe.style.opacity = '1';
-            newIframe.style.transition = 'opacity 0.3s ease';
-        }, 50);
-    }
+            <!-- CHÍNH XÁC ID NÀY PHẢI TỒN TẠI -->
+            <iframe id="pdfViewer" src="" class="absolute top-0 left-0 w-full h-full border-none transition-opacity duration-300 z-10" allowfullscreen="true" scrolling="auto"></iframe>
+        </div>
 
         <!-- WORKSPACE 2: GRAMMAR -->
         <div id="grammarTab" class="workspace-content hidden absolute inset-0 w-full h-full bg-white overflow-y-auto custom-scroll p-6 sm:p-10 cursor-text">
@@ -148,7 +126,7 @@
         </div>
     </div>
 
-    <!-- KHU VỰC ĐIỀU KHIỂN DƯỚI CÙNG -->
+    <!-- ĐIỀU KHIỂN DƯỚI CÙNG -->
     <div class="w-full bg-white rounded-3xl border-4 border-slate-100 shadow-[0_-5px_20px_rgba(0,0,0,0.05)] p-3 sm:p-4 flex flex-col lg:flex-row items-center gap-4 shrink-0 mt-3 mb-1">
         <div class="flex items-center justify-center w-12 h-12 bg-indigo-50 text-indigo-500 rounded-full shrink-0 shadow-inner hidden lg:flex">
             <i class="fa-solid fa-headphones text-xl"></i>
@@ -174,7 +152,6 @@
         </div>
 
         <div class="w-full lg:w-auto flex gap-2 shrink-0 mt-2 lg:mt-0">
-            <!-- NÚT READING NAY ĐÃ GỌI HÀM KẾT NỐI -->
             <button onclick="goToReading()" class="flex-1 lg:w-auto bg-violet-600 hover:bg-violet-500 text-white font-black px-4 py-3 rounded-xl shadow-[0_4px_0_#7c3aed] active:translate-y-[4px] active:shadow-[0_0px_0_#7c3aed] transition-all flex items-center justify-center whitespace-nowrap text-sm">
                 <i class="fa-solid fa-microphone-lines mr-1 animate-pulse"></i> READING
             </button>
@@ -236,14 +213,18 @@
     let hasListenedAudio = false;
     let hasViewedGrammar = false;
     let hasClaimed = false;
-    let currentPdfZoom = 'page-width'; // Khởi tạo Zoom Fit mặc định
+    let currentPdfZoom = 'page-width'; 
 
     const safetyTimer = setTimeout(() => {
-        document.getElementById('loadingIcon').classList.replace('fa-cloud-arrow-down', 'fa-triangle-exclamation');
-        document.getElementById('loadingIcon').classList.replace('text-indigo-500', 'text-rose-500');
-        document.getElementById('loadingText').innerText = "Network Error! Please check your connection.";
-        document.getElementById('loadingText').classList.replace('text-slate-500', 'text-rose-500');
-        document.getElementById('loadingBackBtn').classList.remove('hidden');
+        const icon = document.getElementById('loadingIcon');
+        const text = document.getElementById('loadingText');
+        if(icon && text) {
+            icon.classList.replace('fa-cloud-arrow-down', 'fa-triangle-exclamation');
+            icon.classList.replace('text-indigo-500', 'text-rose-500');
+            text.innerText = "Network Error! Please check your connection.";
+            text.classList.replace('text-slate-500', 'text-rose-500');
+            document.getElementById('loadingBackBtn').classList.remove('hidden');
+        }
     }, 10000);
 
     auth.onAuthStateChanged((user) => {
@@ -286,16 +267,16 @@
       }
     });
 
-    // CHUYỂN TRANG READING ĐỘNG KÈM THAM SỐ
     function goToReading() {
         const unitIndex = parseInt(document.getElementById('unitSelect').value) + 1;
-        // Bắn kèm level và unit hiện hành sang trang reading.html
         window.location.href = `reading.html?level=${currentlyViewingLevel}&unit=${unitIndex}`;
     }
 
-    // LOGIC ĐIỀU KHIỂN ZOOM PDF
+    // THUẬT TOÁN ZOOM PDF AN TOÀN CHỐNG LỖI MẤT DOM
     function zoomPdf(action) {
         const iframe = document.getElementById('pdfViewer');
+        if (!iframe) return;
+        
         const rawPdfUrl = `${GITHUB_BASE_URL}/${currentlyViewingLevel}/student_book.pdf`;
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 1024;
         
@@ -307,12 +288,20 @@
             if (action === 'out') currentPdfZoom = Math.max(50, currentPdfZoom - 25);
         }
 
+        let newSrc = "";
         if (isMobile) {
-            iframe.src = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(rawPdfUrl)}#zoom=${currentPdfZoom}`;
+            newSrc = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(rawPdfUrl)}#zoom=${currentPdfZoom}`;
         } else {
             const hash = (action === 'fit') ? 'view=FitH' : `zoom=${currentPdfZoom}`;
-            iframe.src = `${rawPdfUrl}#${hash}&toolbar=0`;
+            newSrc = `${rawPdfUrl}#${hash}&toolbar=0`;
         }
+
+        // Tạo hiệu ứng mờ đi, nạp link mới, rồi hiện lên để ép trình duyệt load lại kích thước
+        iframe.style.opacity = '0';
+        setTimeout(() => {
+            iframe.src = newSrc;
+            setTimeout(() => { iframe.style.opacity = '1'; }, 300);
+        }, 150);
     }
 
     function switchWorkspace(tabId) {
@@ -385,13 +374,13 @@
         const rawPdfUrl = `${GITHUB_BASE_URL}/${levelToLoad}/student_book.pdf`;
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 1024;
         
-        // Cập nhật hệ thống Zoom Mặc định khi load bài
         currentPdfZoom = 'page-width'; 
         let finalPdfUrl = isMobile 
             ? `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(rawPdfUrl)}#zoom=page-width`
             : `${rawPdfUrl}#view=FitH&toolbar=0`;
             
-        document.getElementById('pdfViewer').src = finalPdfUrl;
+        const viewer = document.getElementById('pdfViewer');
+        if (viewer) viewer.src = finalPdfUrl;
 
         const urlParams = new URLSearchParams(window.location.search);
         const targetUnit = urlParams.get('unit');
@@ -507,7 +496,6 @@
         });
     }
 
-    // SMART DICTIONARY EN-VI (POPUP VERSION)
     const dictPopup = document.getElementById('dictPopup');
     let currentWordToPlay = '';
 
