@@ -86,11 +86,25 @@
     <!-- KHU VỰC HIỂN THỊ CHÍNH -->
     <div class="flex-1 w-full relative min-h-0 mt-3 rounded-3xl overflow-hidden shadow-xl border-4 border-indigo-50 bg-white">
         
-        <!-- WORKSPACE 1: E-BOOK PDF -->
-        <div id="bookTab" class="workspace-content absolute inset-0 w-full h-full bg-slate-100 overflow-auto" style="-webkit-overflow-scrolling: touch;">
+        <!-- WORKSPACE 1: E-BOOK PDF (CÓ NÚT ZOOM) -->
+        <div id="bookTab" class="workspace-content absolute inset-0 w-full h-full bg-slate-100 overflow-hidden relative">
             <div class="absolute top-0 left-0 bg-indigo-600 text-white text-[10px] font-black px-3 py-1 rounded-br-2xl shadow-sm z-10 flex items-center pointer-events-none">
                 <i class="fa-solid fa-file-pdf mr-1"></i> E-Book Viewer
             </div>
+            
+            <!-- TOOLBAR ZOOM BÀI GIẢNG -->
+            <div class="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 bg-slate-900/80 backdrop-blur-md p-2 rounded-2xl flex gap-2 z-20 shadow-[0_10px_30px_rgba(0,0,0,0.3)] border border-slate-700">
+                <button onclick="zoomPdf('out')" class="w-10 h-10 flex items-center justify-center bg-slate-800 text-white rounded-xl hover:bg-indigo-500 transition-colors shadow-inner" title="Zoom Out">
+                    <i class="fa-solid fa-minus"></i>
+                </button>
+                <button onclick="zoomPdf('fit')" class="px-4 h-10 flex items-center justify-center bg-slate-800 text-white font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-indigo-500 transition-colors shadow-inner" title="Fit to Screen">
+                    FIT <i class="fa-solid fa-expand ml-2"></i>
+                </button>
+                <button onclick="zoomPdf('in')" class="w-10 h-10 flex items-center justify-center bg-slate-800 text-white rounded-xl hover:bg-indigo-500 transition-colors shadow-inner" title="Zoom In">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+
             <iframe id="pdfViewer" src="" class="w-full h-full border-none" allowfullscreen="true" scrolling="auto"></iframe>
         </div>
 
@@ -137,7 +151,8 @@
         </div>
 
         <div class="w-full lg:w-auto flex gap-2 shrink-0 mt-2 lg:mt-0">
-            <button onclick="window.location.href='reading.html'" class="flex-1 lg:w-auto bg-violet-600 hover:bg-violet-500 text-white font-black px-4 py-3 rounded-xl shadow-[0_4px_0_#7c3aed] active:translate-y-[4px] active:shadow-[0_0px_0_#7c3aed] transition-all flex items-center justify-center whitespace-nowrap text-sm">
+            <!-- NÚT READING NAY ĐÃ GỌI HÀM KẾT NỐI -->
+            <button onclick="goToReading()" class="flex-1 lg:w-auto bg-violet-600 hover:bg-violet-500 text-white font-black px-4 py-3 rounded-xl shadow-[0_4px_0_#7c3aed] active:translate-y-[4px] active:shadow-[0_0px_0_#7c3aed] transition-all flex items-center justify-center whitespace-nowrap text-sm">
                 <i class="fa-solid fa-microphone-lines mr-1 animate-pulse"></i> READING
             </button>
             
@@ -160,7 +175,6 @@
     const firebaseConfig = {
         apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
         authDomain: "roundup-ai-academy.firebaseapp.com",
-        databaseURL: "https://roundup-ai-academy-default-rtdb.firebaseio.com",
         projectId: "roundup-ai-academy",
         storageBucket: "roundup-ai-academy.firebasestorage.app",
         messagingSenderId: "723976989630",
@@ -199,6 +213,7 @@
     let hasListenedAudio = false;
     let hasViewedGrammar = false;
     let hasClaimed = false;
+    let currentPdfZoom = 'page-width'; // Khởi tạo Zoom Fit mặc định
 
     const safetyTimer = setTimeout(() => {
         document.getElementById('loadingIcon').classList.replace('fa-cloud-arrow-down', 'fa-triangle-exclamation');
@@ -208,7 +223,6 @@
         document.getElementById('loadingBackBtn').classList.remove('hidden');
     }, 10000);
 
-    // 2. FIREBASE & LUỒNG DỮ LIỆU
     auth.onAuthStateChanged((user) => {
       if (user) {
         currentUser = user;
@@ -238,7 +252,6 @@
           }, 500);
         }).catch((error) => {
             clearTimeout(safetyTimer);
-            console.error("FIREBASE ERROR:", error);
             document.getElementById('loadingIcon').classList.replace('fa-cloud-arrow-down', 'fa-bug');
             document.getElementById('loadingIcon').classList.replace('text-indigo-500', 'text-rose-500');
             document.getElementById('loadingText').innerText = "CONNECTION ERROR: " + error.message; 
@@ -250,7 +263,35 @@
       }
     });
 
-    // 3. CÁC HÀM GIAO DIỆN HỌC TẬP
+    // CHUYỂN TRANG READING ĐỘNG KÈM THAM SỐ
+    function goToReading() {
+        const unitIndex = parseInt(document.getElementById('unitSelect').value) + 1;
+        // Bắn kèm level và unit hiện hành sang trang reading.html
+        window.location.href = `reading.html?level=${currentlyViewingLevel}&unit=${unitIndex}`;
+    }
+
+    // LOGIC ĐIỀU KHIỂN ZOOM PDF
+    function zoomPdf(action) {
+        const iframe = document.getElementById('pdfViewer');
+        const rawPdfUrl = `${GITHUB_BASE_URL}/${currentlyViewingLevel}/student_book.pdf`;
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 1024;
+        
+        if (action === 'fit') {
+            currentPdfZoom = 'page-width';
+        } else {
+            if (currentPdfZoom === 'page-width' || typeof currentPdfZoom !== 'number') currentPdfZoom = 100;
+            if (action === 'in') currentPdfZoom += 25;
+            if (action === 'out') currentPdfZoom = Math.max(50, currentPdfZoom - 25);
+        }
+
+        if (isMobile) {
+            iframe.src = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(rawPdfUrl)}#zoom=${currentPdfZoom}`;
+        } else {
+            const hash = (action === 'fit') ? 'view=FitH' : `zoom=${currentPdfZoom}`;
+            iframe.src = `${rawPdfUrl}#${hash}&toolbar=0`;
+        }
+    }
+
     function switchWorkspace(tabId) {
         document.querySelectorAll('.workspace-content').forEach(el => el.classList.add('hidden'));
         document.querySelectorAll('.tab-btn').forEach(el => {
@@ -320,13 +361,13 @@
     function buildClassroom(levelToLoad) {
         const rawPdfUrl = `${GITHUB_BASE_URL}/${levelToLoad}/student_book.pdf`;
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 1024;
-        let finalPdfUrl;
         
-        if (isMobile) {
-            finalPdfUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(rawPdfUrl)}`;
-        } else {
-            finalPdfUrl = `${rawPdfUrl}#view=FitH&toolbar=0`;
-        }
+        // Cập nhật hệ thống Zoom Mặc định khi load bài
+        currentPdfZoom = 'page-width'; 
+        let finalPdfUrl = isMobile 
+            ? `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(rawPdfUrl)}#zoom=page-width`
+            : `${rawPdfUrl}#view=FitH&toolbar=0`;
+            
         document.getElementById('pdfViewer').src = finalPdfUrl;
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -443,9 +484,7 @@
         });
     }
 
-    // ==========================================
     // SMART DICTIONARY EN-VI (POPUP VERSION)
-    // ==========================================
     const dictPopup = document.getElementById('dictPopup');
     let currentWordToPlay = '';
 
