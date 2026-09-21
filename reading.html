@@ -26,7 +26,6 @@
     .mic-active { animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; }
     @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); } 100% { box-shadow: 0 0 0 15px rgba(99, 102, 241, 0); } }
 
-    /* HIỆU ỨNG CHỮ CHẠY MARQUEE */
     @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
     .animate-marquee { display: inline-block; white-space: nowrap; animation: marquee 15s linear infinite; }
   </style>
@@ -130,15 +129,10 @@
 
   <script>
     // ==========================================
-    // BOSS DÁN ĐOẠN FIREBASE CONFIG VÀO ĐÂY
+    // BOSS DÁN ĐOẠN FIREBASE CONFIG VÀO ĐÂY BẮT BUỘC
     // ==========================================
     const firebaseConfig = {
-        apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
-        authDomain: "roundup-ai-academy.firebaseapp.com",
-        projectId: "roundup-ai-academy",
-        storageBucket: "roundup-ai-academy.firebasestorage.app",
-        messagingSenderId: "723976989630",
-        appId: "1:723976989630:web:45f3de91269e70f604e7ef"
+        // DÁN FIREBASE CỦA BOSS VÀO ĐÂY
     };
 
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
@@ -163,14 +157,18 @@
           const data = snapshot.val();
           if (data) {
               userCoins = data.coins || 0;
-              currentLevel = data.current_level || 'starter';
               document.getElementById('displayCoins').innerText = userCoins;
               
+              // LẤY THAM SỐ TỪ CLASSROOM
               const urlParams = new URLSearchParams(window.location.search);
-              const unitParam = urlParams.get('unit') || '1';
-              const currentUnit = 'unit_' + unitParam;
+              const urlLevel = urlParams.get('level');
+              const urlUnit = urlParams.get('unit') || '1';
               
-              document.getElementById('levelTag').innerText = `${currentLevel.replace('_', ' ')} - UNIT ${unitParam}`.toUpperCase();
+              // Ưu tiên load Level trên URL trước, nếu không có mới load Level mặc định của DB
+              currentLevel = urlLevel || data.current_level || 'starter';
+              const currentUnit = 'unit_' + urlUnit;
+              
+              document.getElementById('levelTag').innerText = `${currentLevel.replace('_', ' ')} - UNIT ${urlUnit}`.toUpperCase();
               
               db.ref('readings/' + currentLevel + '/' + currentUnit).once('value').then((readingSnap) => {
                   const readingData = readingSnap.val();
@@ -195,9 +193,6 @@
       } else { window.location.href = "index.html"; }
     });
 
-    // ==========================================
-    // SMART DICTIONARY EN-VI (ZERO-COST API)
-    // ==========================================
     const dictPopup = document.getElementById('dictPopup');
     let currentWordToPlay = '';
 
