@@ -86,7 +86,7 @@
     <!-- KHU VỰC HIỂN THỊ CHÍNH -->
     <div class="flex-1 w-full relative min-h-0 mt-3 rounded-3xl overflow-hidden shadow-xl border-4 border-indigo-50 bg-white">
         
-        <!-- WORKSPACE 1: E-BOOK PDF (BẢO VỆ CHỐNG LỖI NULL) -->
+        <!-- WORKSPACE 1: E-BOOK PDF -->
         <div id="bookTab" class="workspace-content absolute inset-0 w-full h-full bg-slate-100 overflow-hidden relative">
             <div class="absolute top-0 left-0 bg-indigo-600 text-white text-[10px] font-black px-3 py-1 rounded-br-2xl shadow-sm z-30 flex items-center pointer-events-none">
                 <i class="fa-solid fa-file-pdf mr-1"></i> E-Book Viewer
@@ -105,7 +105,6 @@
                 </button>
             </div>
 
-            <!-- CHÍNH XÁC ID NÀY PHẢI TỒN TẠI -->
             <iframe id="pdfViewer" src="" class="absolute top-0 left-0 w-full h-full border-none transition-opacity duration-300 z-10" allowfullscreen="true" scrolling="auto"></iframe>
         </div>
 
@@ -171,7 +170,9 @@
   </footer>
 
   <script>
-    // 1. CẤU HÌNH FIREBASE
+    // ==========================================
+    // 1. CẤU HÌNH FIREBASE ĐÃ TÍCH HỢP SẴN
+    // ==========================================
     const firebaseConfig = {
         apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
         authDomain: "roundup-ai-academy.firebaseapp.com",
@@ -272,14 +273,15 @@
         window.location.href = `reading.html?level=${currentlyViewingLevel}&unit=${unitIndex}`;
     }
 
-    // THUẬT TOÁN ZOOM PDF AN TOÀN CHỐNG LỖI MẤT DOM
+    // ==========================================
+    // 2. LOGIC ĐIỀU KHIỂN ZOOM PDF.JS
+    // ==========================================
     function zoomPdf(action) {
         const iframe = document.getElementById('pdfViewer');
         if (!iframe) return;
         
         const rawPdfUrl = `${GITHUB_BASE_URL}/${currentlyViewingLevel}/student_book.pdf`;
         
-        // 1. Tính toán tỷ lệ Zoom
         if (action === 'fit') {
             currentPdfZoom = 'page-width';
         } else {
@@ -288,19 +290,9 @@
             if (action === 'out') currentPdfZoom = Math.max(50, currentPdfZoom - 25);
         }
 
-        // 2. R&D FIX: Bắn tín hiệu thẳng vào lõi PDF.js, sách sẽ co giãn siêu mượt không cần load lại!
-        iframe.src = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(rawPdfUrl)}#zoom=${currentPdfZoom}`;
-    }
+        const newSrc = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(rawPdfUrl)}#zoom=${currentPdfZoom}`;
 
-        let newSrc = "";
-        if (isMobile) {
-            newSrc = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(rawPdfUrl)}#zoom=${currentPdfZoom}`;
-        } else {
-            const hash = (action === 'fit') ? 'view=FitH' : `zoom=${currentPdfZoom}`;
-            newSrc = `${rawPdfUrl}#${hash}&toolbar=0`;
-        }
-
-        // Tạo hiệu ứng mờ đi, nạp link mới, rồi hiện lên để ép trình duyệt load lại kích thước
+        // Ép tải lại khung iframe để nhận thông số zoom mới
         iframe.style.opacity = '0';
         setTimeout(() => {
             iframe.src = newSrc;
@@ -377,7 +369,7 @@
     function buildClassroom(levelToLoad) {
         const rawPdfUrl = `${GITHUB_BASE_URL}/${levelToLoad}/student_book.pdf`;
         
-        // R&D FIX: Dùng Engine Mozilla PDF.js cho TẤT CẢ thiết bị (PC & Mobile) để đồng bộ trải nghiệm Zoom
+        // Mặc định nạp sách bằng PDF.js
         currentPdfZoom = 'page-width'; 
         const finalPdfUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(rawPdfUrl)}#zoom=${currentPdfZoom}`;
             
@@ -498,6 +490,9 @@
         });
     }
 
+    // ==========================================
+    // 3. SMART DICTIONARY EN-VI (POPUP VERSION)
+    // ==========================================
     const dictPopup = document.getElementById('dictPopup');
     let currentWordToPlay = '';
 
