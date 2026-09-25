@@ -269,18 +269,41 @@
     function toggleMicChat() { if(!rec) return; if(isRec){rec.stop();}else{rec.start(); isRec=true; document.getElementById('btnMicChat').classList.add('recording-pulse', 'text-rose-500');} }
 
     async function sendChatMessage() {
-        const inp = document.getElementById('chatInput'); const txt = inp.value.trim(); if(!txt && !chatImg) return;
-        renderMsg('user', txt, chatImg); const pTxt = txt; const pImg = chatImg; inp.value = ""; inp.style.height = 'auto'; removeImage();
-        const lId = "load_"+Date.now(); renderMsg('ai', '<i class="fa-solid fa-ellipsis fa-fade text-2xl"></i>', null, lId);
-        try {
-            let c = [{ role: "user", parts: [{ text: "System Rule: You are an English Tutor. Guide the student to answers, evaluate right/wrong, explain why. Be encouraging.\n\nStudent: " + pTxt }] }];
-            if(pImg) c[0].parts.push({ inline_data: { mime_type: pImg.match(/[^:]\w+\/[\w-+\d.]+(?=;|,)/)[0], data: pImg.split(',')[1] } });
-            let res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: c }) });
-            let data = await res.json(); document.getElementById(lId).remove();
-            renderMsg('ai', data.candidates[0].content.parts[0].text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>'));
-        } catch (e) { document.getElementById(lId).remove(); renderMsg('ai', '<span class="text-rose-500">API Connection error.</span>'); }
-    }
+const inp = document.getElementById('chatInput');
+const txt = inp.value.trim();
+if(!txt && !chatImg) return;
 
+renderMsg('user', txt, chatImg);
+const pTxt = txt;
+const pImg = chatImg;
+inp.value = "";
+inp.style.height = 'auto';
+removeImage();
+
+const lId = "load_"+Date.now();
+renderMsg('ai', '', null, lId);
+
+try {
+let c = [{ role: "user", parts: [{ text: "System Rule: You are an English Tutor. Guide the student to answers, evaluate right/wrong, explain why. Be encouraging.\n\nStudent: " + pTxt }] }];
+if(pImg) c[0].parts.push({ inline_data: { mime_type: pImg.match(/[^:]\w+/[\w-+\d.]+(?=;|,)/)[0], data: pImg.split(',')[1] } });
+  let res = await fetch(`[https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=\(](https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=\)){GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: c }) });
+let data = await res.json();
+
+if (document.getElementById(lId)) document.getElementById(lId).remove();
+
+if(data.error) {
+  renderMsg('ai', 'Lỗi từ Google: ' + data.error.message + '');
+} else if (data.candidates && data.candidates[0].content) {
+  renderMsg('ai', data.candidates[0].content.parts[0].text.replace(/\*\*(.*?)\*\*/g, '**$1**').replace(/\n/g, '
+'));
+} else {
+renderMsg('ai', 'Lỗi: Phản hồi bị chặn bởi bộ lọc an toàn.');
+}
+} catch (e) {
+if (document.getElementById(lId)) document.getElementById(lId).remove();
+renderMsg('ai', 'Lỗi kết nối API. Boss kiểm tra lại API Key nhé.');
+}
+}
     function renderMsg(role, text, img = null, id = "") {
         const h = document.getElementById('chatHistory'); const d = document.createElement('div');
         if(role === 'user') {
