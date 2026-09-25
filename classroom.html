@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Smart Classroom - Round-Up AI</title>
+  <title>Smart Classroom - Study Daily</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
@@ -18,599 +18,272 @@
     .custom-scroll::-webkit-scrollbar { width: 6px; }
     .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
-    
     audio { width: 100%; height: 44px; outline: none; border-radius: 12px; }
     audio::-webkit-media-controls-panel { background-color: #f1f5f9; border-radius: 12px; }
-    
     .tab-btn { transition: all 0.3s; }
     .tab-btn.active { background-color: #4f46e5; color: white; border-color: #4338ca; box-shadow: 0 4px 0 #3730a3; transform: translateY(-2px); }
+    .recording-pulse { animation: pulse-ring 1.5s infinite; }
+    @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(244,63,94,0.7); } 100% { box-shadow: 0 0 0 15px rgba(244,63,94,0); } }
   </style>
 </head>
 <body class="h-[100dvh] w-full flex flex-col bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')] relative overflow-hidden" id="mainBody">
 
-  <!-- TOPBAR -->
+  <!-- HEADER -->
   <header class="bg-white border-b-2 border-indigo-100 p-3 sm:p-4 flex justify-between items-center shadow-sm z-50 shrink-0">
     <div class="flex items-center space-x-3">
-      <button onclick="window.location.href='dashboard.html'" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center justify-center text-slate-600 transition shadow-sm border border-slate-200">
-        <i class="fa-solid fa-arrow-left"></i>
-      </button>
+      <button onclick="window.location.href='dashboard.html'" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center justify-center text-slate-600 transition shadow-sm border border-slate-200"><i class="fa-solid fa-arrow-left"></i></button>
       <div class="flex flex-col">
         <h1 class="font-black text-lg sm:text-xl text-indigo-900 leading-tight">Smart Classroom</h1>
-        <select id="courseSelect" onchange="switchLevel(this.value)" class="mt-0.5 bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold px-2 py-0.5 rounded-lg focus:outline-none focus:border-indigo-500 text-[10px] sm:text-xs uppercase tracking-wider cursor-pointer shadow-inner">
-            <option>Loading...</option>
-        </select>
+        <select id="courseSelect" onchange="switchLevel(this.value)" class="mt-0.5 bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold px-2 py-0.5 rounded-lg focus:outline-none text-[10px] sm:text-xs uppercase"><option>Loading...</option></select>
       </div>
     </div>
-    
-    <div class="flex items-center bg-amber-50 px-3 sm:px-4 py-2 rounded-full border border-amber-200 shadow-sm">
-      <i class="fa-solid fa-coins text-amber-500 mr-1 sm:mr-2 text-lg animate-bounce"></i>
-      <span id="displayCoins" class="font-black text-amber-700 text-lg sm:text-xl">...</span>
+    <div class="flex items-center bg-amber-50 px-3 py-2 rounded-full border border-amber-200 shadow-sm">
+      <i class="fa-solid fa-coins text-amber-500 mr-2 text-lg animate-bounce"></i><span id="displayCoins" class="font-black text-amber-700 text-lg">...</span>
     </div>
   </header>
 
   <!-- LOADING OVERLAY -->
   <div id="loadingOverlay" class="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-white mt-16 transition-opacity duration-500">
-      <i id="loadingIcon" class="fa-solid fa-cloud-arrow-down fa-bounce text-5xl text-indigo-500 mb-4"></i>
-      <p id="loadingText" class="font-black text-slate-500 animate-pulse uppercase tracking-widest text-sm mb-4 px-6 text-center">Syncing Curriculum Data...</p>
-      <button id="loadingBackBtn" onclick="window.location.href='dashboard.html'" class="hidden mt-4 bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold px-6 py-2 rounded-xl transition">
-          <i class="fa-solid fa-arrow-left mr-2"></i> Go Back
-      </button>
+      <i class="fa-solid fa-cloud-arrow-down fa-bounce text-5xl text-indigo-500 mb-4"></i><p class="font-black text-slate-500 animate-pulse text-sm">Syncing Data...</p>
   </div>
 
-  <!-- TỪ ĐIỂN SMART TRANSLATE SIDEBAR CHO PHỤ HUYNH -->
-  <button onclick="toggleDict()" class="fixed top-1/3 right-0 transform -translate-y-1/2 bg-indigo-600 text-white p-3 rounded-l-xl shadow-[-5px_0_15px_rgba(79,70,229,0.4)] z-[9999] hover:pr-5 transition-all group border-y border-l border-indigo-400">
-      <i class="fa-solid fa-language group-hover:animate-bounce text-xl"></i>
-  </button>
-
-  <div id="dictSidebar" class="fixed top-20 right-0 h-[70vh] min-h-[400px] max-h-[500px] w-80 bg-white shadow-[-10px_10px_30px_rgba(0,0,0,0.3)] transform translate-x-full transition-transform duration-300 z-[9999] flex flex-col border-y-2 border-l-4 border-indigo-600 rounded-l-2xl overflow-hidden">
-      <div class="bg-indigo-600 p-4 flex justify-between items-center text-white relative overflow-hidden shrink-0">
-          <div class="font-black flex items-center gap-2 text-lg tracking-wide z-10">
-              <i class="fa-solid fa-book-open text-xl"></i> Dictionary
-          </div>
-          <button onclick="toggleDict()" class="hover:text-rose-300 z-10 transition-colors w-8 h-8 flex items-center justify-center bg-indigo-700 rounded-full"><i class="fa-solid fa-xmark"></i></button>
+  <!-- DICTIONARY SIDEBAR -->
+  <button onclick="toggleDict()" class="fixed top-1/3 right-0 transform -translate-y-1/2 bg-indigo-600 text-white p-3 rounded-l-xl shadow-[-5px_0_15px_rgba(79,70,229,0.4)] z-[9999] hover:pr-5 transition-all"><i class="fa-solid fa-language text-xl"></i></button>
+  <div id="dictSidebar" class="fixed top-20 right-0 h-[70vh] min-h-[400px] w-80 bg-white shadow-[-10px_10px_30px_rgba(0,0,0,0.3)] transform translate-x-full transition-transform duration-300 z-[9999] flex flex-col border-y-2 border-l-4 border-indigo-600 rounded-l-2xl overflow-hidden">
+      <div class="bg-indigo-600 p-4 flex justify-between items-center text-white shrink-0">
+          <div class="font-black flex items-center gap-2 text-lg"><i class="fa-solid fa-book-open"></i> Dictionary</div>
+          <button onclick="toggleDict()" class="w-8 h-8 flex items-center justify-center bg-indigo-700 rounded-full hover:text-rose-300"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <div class="p-3 border-b border-slate-100 bg-slate-50 shrink-0 shadow-sm relative z-10">
-          <div class="flex gap-2">
-              <input type="text" id="dictInput" placeholder="Type a word..." class="w-full px-3 py-3 rounded-xl border-2 border-slate-200 focus:outline-none focus:border-indigo-500 font-bold text-slate-700" onkeypress="if(event.key === 'Enter') translateWord()">
-              <button onclick="translateWord()" class="bg-indigo-600 text-white px-4 rounded-xl hover:bg-indigo-500 shadow-md">
-                  <i class="fa-solid fa-magnifying-glass"></i>
-              </button>
-          </div>
+      <div class="p-3 bg-slate-50 border-b flex gap-2">
+          <input type="text" id="dictInput" placeholder="Type a word..." class="w-full px-3 py-3 rounded-xl border-2 border-slate-200 font-bold" onkeypress="if(event.key === 'Enter') translateWord()">
+          <button onclick="translateWord()" class="bg-indigo-600 text-white px-4 rounded-xl"><i class="fa-solid fa-magnifying-glass"></i></button>
       </div>
-      <div class="p-4 flex-1 overflow-y-auto custom-scroll bg-slate-50" id="dictResult">
-          <div class="flex flex-col items-center justify-center h-full text-slate-400 opacity-70">
-              <i class="fa-solid fa-keyboard text-4xl mb-3"></i>
-              <p class="text-sm text-center font-bold px-2">Type any word to translate!</p>
-          </div>
-      </div>
+      <div class="p-4 flex-1 overflow-y-auto bg-slate-50" id="dictResult"><div class="flex flex-col items-center justify-center h-full text-slate-400 opacity-70"><p class="text-sm font-bold">Type to translate!</p></div></div>
   </div>
 
-  <!-- TỪ ĐIỂN POPUP CHO HỌC VIÊN -->
-  <div id="dictPopup" class="fixed hidden z-[9999] bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.3)] border-2 border-indigo-100 p-4 w-64 transition-all opacity-0 translate-y-2 pointer-events-auto">
+  <!-- DICTIONARY POPUP -->
+  <div id="dictPopup" class="fixed hidden z-[9999] bg-white rounded-2xl shadow-xl border-2 border-indigo-100 p-4 w-64 opacity-0 translate-y-2 transition-all">
       <div class="flex justify-between items-start mb-2">
-          <h4 id="dictPopupWord" class="font-black text-indigo-900 text-lg leading-tight pr-4">Word</h4>
-          <button onclick="playDictAudio()" class="text-indigo-400 hover:text-indigo-600 transition bg-indigo-50 w-8 h-8 rounded-full flex items-center justify-center shrink-0">
-              <i class="fa-solid fa-volume-high"></i>
-          </button>
+          <h4 id="dictPopupWord" class="font-black text-indigo-900 text-lg">Word</h4>
+          <button onclick="playDictAudio()" class="text-indigo-400 bg-indigo-50 w-8 h-8 rounded-full flex items-center justify-center"><i class="fa-solid fa-volume-high"></i></button>
       </div>
-      <div class="w-full h-[1px] bg-slate-100 mb-2"></div>
       <p id="dictPopupMeaning" class="text-slate-600 font-bold text-sm">Translating...</p>
   </div>
 
-  <!-- MAIN WORKSPACE -->
   <main class="flex-1 w-full max-w-[95%] lg:max-w-7xl mx-auto p-2 sm:p-4 flex flex-col min-h-0 relative opacity-0 transition-opacity duration-500" id="mainContent">
     
     <!-- TABS -->
     <div class="flex gap-2 shrink-0">
-        <button onclick="switchWorkspace('bookTab')" id="btn_bookTab" class="tab-btn active flex-1 bg-white border-2 border-slate-200 text-slate-600 font-black py-3 rounded-2xl flex items-center justify-center uppercase tracking-widest text-sm shadow-sm">
-            <i class="fa-solid fa-book-open mr-2"></i> E-Book
-        </button>
-        <button onclick="switchWorkspace('grammarTab')" id="btn_grammarTab" class="tab-btn flex-1 bg-white border-2 border-slate-200 text-slate-600 font-black py-3 rounded-2xl flex items-center justify-center uppercase tracking-widest text-sm shadow-sm">
-            <i class="fa-solid fa-spell-check mr-2"></i> Grammar
-        </button>
+        <button onclick="switchWorkspace('bookTab')" id="btn_bookTab" class="tab-btn active flex-1 bg-white border-2 border-slate-200 text-slate-600 font-black py-3 rounded-2xl uppercase text-sm"><i class="fa-solid fa-book-open mr-2"></i> E-Book</button>
+        <button onclick="switchWorkspace('grammarTab')" id="btn_grammarTab" class="tab-btn flex-1 bg-white border-2 border-slate-200 text-slate-600 font-black py-3 rounded-2xl uppercase text-sm"><i class="fa-solid fa-spell-check mr-2"></i> Grammar</button>
+        <button onclick="switchWorkspace('tutorTab')" id="btn_tutorTab" class="tab-btn flex-1 bg-white border-2 border-slate-200 text-slate-600 font-black py-3 rounded-2xl uppercase text-sm"><i class="fa-solid fa-user-graduate mr-2 text-indigo-500"></i> TALK WITH TUTOR</button>
     </div>
 
-    <!-- KHU VỰC HIỂN THỊ CHÍNH -->
+    <!-- NỘI DUNG TABS -->
     <div class="flex-1 w-full relative min-h-0 mt-3 rounded-3xl overflow-hidden shadow-xl border-4 border-indigo-50 bg-white">
         
-        <!-- WORKSPACE 1: E-BOOK PDF -->
+        <!-- E-BOOK -->
         <div id="bookTab" class="workspace-content absolute inset-0 w-full h-full bg-slate-100 overflow-hidden relative">
-            <div class="absolute top-0 left-0 bg-indigo-600 text-white text-[10px] font-black px-3 py-1 rounded-br-2xl shadow-sm z-30 flex items-center pointer-events-none">
-                <i class="fa-solid fa-file-pdf mr-1"></i> E-Book Viewer
+            <div class="absolute bottom-4 right-4 bg-slate-900/80 p-2 rounded-2xl flex gap-2 z-30 shadow-xl border border-slate-700">
+                <button onclick="zoomPdf('out')" class="w-10 h-10 bg-slate-800 text-white rounded-xl"><i class="fa-solid fa-minus"></i></button>
+                <button onclick="zoomPdf('fit')" class="px-4 h-10 bg-slate-800 text-white font-bold text-xs uppercase rounded-xl">FIT</button>
+                <button onclick="zoomPdf('in')" class="w-10 h-10 bg-slate-800 text-white rounded-xl"><i class="fa-solid fa-plus"></i></button>
             </div>
-            
-            <!-- TOOLBAR ZOOM -->
-            <div class="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 bg-slate-900/80 backdrop-blur-md p-2 rounded-2xl flex gap-2 z-30 shadow-[0_10px_30px_rgba(0,0,0,0.3)] border border-slate-700">
-                <button onclick="zoomPdf('out')" class="w-10 h-10 flex items-center justify-center bg-slate-800 text-white rounded-xl hover:bg-indigo-500 transition-colors shadow-inner" title="Zoom Out">
-                    <i class="fa-solid fa-minus"></i>
-                </button>
-                <button onclick="zoomPdf('fit')" class="px-4 h-10 flex items-center justify-center bg-slate-800 text-white font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-indigo-500 transition-colors shadow-inner" title="Fit to Screen">
-                    FIT <i class="fa-solid fa-expand ml-2"></i>
-                </button>
-                <button onclick="zoomPdf('in')" class="w-10 h-10 flex items-center justify-center bg-slate-800 text-white rounded-xl hover:bg-indigo-500 transition-colors shadow-inner" title="Zoom In">
-                    <i class="fa-solid fa-plus"></i>
-                </button>
-            </div>
-
-            <iframe id="pdfViewer" src="" class="absolute top-0 left-0 w-full h-full border-none transition-opacity duration-300 z-10" allowfullscreen="true" scrolling="auto"></iframe>
+            <iframe id="pdfViewer" src="" class="absolute top-0 left-0 w-full h-full border-none z-10" allowfullscreen="true"></iframe>
         </div>
 
-        <!-- WORKSPACE 2: GRAMMAR -->
+        <!-- GRAMMAR -->
         <div id="grammarTab" class="workspace-content hidden absolute inset-0 w-full h-full bg-white overflow-y-auto custom-scroll p-6 sm:p-10 cursor-text">
             <div class="max-w-4xl mx-auto flex flex-col items-center text-center">
-                <div class="bg-indigo-100 text-indigo-600 w-16 h-16 rounded-full flex items-center justify-center text-3xl mb-4 shadow-inner border-2 border-white ring-4 ring-indigo-50">
-                    <i class="fa-solid fa-lightbulb"></i>
+                <div class="bg-indigo-100 text-indigo-600 w-16 h-16 rounded-full flex items-center justify-center text-3xl mb-4"><i class="fa-solid fa-lightbulb"></i></div>
+                <h2 id="gramTitle" class="text-2xl sm:text-4xl font-black text-slate-800 mb-6 border-b-2 border-slate-100 pb-4 w-full">Loading...</h2>
+                <p id="gramExplanation" class="text-lg text-slate-600 font-bold mb-8 bg-slate-50 p-6 rounded-2xl border text-left w-full"></p>
+                <div id="grammarExamples" class="w-full space-y-4 text-left"></div>
+            </div>
+        </div>
+
+        <!-- TALK WITH TUTOR -->
+        <div id="tutorTab" class="workspace-content hidden absolute inset-0 w-full h-full bg-slate-50 flex flex-col cursor-text">
+            <div class="bg-indigo-600 text-white p-3 shadow-md z-10 flex gap-3 items-center shrink-0">
+                <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"><i class="fa-solid fa-user-graduate text-xl"></i></div>
+                <div><h3 class="font-black text-lg">Study Daily English Tutor</h3><p class="text-xs font-bold opacity-80 uppercase">Always here to help you</p></div>
+            </div>
+            
+            <div id="chatHistory" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scroll pb-6">
+                <div class="flex gap-3 max-w-[90%]">
+                     <div class="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white shrink-0"><i class="fa-solid fa-robot"></i></div>
+                     <div class="bg-white border p-4 rounded-2xl rounded-tl-none shadow-sm text-slate-700 font-bold text-[15px]">
+                         Hello! I am your English Tutor. You can chat, talk, or <span class="text-indigo-600">upload pictures</span> of your exercises. Let's do our best!
+                     </div>
                 </div>
-                
-                <h2 id="gramTitle" class="text-2xl sm:text-4xl font-black text-slate-800 mb-6 border-b-2 border-slate-100 pb-4 w-full">Loading Grammar...</h2>
-                <p id="gramExplanation" class="text-lg text-slate-600 font-bold leading-relaxed mb-8 bg-slate-50 p-6 rounded-2xl border border-slate-200 text-left w-full"></p>
-                
-                <div id="grammarExamples" class="w-full space-y-4 text-left">
-                    <!-- Sẽ được Gen bằng JS -->
+            </div>
+
+            <div class="bg-white border-t p-3 flex gap-2 items-end shrink-0 z-10">
+                <label class="cursor-pointer text-slate-400 hover:text-indigo-500 p-2 bg-slate-100 rounded-xl">
+                    <i class="fa-solid fa-image text-xl"></i><input type="file" id="imageUpload" accept="image/*" class="hidden" onchange="previewImage(this)">
+                </label>
+                <button id="btnMicChat" onclick="toggleMicChat()" class="text-slate-400 hover:text-rose-500 p-2 bg-slate-100 rounded-xl"><i class="fa-solid fa-microphone text-xl"></i></button>
+                <div class="flex-1 bg-slate-100 rounded-xl border flex flex-col relative">
+                    <div id="imgPreviewContainer" class="hidden relative self-start m-2">
+                        <img id="imgPreview" src="" class="max-h-20 rounded-lg border">
+                        <button onclick="removeImage()" class="absolute -top-2 -right-2 bg-rose-500 text-white w-5 h-5 rounded-full text-[10px]"><i class="fa-solid fa-times"></i></button>
+                    </div>
+                    <textarea id="chatInput" rows="1" class="w-full bg-transparent p-3 focus:outline-none font-bold text-slate-700 resize-none max-h-32" placeholder="Ask your tutor in English..." onkeypress="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendChatMessage(); }"></textarea>
                 </div>
+                <button onclick="sendChatMessage()" class="bg-indigo-600 text-white w-12 h-12 rounded-xl hover:bg-indigo-500 flex items-center justify-center shrink-0"><i class="fa-solid fa-paper-plane text-xl"></i></button>
             </div>
         </div>
     </div>
 
-    <!-- ĐIỀU KHIỂN DƯỚI CÙNG -->
-    <div class="w-full bg-white rounded-3xl border-4 border-slate-100 shadow-[0_-5px_20px_rgba(0,0,0,0.05)] p-3 sm:p-4 flex flex-col lg:flex-row items-center gap-4 shrink-0 mt-3 mb-1">
-        <div class="flex items-center justify-center w-12 h-12 bg-indigo-50 text-indigo-500 rounded-full shrink-0 shadow-inner hidden lg:flex">
-            <i class="fa-solid fa-headphones text-xl"></i>
-        </div>
-        
-        <div class="flex-1 w-full flex flex-col sm:flex-row items-start sm:items-center gap-3">
+    <!-- AUDIO CONTROLS -->
+    <div class="w-full bg-white rounded-3xl border-4 border-slate-100 p-3 flex flex-col lg:flex-row gap-4 shrink-0 mt-3 mb-1">
+        <div class="flex-1 w-full flex flex-col sm:flex-row gap-3">
             <div class="flex gap-2 w-full sm:w-auto shrink-0">
-                <div class="flex flex-col flex-1 sm:w-28">
-                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 ml-1">Select Unit</label>
-                    <select id="unitSelect" onchange="changeUnit()" class="bg-slate-100 border border-slate-300 text-slate-700 font-bold px-2 py-2 rounded-xl focus:outline-none focus:border-indigo-500 w-full shadow-inner cursor-pointer text-sm"></select>
-                </div>
-                <div class="flex flex-col flex-1 sm:w-36">
-                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 ml-1">Select Track</label>
-                    <select id="trackSelect" onchange="changeTrack(this.value)" class="bg-slate-100 border border-slate-300 text-slate-700 font-bold px-2 py-2 rounded-xl focus:outline-none focus:border-indigo-500 w-full shadow-inner cursor-pointer text-sm"></select>
-                </div>
+                <select id="unitSelect" onchange="changeUnit()" class="bg-slate-100 border border-slate-300 font-bold px-2 py-2 rounded-xl w-full sm:w-28 text-sm uppercase"></select>
+                <select id="trackSelect" onchange="changeTrack(this.value)" class="bg-slate-100 border border-slate-300 font-bold px-2 py-2 rounded-xl w-full sm:w-36 text-sm"></select>
             </div>
-            
-            <div class="flex-1 w-full mt-2 sm:mt-0">
-                <audio id="audioPlayer" controls controlsList="nodownload" class="w-full" onplay="markAudioListened()">
-                    <source id="audioSource" src="" type="audio/mpeg">
-                </audio>
-            </div>
+            <div class="flex-1 w-full"><audio id="audioPlayer" controls class="w-full"><source id="audioSource" src="" type="audio/mpeg"></audio></div>
         </div>
-
-        <div class="w-full lg:w-auto flex gap-2 shrink-0 mt-2 lg:mt-0">
-            <button onclick="goToReading()" class="flex-1 lg:w-auto bg-violet-600 hover:bg-violet-500 text-white font-black px-4 py-3 rounded-xl shadow-[0_4px_0_#7c3aed] active:translate-y-[4px] active:shadow-[0_0px_0_#7c3aed] transition-all flex items-center justify-center whitespace-nowrap text-sm">
-                <i class="fa-solid fa-microphone-lines mr-1 animate-pulse"></i> READING
-            </button>
-            
-            <button id="btnComplete" onclick="completeLesson()" class="flex-1 lg:w-auto bg-slate-300 text-slate-500 cursor-not-allowed font-black px-4 py-3 rounded-xl shadow-[0_4px_0_#cbd5e1] transition-all flex items-center justify-center whitespace-nowrap text-sm relative group">
-                <i class="fa-solid fa-lock mr-1" id="claimIcon"></i> <span id="claimText">LOCKED</span>
-                <div class="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                    Listen & View Grammar to Unlock
-                </div>
-            </button>
+        <div class="w-full lg:w-auto flex gap-2 shrink-0">
+            <button onclick="goToReading()" class="flex-1 bg-violet-600 text-white font-black px-4 py-3 rounded-xl shadow-[0_4px_0_#7c3aed] text-sm"><i class="fa-solid fa-microphone-lines mr-1 animate-pulse"></i> READING</button>
         </div>
     </div>
   </main>
-
-  <footer class="w-full text-center py-2 shrink-0 z-40 bg-transparent border-t border-slate-200 mt-2">
-      <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">© 2026 Son Nguyen. All rights reserved.</p>
-  </footer>
-
+  
   <script>
-    // ==========================================
-    // 1. CẤU HÌNH FIREBASE
-    // ==========================================
-    const firebaseConfig = {
-        apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
-        authDomain: "roundup-ai-academy.firebaseapp.com",
-        projectId: "roundup-ai-academy",
-        storageBucket: "roundup-ai-academy.firebasestorage.app",
-        messagingSenderId: "723976989630",
-        appId: "1:723976989630:web:45f3de91269e70f604e7ef"
-    };
-
+    // BẮT BUỘC DÁN FIREBASE CONFIG VÀ GEMINI API KEY VÀO ĐÂY
+    const firebaseConfig = { /* CẤU HÌNH FIREBASE Ở ĐÂY */ };
+    const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE"; 
+    
     const GITHUB_BASE_URL = "https://shopkazoku.github.io/roundup-audio";
-    const LEVEL_HIERARCHY = ['starter', 'level_1', 'level_2', 'level_3', 'level_4', 'level_5', 'level_6'];
     const unitMapping = [
         { unit: 1, name: "Unit 1", startTrack: 1, endTrack: 6 },
         { unit: 2, name: "Unit 2", startTrack: 7, endTrack: 11 },
-        { unit: 3, name: "Unit 3", startTrack: 12, endTrack: 17 },
-        { unit: 4, name: "Unit 4", startTrack: 18, endTrack: 23 },
-        { unit: 5, name: "Unit 5", startTrack: 24, endTrack: 29 },
-        { unit: 6, name: "Unit 6", startTrack: 30, endTrack: 35 },
-        { unit: 7, name: "Unit 7", startTrack: 36, endTrack: 41 },
-        { unit: 8, name: "Unit 8", startTrack: 42, endTrack: 47 },
-        { unit: 9, name: "Unit 9", startTrack: 48, endTrack: 52 },
-        { unit: 10, name: "Unit 10", startTrack: 53, endTrack: 58 },
-        { unit: 11, name: "Unit 11", startTrack: 59, endTrack: 64 },
-        { unit: 12, name: "Unit 12", startTrack: 65, endTrack: 70 },
-        { unit: 13, name: "Unit 13", startTrack: 71, endTrack: 76 },
-        { unit: 14, name: "Unit 14", startTrack: 77, endTrack: 81 },
-        { unit: 15, name: "Unit 15", startTrack: 82, endTrack: 88 }
+        { unit: 3, name: "Unit 3", startTrack: 12, endTrack: 17 } // Thêm tiếp các Unit khác
     ];
 
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.database();
-
-    let currentUser = null;
-    let userCoins = 0;
-    let userMaxLevel = "starter"; 
-    let currentlyViewingLevel = "starter"; 
-
-    let hasListenedAudio = false;
-    let hasViewedGrammar = false;
-    let hasClaimed = false;
-    let currentPdfZoom = 'page-width'; 
-
-    const safetyTimer = setTimeout(() => {
-        const icon = document.getElementById('loadingIcon');
-        const text = document.getElementById('loadingText');
-        if(icon && text) {
-            icon.classList.replace('fa-cloud-arrow-down', 'fa-triangle-exclamation');
-            icon.classList.replace('text-indigo-500', 'text-rose-500');
-            text.innerText = "Network Error! Please check your connection.";
-            text.classList.replace('text-slate-500', 'text-rose-500');
-            document.getElementById('loadingBackBtn').classList.remove('hidden');
-        }
-    }, 10000);
+    const auth = firebase.auth(); const db = firebase.database();
+    let currentUser = null; let currentlyViewingLevel = "starter"; let currentPdfZoom = 'page-width'; 
 
     auth.onAuthStateChanged((user) => {
       if (user) {
         currentUser = user;
         db.ref('users/' + user.uid).once('value').then((snapshot) => {
-          clearTimeout(safetyTimer);
-          let data = snapshot.val();
-          
-          if (!data) {
-              data = { coins: 0, current_level: 'starter' };
-              db.ref('users/' + user.uid).set(data);
-          }
-          
-          userCoins = data.coins || 0;
-          userMaxLevel = data.current_level || 'starter'; 
-          currentlyViewingLevel = userMaxLevel; 
-          
-          document.getElementById('displayCoins').innerText = userCoins;
-          buildCourseDropdown(); 
-          buildClassroom(currentlyViewingLevel); 
-          
-          setTimeout(() => {
-              document.getElementById('loadingOverlay').style.opacity = '0';
-              setTimeout(() => {
-                  document.getElementById('loadingOverlay').style.display = 'none';
-                  document.getElementById('mainContent').style.opacity = '1';
-              }, 500);
-          }, 500);
-        }).catch((error) => {
-            clearTimeout(safetyTimer);
-            document.getElementById('loadingIcon').classList.replace('fa-cloud-arrow-down', 'fa-bug');
-            document.getElementById('loadingIcon').classList.replace('text-indigo-500', 'text-rose-500');
-            document.getElementById('loadingText').innerText = "CONNECTION ERROR: " + error.message; 
-            document.getElementById('loadingText').classList.replace('text-slate-500', 'text-rose-500');
-            document.getElementById('loadingBackBtn').classList.remove('hidden');
+          let data = snapshot.val() || { coins: 0, current_level: 'starter' };
+          document.getElementById('displayCoins').innerText = data.coins || 0;
+          currentlyViewingLevel = data.current_level || 'starter'; 
+          document.getElementById('courseSelect').innerHTML = `<option>${currentlyViewingLevel.replace('_', ' ').toUpperCase()} CLASS</option>`;
+          buildClassroom(); 
+          setTimeout(() => { document.getElementById('loadingOverlay').style.display = 'none'; document.getElementById('mainContent').style.opacity = '1'; }, 500);
         });
-      } else { 
-          window.location.href = "index.html"; 
-      }
+      } else { window.location.href = "index.html"; }
     });
 
-    // ==========================================
-    // 2. LÕI ĐIỀU KHIỂN GIAO DIỆN & BÀI HỌC
-    // ==========================================
-    function goToReading() {
-        const unitIndex = parseInt(document.getElementById('unitSelect').value) + 1;
-        window.location.href = `reading.html?level=${currentlyViewingLevel}&unit=${unitIndex}`;
-    }
-
+    function goToReading() { window.location.href = `reading.html?level=${currentlyViewingLevel}`; }
+    
     function zoomPdf(action) {
-        const iframe = document.getElementById('pdfViewer');
-        if (!iframe) return;
-        
-        const rawPdfUrl = `${GITHUB_BASE_URL}/${currentlyViewingLevel}/student_book.pdf`;
-        
-        if (action === 'fit') {
-            currentPdfZoom = 'page-width';
-        } else {
-            if (currentPdfZoom === 'page-width' || typeof currentPdfZoom !== 'number') currentPdfZoom = 100;
-            if (action === 'in') currentPdfZoom += 25;
-            if (action === 'out') currentPdfZoom = Math.max(50, currentPdfZoom - 25);
-        }
-
-        const newSrc = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(rawPdfUrl)}#zoom=${currentPdfZoom}`;
-
-        iframe.style.opacity = '0';
-        setTimeout(() => {
-            iframe.src = newSrc;
-            setTimeout(() => { iframe.style.opacity = '1'; }, 300);
-        }, 150);
+        if (action === 'fit') currentPdfZoom = 'page-width';
+        else { if (typeof currentPdfZoom !== 'number') currentPdfZoom = 100; action === 'in' ? currentPdfZoom += 25 : currentPdfZoom = Math.max(50, currentPdfZoom - 25); }
+        document.getElementById('pdfViewer').src = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(GITHUB_BASE_URL+'/'+currentlyViewingLevel+'/student_book.pdf')}#zoom=${currentPdfZoom}`;
     }
 
     function switchWorkspace(tabId) {
         document.querySelectorAll('.workspace-content').forEach(el => el.classList.add('hidden'));
-        document.querySelectorAll('.tab-btn').forEach(el => {
-            el.classList.remove('active', 'bg-indigo-600', 'text-white', 'border-indigo-700');
-            el.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
-            el.style.boxShadow = 'none';
-        });
-
+        document.querySelectorAll('.tab-btn').forEach(el => { el.classList.remove('active', 'bg-indigo-600', 'text-white'); el.classList.add('bg-white', 'text-slate-600'); });
         document.getElementById(tabId).classList.remove('hidden');
-        const btn = document.getElementById('btn_' + tabId);
-        btn.classList.add('active');
-        btn.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
-
-        if(tabId === 'grammarTab') {
-            hasViewedGrammar = true;
-            checkClaimUnlock();
-        }
+        document.getElementById('btn_' + tabId).classList.add('active'); document.getElementById('btn_' + tabId).classList.remove('bg-white', 'text-slate-600');
     }
 
-    function buildCourseDropdown() {
-        const select = document.getElementById('courseSelect');
-        select.innerHTML = '';
-        let maxIndex = LEVEL_HIERARCHY.indexOf(userMaxLevel);
-        if (maxIndex === -1) maxIndex = 0; 
-        for (let i = 0; i <= maxIndex; i++) {
-            let lvl = LEVEL_HIERARCHY[i];
-            let opt = document.createElement('option');
-            opt.value = lvl; opt.innerText = lvl.replace('_', ' ').toUpperCase() + ' CLASS';
-            if (lvl === currentlyViewingLevel) opt.selected = true;
-            select.appendChild(opt);
-        }
-    }
-
-    function switchLevel(newLevel) {
-        currentlyViewingLevel = newLevel;
-        document.getElementById('loadingOverlay').style.display = 'flex';
-        document.getElementById('loadingOverlay').style.opacity = '1';
-        document.getElementById('mainContent').style.opacity = '0';
-        buildClassroom(currentlyViewingLevel);
-        
-        setTimeout(() => {
-            document.getElementById('loadingOverlay').style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('loadingOverlay').style.display = 'none';
-                document.getElementById('mainContent').style.opacity = '1';
-            }, 500);
-        }, 1000);
-    }
-
-    function buildClassroom(levelToLoad) {
-        const rawPdfUrl = `${GITHUB_BASE_URL}/${levelToLoad}/student_book.pdf`;
-        currentPdfZoom = 'page-width'; 
-        const finalPdfUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(rawPdfUrl)}#zoom=${currentPdfZoom}`;
-            
-        const viewer = document.getElementById('pdfViewer');
-        if (viewer) viewer.src = finalPdfUrl;
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const targetUnit = urlParams.get('unit');
-
-        const unitSelect = document.getElementById('unitSelect');
-        unitSelect.innerHTML = '';
-        unitMapping.forEach((item, index) => {
-            let opt = document.createElement('option');
-            opt.value = index; opt.innerText = item.name;
-            if (targetUnit && index === (parseInt(targetUnit) - 1)) opt.selected = true;
-            unitSelect.appendChild(opt);
-        });
+    function buildClassroom() {
+        zoomPdf('fit');
+        document.getElementById('unitSelect').innerHTML = unitMapping.map((u, i) => `<option value="${i}">${u.name}</option>`).join('');
         changeUnit(); 
     }
-    
+
     function changeUnit() {
-        updateTrackList();
+        let u = unitMapping[document.getElementById('unitSelect').value]; let trackHTML = '';
+        for(let i = u.startTrack; i <= u.endTrack; i++) { let t = i < 10 ? '0'+i : i; trackHTML += `<option value="${GITHUB_BASE_URL}/${currentlyViewingLevel}/track_${t}.mp3">Track ${t}</option>`; }
+        document.getElementById('trackSelect').innerHTML = trackHTML;
+        changeTrack(document.getElementById('trackSelect').value);
         fetchGrammarData();
-        hasListenedAudio = false;
-        hasViewedGrammar = false;
-        hasClaimed = false;
-        
-        const btn = document.getElementById('btnComplete');
-        btn.className = "flex-1 lg:w-auto bg-slate-300 text-slate-500 cursor-not-allowed font-black px-4 py-3 rounded-xl shadow-[0_4px_0_#cbd5e1] transition-all flex items-center justify-center whitespace-nowrap text-sm relative group";
-        document.getElementById('claimIcon').className = "fa-solid fa-lock mr-1";
-        document.getElementById('claimText').innerText = "LOCKED";
     }
-
-    function updateTrackList() {
-        const unitIndex = document.getElementById('unitSelect').value;
-        const selectedUnit = unitMapping[unitIndex];
-        const trackSelect = document.getElementById('trackSelect');
-        trackSelect.innerHTML = '';
-        for(let i = selectedUnit.startTrack; i <= selectedUnit.endTrack; i++) {
-            let trackNum = i < 10 ? '0' + i : i.toString();
-            let opt = document.createElement('option');
-            opt.value = `${GITHUB_BASE_URL}/${currentlyViewingLevel}/track_${trackNum}.mp3`;
-            opt.innerText = `Track ${trackNum}`;
-            trackSelect.appendChild(opt);
-        }
-        changeTrack(trackSelect.value);
-    }
-
-    function changeTrack(trackUrl) {
-        const audioEl = document.getElementById('audioPlayer');
-        document.getElementById('audioSource').src = trackUrl;
-        audioEl.load();
-    }
+    function changeTrack(url) { document.getElementById('audioSource').src = url; document.getElementById('audioPlayer').load(); }
 
     function fetchGrammarData() {
-        const unitIndex = parseInt(document.getElementById('unitSelect').value) + 1;
-        const targetUnit = "unit_" + unitIndex;
-
-        db.ref('grammar/' + currentlyViewingLevel + '/' + targetUnit).once('value').then(snap => {
-            const data = snap.val();
-            const examArea = document.getElementById('grammarExamples');
-            examArea.innerHTML = "";
-
+        let uIdx = parseInt(document.getElementById('unitSelect').value) + 1;
+        db.ref(`grammar/${currentlyViewingLevel}/unit_${uIdx}`).once('value').then(snap => {
+            const data = snap.val(); const examArea = document.getElementById('grammarExamples'); examArea.innerHTML = "";
             if(data) {
                 document.getElementById('gramTitle').innerText = data.title || "Grammar Focus";
                 document.getElementById('gramExplanation').innerText = data.explanation || "";
-
-                const genExampleHTML = (en, vi) => {
-                    if(!en) return "";
-                    const cleanEn = en.replace(/'/g, "\\'"); 
-                    return `
-                    <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 flex items-start gap-4 hover:bg-indigo-50 transition">
-                        <button onclick="readGrammarAloud('${cleanEn}')" class="bg-indigo-500 hover:bg-indigo-400 text-white w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-md transition transform active:scale-95 mt-1" title="Listen">
-                            <i class="fa-solid fa-volume-high"></i>
-                        </button>
-                        <div>
-                            <p class="font-black text-lg text-slate-800">${en}</p>
-                            <p class="text-sm font-bold text-slate-500 italic mt-1">${vi}</p>
-                        </div>
-                    </div>`;
-                };
-
-                if(data.ex1_en) examArea.innerHTML += genExampleHTML(data.ex1_en, data.ex1_vi);
-                if(data.ex2_en) examArea.innerHTML += genExampleHTML(data.ex2_en, data.ex2_vi);
-            } else {
-                document.getElementById('gramTitle').innerText = "Grammar Note";
-                document.getElementById('gramExplanation').innerText = "Grammar content is being updated. Please ask your teacher to add it via the Admin Panel.";
-            }
+                if(data.ex1_en) examArea.innerHTML += `<div class="bg-indigo-50/50 p-4 rounded-xl flex gap-4"><button onclick="readAloudDict('${data.ex1_en.replace(/'/g, "\\'")}')" class="bg-indigo-500 text-white w-10 h-10 rounded-full shrink-0"><i class="fa-solid fa-volume-high"></i></button><div><p class="font-black text-slate-800">${data.ex1_en}</p><p class="text-sm font-bold text-slate-500">${data.ex1_vi}</p></div></div>`;
+            } else { document.getElementById('gramTitle').innerText = "Grammar Details"; document.getElementById('gramExplanation').innerText = "No grammar rules added for this unit yet."; }
         });
     }
 
-    function readGrammarAloud(text) {
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'en-US';
-            utterance.rate = 0.9;
-            window.speechSynthesis.speak(utterance);
-        }
-    }
-
-    function markAudioListened() {
-        hasListenedAudio = true;
-        checkClaimUnlock();
-    }
-
-    function checkClaimUnlock() {
-        if (hasClaimed) return;
-        const btn = document.getElementById('btnComplete');
-        
-        if (hasListenedAudio && hasViewedGrammar) {
-            btn.classList.remove('bg-slate-300', 'text-slate-500', 'cursor-not-allowed', 'shadow-[0_4px_0_#cbd5e1]');
-            btn.classList.add('bg-emerald-500', 'hover:bg-emerald-400', 'text-white', 'shadow-[0_4px_0_#059669]', 'active:translate-y-[4px]', 'active:shadow-[0_0px_0_#059669]', 'cursor-pointer');
-            document.getElementById('claimIcon').classList.replace('fa-lock', 'fa-check-circle');
-            document.getElementById('claimText').innerText = "CLAIM +50";
-        }
-    }
-
-    function completeLesson() {
-        if (hasClaimed || !hasListenedAudio || !hasViewedGrammar) return;
-        userCoins += 50;
-        db.ref('users/' + currentUser.uid).update({ coins: userCoins }).then(() => {
-            document.getElementById('displayCoins').innerText = userCoins;
-            confetti({ particleCount: 100, spread: 70, origin: { y: 0.8 }, colors: ['#10b981', '#fbbf24'] });
-            
-            const btn = document.getElementById('btnComplete');
-            btn.innerHTML = "<i class='fa-solid fa-check mr-1'></i> CLAIMED!";
-            btn.classList.replace('bg-emerald-500', 'bg-slate-300');
-            btn.classList.replace('hover:bg-emerald-400', 'hover:bg-slate-300');
-            btn.classList.replace('text-white', 'text-slate-500');
-            btn.classList.replace('shadow-[0_4px_0_#cbd5e1]', 'shadow-[0_4px_0_#cbd5e1]');
-            btn.classList.remove('cursor-pointer');
-            btn.classList.add('pointer-events-none');
-            hasClaimed = true;
-        });
-    }
-
-    // ==========================================
-    // 3. TỪ ĐIỂN SMART DICTIONARY (2 CHẾ ĐỘ)
-    // ==========================================
-    let currentWordToPlay = '';
-
-    // CHẾ ĐỘ 1: SIDEBAR TỪ ĐIỂN (BÊN SÁCH PDF CHO PHỤ HUYNH)
-    function toggleDict() {
-        const sidebar = document.getElementById('dictSidebar');
-        sidebar.classList.toggle('translate-x-full');
-    }
-
+    // --- DICTIONARY ---
+    function toggleDict() { document.getElementById('dictSidebar').classList.toggle('translate-x-full'); }
     async function translateWord(word = null) {
-        const inputWord = word || document.getElementById('dictInput').value.trim();
-        if (!inputWord) return;
-        
-        document.getElementById('dictInput').value = inputWord;
-        const resultBox = document.getElementById('dictResult');
-        
-        resultBox.innerHTML = '<div class="text-center text-indigo-500 mt-10"><i class="fa-solid fa-spinner fa-spin text-4xl"></i><p class="text-sm font-bold mt-3 animate-pulse">Translating...</p></div>';
-        document.getElementById('dictSidebar').classList.remove('translate-x-full');
-
+        const txt = word || document.getElementById('dictInput').value.trim(); if (!txt) return;
+        document.getElementById('dictInput').value = txt; document.getElementById('dictSidebar').classList.remove('translate-x-full');
+        document.getElementById('dictResult').innerHTML = '<div class="text-center text-indigo-500 mt-10"><i class="fa-solid fa-spinner fa-spin text-4xl"></i></div>';
         try {
-            const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(inputWord)}&langpair=en|vi`);
-            const data = await response.json();
-            const translatedText = data.responseData.translatedText;
-            
-            resultBox.innerHTML = `
-                <div class="bg-white rounded-2xl p-5 border-2 border-indigo-100 shadow-sm relative overflow-hidden mt-2">
-                    <div class="absolute top-0 right-0 text-6xl text-indigo-50 opacity-50 transform translate-x-4 -translate-y-2"><i class="fa-solid fa-quote-right"></i></div>
-                    <h3 class="text-2xl font-black text-indigo-900 mb-2 relative z-10">${inputWord}</h3>
-                    <p class="text-emerald-600 font-black text-xl relative z-10">${translatedText}</p>
-                </div>
-                <button onclick="readAloudDict('${inputWord.replace(/'/g, "\\'")}')" class="mt-4 w-full bg-indigo-600 text-white font-black py-4 rounded-xl shadow-[0_5px_0_#4338ca] hover:bg-indigo-500 active:translate-y-[5px] active:shadow-[0_0px_0_#4338ca] transition-all flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-volume-high text-lg"></i> PHÁT ÂM
-                </button>
-            `;
-        } catch (error) {
-            resultBox.innerHTML = '<div class="bg-rose-50 text-rose-600 p-4 rounded-xl text-center font-bold text-sm">Lỗi kết nối từ điển. Vui lòng thử lại!</div>';
-        }
+            let res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=en|vi`); let data = await res.json();
+            document.getElementById('dictResult').innerHTML = `<div class="bg-white rounded-2xl p-5 shadow-sm text-center"><h3 class="text-2xl font-black text-indigo-900 mb-2">${txt}</h3><p class="text-emerald-600 font-black text-xl mb-4">${data.responseData.translatedText}</p><button onclick="readAloudDict('${txt.replace(/'/g, "\\'")}')" class="bg-indigo-100 text-indigo-600 w-14 h-14 rounded-full mx-auto"><i class="fa-solid fa-volume-high text-2xl"></i></button></div>`;
+        } catch(e) {}
     }
+    function readAloudDict(text) { if ('speechSynthesis' in window) { window.speechSynthesis.cancel(); let u = new SpeechSynthesisUtterance(text); u.lang='en-US'; window.speechSynthesis.speak(u); } }
 
-    function readAloudDict(text) {
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'en-US';
-            window.speechSynthesis.speak(utterance);
-        }
-    }
-
-    // CHẾ ĐỘ 2: POPUP BÔI ĐEN (BÊN TRONG GRAMMAR)
     const dictPopup = document.getElementById('dictPopup');
-
     document.getElementById('grammarTab').addEventListener('mouseup', async (e) => {
-        let selectedText = window.getSelection().toString().trim();
-        
-        if (selectedText.length > 0 && selectedText.length < 40) {
-            currentWordToPlay = selectedText;
-            document.getElementById('dictPopupWord').innerText = selectedText;
-            document.getElementById('dictPopupMeaning').innerText = "Translating...";
-            
-            let x = e.clientX;
-            let y = e.clientY + 20;
-            if(x + 260 > window.innerWidth) x = window.innerWidth - 270;
-            if(y + 100 > window.innerHeight) y = e.clientY - 120; 
-            
-            dictPopup.style.left = `${x}px`;
-            dictPopup.style.top = `${y}px`;
-            dictPopup.classList.remove('hidden');
-            
-            setTimeout(() => {
-                dictPopup.classList.remove('opacity-0', 'translate-y-2');
-            }, 10);
-
-            try {
-                let res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(selectedText)}&langpair=en|vi`);
-                let data = await res.json();
-                document.getElementById('dictPopupMeaning').innerText = data.responseData.translatedText || "No translation found.";
-            } catch(err) {
-                document.getElementById('dictPopupMeaning').innerText = "Translation error. Please check network.";
-            }
+        let txt = window.getSelection().toString().trim();
+        if (txt.length > 0 && txt.length < 40) {
+            document.getElementById('dictPopupWord').innerText = txt; document.getElementById('dictPopupMeaning').innerText = "Translating...";
+            let x = e.clientX; let y = e.clientY + 20;
+            if(x + 260 > window.innerWidth) x = window.innerWidth - 270; if(y + 100 > window.innerHeight) y = e.clientY - 120; 
+            dictPopup.style.left = `${x}px`; dictPopup.style.top = `${y}px`; dictPopup.classList.remove('hidden');
+            setTimeout(() => { dictPopup.classList.remove('opacity-0', 'translate-y-2'); }, 10);
+            try { let res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=en|vi`); let data = await res.json(); document.getElementById('dictPopupMeaning').innerText = data.responseData.translatedText || "Not found."; } catch(err) {}
         }
     });
+    document.addEventListener('mousedown', (e) => { if (!dictPopup.contains(e.target)) { dictPopup.classList.add('opacity-0', 'translate-y-2'); setTimeout(() => { dictPopup.classList.add('hidden'); }, 200); } });
 
-    document.addEventListener('mousedown', (e) => {
-        if (!dictPopup.contains(e.target)) {
-            dictPopup.classList.add('opacity-0', 'translate-y-2');
-            setTimeout(() => { dictPopup.classList.add('hidden'); }, 200);
+    // --- AI TUTOR CHAT ---
+    let chatImg = null; let isRec = false; let rec = null;
+    function previewImage(input) { if(input.files && input.files[0]) { let r = new FileReader(); r.onload = (e) => { chatImg = e.target.result; document.getElementById('imgPreview').src = chatImg; document.getElementById('imgPreviewContainer').classList.remove('hidden'); }; r.readAsDataURL(input.files[0]); } }
+    function removeImage() { chatImg = null; document.getElementById('imgPreviewContainer').classList.add('hidden'); document.getElementById('imageUpload').value = ""; }
+
+    if(window.SpeechRecognition || window.webkitSpeechRecognition) {
+        rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)(); rec.lang = 'en-US';
+        rec.onresult = (e) => { document.getElementById('chatInput').value += e.results[0][0].transcript + " "; };
+        rec.onend = () => { isRec = false; document.getElementById('btnMicChat').classList.remove('recording-pulse', 'text-rose-500'); };
+    }
+    function toggleMicChat() { if(!rec) return; if(isRec){rec.stop();}else{rec.start(); isRec=true; document.getElementById('btnMicChat').classList.add('recording-pulse', 'text-rose-500');} }
+
+    async function sendChatMessage() {
+        const inp = document.getElementById('chatInput'); const txt = inp.value.trim(); if(!txt && !chatImg) return;
+        renderMsg('user', txt, chatImg); const pTxt = txt; const pImg = chatImg; inp.value = ""; inp.style.height = 'auto'; removeImage();
+        const lId = "load_"+Date.now(); renderMsg('ai', '<i class="fa-solid fa-ellipsis fa-fade text-2xl"></i>', null, lId);
+        try {
+            let c = [{ role: "user", parts: [{ text: "System Rule: You are an English Tutor. Guide the student to answers, evaluate right/wrong, explain why. Be encouraging.\n\nStudent: " + pTxt }] }];
+            if(pImg) c[0].parts.push({ inline_data: { mime_type: pImg.match(/[^:]\w+\/[\w-+\d.]+(?=;|,)/)[0], data: pImg.split(',')[1] } });
+            let res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: c }) });
+            let data = await res.json(); document.getElementById(lId).remove();
+            renderMsg('ai', data.candidates[0].content.parts[0].text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>'));
+        } catch (e) { document.getElementById(lId).remove(); renderMsg('ai', '<span class="text-rose-500">API Connection error.</span>'); }
+    }
+
+    function renderMsg(role, text, img = null, id = "") {
+        const h = document.getElementById('chatHistory'); const d = document.createElement('div');
+        if(role === 'user') {
+            d.className = "flex gap-3 max-w-[85%] ml-auto flex-row-reverse";
+            d.innerHTML = `<div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center shrink-0"><i class="fa-solid fa-user"></i></div><div class="bg-indigo-600 text-white p-3 rounded-2xl rounded-tr-none break-words">${img ? `<img src="${img}" class="max-w-full rounded-lg mb-2">`:""}${text}</div>`;
+        } else {
+            d.className = "flex gap-3 max-w-[90%]"; if(id) d.id = id;
+            d.innerHTML = `<div class="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white shrink-0"><i class="fa-solid fa-user-graduate"></i></div><div class="bg-white border p-3 rounded-2xl rounded-tl-none break-words">${text}</div>`;
         }
-    });
-
-    function playDictAudio() {
-        if (!currentWordToPlay || !('speechSynthesis' in window)) return;
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(currentWordToPlay);
-        utterance.lang = 'en-US';
-        window.speechSynthesis.speak(utterance);
+        h.appendChild(d); h.scrollTop = h.scrollHeight;
     }
   </script>
 </body>
