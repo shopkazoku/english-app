@@ -304,6 +304,17 @@
     renderMsg('ai', '<span class="text-rose-500 font-bold">Lỗi kết nối API. Boss kiểm tra lại API Key nhé.</span>'); 
   }
 }
+    function renderMsg(role, text, img = null, id = "") {
+        const h = document.getElementById('chatHistory'); const d = document.createElement('div');
+        if(role === 'user') {
+            d.className = "flex gap-3 max-w-[85%] ml-auto flex-row-reverse";
+            d.innerHTML = `<div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center shrink-0"><i class="fa-solid fa-user"></i></div><div class="bg-indigo-600 text-white p-3 rounded-2xl rounded-tr-none break-words">${img ? `<img src="${img}" class="max-w-full rounded-lg mb-2">`:""}${text}</div>`;
+        } else {
+            d.className = "flex gap-3 max-w-[90%]"; if(id) d.id = id;
+            d.innerHTML = `<div class="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white shrink-0"><i class="fa-solid fa-user-graduate"></i></div><div class="bg-white border p-3 rounded-2xl rounded-tl-none break-words">${text}</div>`;
+        }
+        h.appendChild(d); h.scrollTop = h.scrollHeight;
+    }
   </script>
 </body>
 </html>
