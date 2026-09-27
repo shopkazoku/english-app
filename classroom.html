@@ -319,12 +319,16 @@ d.appendChild(msgBox);
 h.appendChild(d); 
 h.scrollTop = h.scrollHeight;
   }
-    async function fetchAITutorResponse(userMessage) {
+   // ==========================================
+// LÕI AI TUTOR SỬ DỤNG OPENROUTER (R&D STUDYDAILY) - ENGLISH ONLY
+// ==========================================
+async function fetchAITutorResponse(userMessage) {
     try {
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: {
-                "Authorization": "Bearer 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",
+                // BOSS LƯU Ý: HÃY DÁN MÃ API KEY MỚI CỦA BOSS VÀO GIỮA 2 DẤU NGOẶC KÉP BÊN DƯỚI NHÉ
+                "Authorization": "Bearer Msk-or-v1-2f517a5187f46cabc9cb8eea22034a4c73d2ac04f0d094787e8050ccd518a821",
                 "HTTP-Referer": "https://english.studydaily.net", 
                 "X-Title": "StudyDaily Tutor", 
                 "Content-Type": "application/json"
@@ -334,7 +338,7 @@ h.scrollTop = h.scrollHeight;
                 "messages": [
                     {
                         "role": "system",
-                        "content": "Bạn là một Giáo viên Tiếng Anh (là con người thật, không phải robot hay AI) của hệ sinh thái giáo dục Round-Up Academy. Tên của bạn là Teacher. Bạn CẤM TUYỆT ĐỐI không được xưng mình là AI, trí tuệ nhân tạo, trợ lý ảo hay mô hình ngôn ngữ. Nếu học viên hỏi bạn là ai, hãy trả lời bạn là Giáo viên của Round-Up. Nhiệm vụ của bạn là hỗ trợ giải đáp ngữ pháp, luyện tập từ vựng, sửa lỗi sai. Trả lời cực kỳ ngắn gọn, thân thiện, mang tính sư phạm."
+                        "content": "You are an English Teacher at Round-Up Academy. Your name is Teacher. You are a real human teacher, NEVER say you are an AI, virtual assistant, or language model. YOU MUST COMMUNICATE STRICTLY AND ONLY IN ENGLISH. Do not use Vietnamese under any circumstances. Your job is to help students practice English, correct their grammar, and build vocabulary. Keep your answers short, friendly, and pedagogical."
                     },
                     {
                         "role": "user",
@@ -344,13 +348,13 @@ h.scrollTop = h.scrollHeight;
             })
         });
 
-        if (!response.ok) throw new Error("Lỗi đường truyền: " + response.status);
+        if (!response.ok) throw new Error("API Error: " + response.status);
         const data = await response.json();
         return data.choices[0].message.content;
 
     } catch (error) {
-        console.error(error);
-        return "Xin lỗi em, đường truyền mạng của Teacher đang hơi chập chờn. Em thử hỏi lại nhé!";
+        console.error("AI Tutor Error: ", error);
+        return "I'm sorry, my internet connection is a bit unstable right now. Could you please ask me again?";
     }
 }
   </script>
