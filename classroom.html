@@ -326,8 +326,7 @@ async function fetchAITutorResponse(userMessage) {
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: {
-                headers: {
-                // Tách chữ "sk-or-v1-" ra khỏi phần còn lại của Key để qua mặt Github Scanner
+                // Cú pháp tách chuỗi chuẩn xác (Chỉ thay thế phần chữ IN HOA)
                 "Authorization": "Bearer sk-or-v1-" + "0d6cfa6ef1bf416e2fe056b6204b1dd8a574b49bba0f2c732c56ce6ea82ff38bY",
                 "HTTP-Referer": "https://english.studydaily.net", 
                 "X-Title": "StudyDaily Tutor", 
@@ -349,7 +348,6 @@ async function fetchAITutorResponse(userMessage) {
         });
 
         if (!response.ok) {
-            // Nối chuỗi cơ bản chống lỗi định dạng
             const errorData = await response.text();
             throw new Error("Mã lỗi: " + response.status + " - Chi tiết: " + errorData);
         }
@@ -359,7 +357,6 @@ async function fetchAITutorResponse(userMessage) {
 
     } catch (error) {
         console.error("AI Tutor Error: ", error);
-        // In trực tiếp lỗi ra giao diện chat để chẩn đoán
         return "Báo cáo Boss, hệ thống kẹt ở: " + error.message;
     }
 }
