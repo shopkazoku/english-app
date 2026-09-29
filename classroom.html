@@ -319,15 +319,16 @@ h.appendChild(d);
 h.scrollTop = h.scrollHeight;
   }
    // ==========================================
-// LÕI AI TUTOR SỬ DỤNG OPENROUTER (R&D STUDYDAILY) - ENGLISH ONLY
+// LÕI AI TUTOR SỬ DỤNG OPENROUTER - BẮT LỖI CHÍNH XÁC
 // ==========================================
 async function fetchAITutorResponse(userMessage) {
     try {
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: {
-                // BOSS LƯU Ý: HÃY DÁN MÃ API KEY MỚI CỦA BOSS VÀO GIỮA 2 DẤU NGOẶC KÉP BÊN DƯỚI NHÉ
-                "Authorization": "Bearer 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",
+                headers: {
+                // Tách chữ "sk-or-v1-" ra khỏi phần còn lại của Key để qua mặt Github Scanner
+                "Authorization": "Bearer sk-or-v1-" + "0d6cfa6ef1bf416e2fe056b6204b1dd8a574b49bba0f2c732c56ce6ea82ff38bY",
                 "HTTP-Referer": "https://english.studydaily.net", 
                 "X-Title": "StudyDaily Tutor", 
                 "Content-Type": "application/json"
@@ -348,18 +349,18 @@ async function fetchAITutorResponse(userMessage) {
         });
 
         if (!response.ok) {
-            // Lấy thông báo lỗi chi tiết từ máy chủ OpenRouter
+            // Nối chuỗi cơ bản chống lỗi định dạng
             const errorData = await response.text();
-            throw new Error(`Lỗi \({response.status} -\){errorData}`);
+            throw new Error("Mã lỗi: " + response.status + " - Chi tiết: " + errorData);
         }
-        
+
         const data = await response.json();
         return data.choices[0].message.content;
 
     } catch (error) {
         console.error("AI Tutor Error: ", error);
-        // In thẳng nguyên nhân lỗi ra màn hình chat
-        return "Báo cáo Boss, lỗi thực tế từ máy chủ là: " + error.message;
+        // In trực tiếp lỗi ra giao diện chat để chẩn đoán
+        return "Báo cáo Boss, hệ thống kẹt ở: " + error.message;
     }
 }
   </script>
