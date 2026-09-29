@@ -294,10 +294,9 @@ function toggleMicChat() {
     document.getElementById(lId).remove();
     
     let finalHtml = response.replace(/\*\*(.*?)\*\*/g, '**$1**');
-    finalHtml = finalHtml.replace(/\n/g, '');
+finalHtml = finalHtml.replace(/\n/g, '');
 renderMsg('tutor', finalHtml);
 }
-
 function renderMsg(role, text, id = "") {
 const h = document.getElementById('chatHistory');
 const d = document.createElement('div');
@@ -328,7 +327,7 @@ async function fetchAITutorResponse(userMessage) {
             method: "POST",
             headers: {
                 // BOSS LƯU Ý: HÃY DÁN MÃ API KEY MỚI CỦA BOSS VÀO GIỮA 2 DẤU NGOẶC KÉP BÊN DƯỚI NHÉ
-                "Authorization": "Bearer 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",
+                "Authorization": "Bearer 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",
                 "HTTP-Referer": "https://english.studydaily.net", 
                 "X-Title": "StudyDaily Tutor", 
                 "Content-Type": "application/json"
@@ -348,13 +347,19 @@ async function fetchAITutorResponse(userMessage) {
             })
         });
 
-        if (!response.ok) throw new Error("API Error: " + response.status);
+        if (!response.ok) {
+            // Lấy thông báo lỗi chi tiết từ máy chủ OpenRouter
+            const errorData = await response.text();
+            throw new Error(`Lỗi \({response.status} -\){errorData}`);
+        }
+        
         const data = await response.json();
         return data.choices[0].message.content;
 
     } catch (error) {
         console.error("AI Tutor Error: ", error);
-        return "I'm sorry, my internet connection is a bit unstable right now. Could you please ask me again?";
+        // In thẳng nguyên nhân lỗi ra màn hình chat
+        return "Báo cáo Boss, lỗi thực tế từ máy chủ là: " + error.message;
     }
 }
   </script>
