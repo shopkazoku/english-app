@@ -280,7 +280,28 @@ function toggleMicChat() {
    // ==========================================
 // 1. HÀM XỬ LÝ GIAO DIỆN (BẮT ĐƯỢC CHỮ VÀ ẢNH - CHỐNG VỠ KHUNG 100%)
 // ==========================================
-async function sendChatMessage() {
+function renderMsg(role, text, id = "") {
+    const h = document.getElementById('chatHistory');
+    const d = document.createElement('div');
+    d.className = role === 'user' ? "flex gap-3 max-w-[85%] ml-auto flex-row-reverse" : "flex gap-3 max-w-[90%]";
+    if (id) d.id = id;
+    const avatar = document.createElement('div');
+    avatar.className = role === 'user' ? "w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center shrink-0" : "w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white shrink-0";
+
+    const icon = document.createElement('i');
+    icon.className = role === 'user' ? "fa-solid fa-user" : "fa-solid fa-user-graduate";
+    avatar.appendChild(icon);
+
+    const msgBox = document.createElement('div');
+    msgBox.className = role === 'user' ? "bg-indigo-600 text-white p-3 rounded-2xl rounded-tr-none break-words" : "bg-white border p-3 rounded-2xl rounded-tl-none break-words";
+    msgBox.innerHTML = text;
+
+    d.appendChild(avatar);
+    d.appendChild(msgBox);
+    h.appendChild(d); 
+    h.scrollTop = h.scrollHeight;
+}
+    async function sendChatMessage() {
     const inp = document.getElementById('chatInput'); 
     const txt = inp.value.trim(); 
     
