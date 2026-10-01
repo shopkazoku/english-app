@@ -277,87 +277,104 @@ function removeImage() {
 function toggleMicChat() { 
     alert("Tính năng Voice tạm thời vô hiệu hóa trên mô hình Llama 3. Vui lòng dùng Text!"); 
 }
-    async function sendChatMessage() {
+   // ==========================================
+// 1. HÀM XỬ LÝ GIAO DIỆN (BẮT ĐƯỢC CHỮ VÀ ẢNH - CHỐNG VỠ KHUNG 100%)
+// ==========================================
+async function sendChatMessage() {
     const inp = document.getElementById('chatInput'); 
     const txt = inp.value.trim(); 
-    if(!txt) return; 
     
-    renderMsg('user', txt); 
+    if(!txt && !chatImg) return; 
+    
+    let displayMsg = txt;
+    if (chatImg) {
+        // Đã mã hóa dấu ngoặc thành \x3C và \x3E để an toàn tuyệt đối khi copy
+        displayMsg += "\x3Cbr\x3E\x3Cimg src='" + chatImg + "' style='max-height:120px; border-radius:8px; margin-top:8px; border: 2px solid #e2e8f0;'\x3E";
+    }
+    renderMsg('user', displayMsg); 
+    
     inp.value = ""; 
     inp.style.height = 'auto'; 
+    
+    const currentImg = chatImg;
     removeImage();
     
     const lId = "load_" + Date.now(); 
-    renderMsg('tutor', 'Đang suy nghĩ...', lId);
+    renderMsg('tutor', '\x3Ci class="fa-solid fa-spinner fa-spin mr-2"\x3E\x3C/i\x3ETeacher Emma is reading...', lId);
     
-    const response = await fetchAITutorResponse(txt);
-    document.getElementById(lId).remove();
-    
-    let finalHtml = response.replace(/\*\*(.*?)\*\*/g, '**$1**');
-finalHtml = finalHtml.replace(/\n/g, '');
-renderMsg('tutor', finalHtml);
-}
-function renderMsg(role, text, id = "") {
-const h = document.getElementById('chatHistory');
-const d = document.createElement('div');
-d.className = role === 'user' ? "flex gap-3 max-w-[85%] ml-auto flex-row-reverse" : "flex gap-3 max-w-[90%]";
-if (id) d.id = id;
-  const avatar = document.createElement('div');
-avatar.className = role === 'user' ? "w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center shrink-0" : "w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white shrink-0";
-
-const icon = document.createElement('i');
-icon.className = role === 'user' ? "fa-solid fa-user" : "fa-solid fa-user-graduate";
-avatar.appendChild(icon);
-
-const msgBox = document.createElement('div');
-msgBox.className = role === 'user' ? "bg-indigo-600 text-white p-3 rounded-2xl rounded-tr-none break-words" : "bg-white border p-3 rounded-2xl rounded-tl-none break-words";
-msgBox.innerHTML = text;
-
-d.appendChild(avatar);
-d.appendChild(msgBox);
-h.appendChild(d); 
-h.scrollTop = h.scrollHeight;
-  }
-   // ==========================================
-// LÕI AI TUTOR SỬ DỤNG OPENROUTER - BẮT LỖI CHÍNH XÁC
-// ==========================================
-async function fetchAITutorResponse(userMessage) {
     try {
-        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        const response = await fetchAITutorResponse(txt, currentImg);
+        if (document.getElementById(lId)) document.getElementById(lId).remove();
+        
+        if (!response) {
+            renderMsg('tutor', 'Oops! Could not connect to Emma.');
+            return;
+        }
+        
+        let finalHtml = String(response).replace(/\*\*(.*?)\*\*/g, '\x3Cstrong\x3E$1\x3C/strong\x3E');
+        finalHtml = finalHtml.replace(/\n/g, '\x3Cbr\x3E');
+        renderMsg('tutor', finalHtml);
+
+    } catch (err) {
+        if (document.getElementById(lId)) document.getElementById(lId).remove();
+        renderMsg('tutor', 'System Error: ' + err.message);
+    }
+}
+
+// ==========================================
+// 2. LÕI AI TUTOR SỬ DỤNG GOOGLE GEMINI VISION
+// ==========================================
+async function fetchAITutorResponse(userMessage, base64Image) {
+    try {
+        // Đảm bảo biến GEMINI_API_KEY ở đầu file bắt đầu bằng "AIzaSy..."
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M}`;
+        
+        let userPrompt = userMessage || "Please check my attached exercise.";
+        let parts = [{ "text": userPrompt }];
+
+        if (base64Image) {
+            const mimeType = base64Image.split(';')[0].split(':')[1];
+            const base64Data = base64Image.split(',')[1];
+            parts.push({
+                "inlineData": {
+                    "mimeType": mimeType,
+                    "data": base64Data
+                }
+            });
+        }
+
+        const response = await fetch(url, {
             method: "POST",
             headers: {
-                // Cú pháp tách chuỗi chuẩn xác (Chỉ thay thế phần chữ IN HOA)
-                "Authorization": "Bearer sk-or-v1-" + "180645b2156b40b2f9eac0942dc7f94a66700e732c222ea775236f7a904c21bd",
-                "HTTP-Referer": "https://english.studydaily.net", 
-                "X-Title": "StudyDaily Tutor", 
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                "model": "meta-llama/llama-3-8b-instruct:free",
-                "messages": [
-                    {
-                        "role": "system",
-                        "content": "You are an English Teacher at Round-Up Academy. Your name is Teacher. You are a real human teacher, NEVER say you are an AI, virtual assistant, or language model. YOU MUST COMMUNICATE STRICTLY AND ONLY IN ENGLISH. Do not use Vietnamese under any circumstances. Your job is to help students practice English, correct their grammar, and build vocabulary. Keep your answers short, friendly, and pedagogical."
-                    },
-                    {
-                        "role": "user",
-                        "content": userMessage
-                    }
-                ]
+                "systemInstruction": {
+                    "parts": [{ 
+                        "text": "You are an English Teacher named Emma at Round-Up Academy. You are a real human teacher. YOU MUST COMMUNICATE STRICTLY AND ONLY IN ENGLISH. Do not use Vietnamese. If a student sends an image, analyze it as an English exercise, point out mistakes, correct them, and explain the grammar clearly. Keep your answers friendly, highly pedagogical, and easy to read." 
+                    }]
+                },
+                "contents": [{
+                    "role": "user",
+                    "parts": parts
+                }],
+                "generationConfig": {
+                    "temperature": 0.7
+                }
             })
         });
 
         if (!response.ok) {
-            const errorData = await response.text();
-            throw new Error("Mã lỗi: " + response.status + " - Chi tiết: " + errorData);
+            const errorData = await response.json();
+            throw new Error(errorData.error?.message || "API Error");
         }
 
         const data = await response.json();
-        return data.choices[0].message.content;
+        return data.candidates[0].content.parts[0].text;
 
     } catch (error) {
-        console.error("AI Tutor Error: ", error);
-        return "Báo cáo Boss, hệ thống kẹt ở: " + error.message;
+        console.error("Gemini AI Error: ", error);
+        throw error;
     }
 }
   </script>
