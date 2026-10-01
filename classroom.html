@@ -348,8 +348,7 @@ function renderMsg(role, text, id = "") {
 async function fetchAITutorResponse(userMessage, base64Image) {
     try {
         // Đảm bảo biến GEMINI_API_KEY ở đầu file bắt đầu bằng "AIzaSy..."
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M}`;
-        
+        const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M";        
         let userPrompt = userMessage || "Please check my attached exercise.";
         let parts = [{ "text": userPrompt }];
 
