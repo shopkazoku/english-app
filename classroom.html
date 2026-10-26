@@ -22,8 +22,6 @@
     audio::-webkit-media-controls-panel { background-color: #f1f5f9; border-radius: 12px; }
     .tab-btn { transition: all 0.3s; }
     .tab-btn.active { background-color: #4f46e5; color: white; border-color: #4338ca; box-shadow: 0 4px 0 #3730a3; transform: translateY(-2px); }
-    .recording-pulse { animation: pulse-ring 1.5s infinite; }
-    @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(244,63,94,0.7); } 100% { box-shadow: 0 0 0 15px rgba(244,63,94,0); } }
   </style>
 </head>
 <body class="h-[100dvh] w-full flex flex-col bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')] relative overflow-hidden" id="mainBody">
@@ -76,7 +74,7 @@
     <div class="flex gap-2 shrink-0">
         <button onclick="switchWorkspace('bookTab')" id="btn_bookTab" class="tab-btn active flex-1 bg-white border-2 border-slate-200 text-slate-600 font-black py-3 rounded-2xl uppercase text-sm"><i class="fa-solid fa-book-open mr-2"></i> E-Book</button>
         <button onclick="switchWorkspace('grammarTab')" id="btn_grammarTab" class="tab-btn flex-1 bg-white border-2 border-slate-200 text-slate-600 font-black py-3 rounded-2xl uppercase text-sm"><i class="fa-solid fa-spell-check mr-2"></i> Grammar</button>
-        <button onclick="switchWorkspace('tutorTab')" id="btn_tutorTab" class="tab-btn flex-1 bg-white border-2 border-slate-200 text-slate-600 font-black py-3 rounded-2xl uppercase text-sm"><i class="fa-solid fa-user-graduate mr-2 text-indigo-500"></i> TALK WITH TUTOR</button>
+        <button onclick="switchWorkspace('exerciseTab')" id="btn_exerciseTab" class="tab-btn flex-1 bg-white border-2 border-slate-200 text-slate-600 font-black py-3 rounded-2xl uppercase text-sm"><i class="fa-solid fa-pen-to-square mr-2 text-indigo-500"></i> SMART EXERCISE</button>
     </div>
 
     <!-- NỘI DUNG TABS -->
@@ -102,35 +100,35 @@
             </div>
         </div>
 
-     <!-- ========================================== -->
-<!-- KHU VỰC SMART EXERCISE (THAY THẾ CHAT TÚTOR) -->
-<!-- ========================================== -->
-<div id="exercise-panel" class="bg-white rounded-2xl shadow-xl p-6 mt-4 w-full relative">
-    
-    <!-- Tiêu đề -->
-    <div class="flex items-center justify-between border-b pb-4 mb-4">
-        <h2 class="text-2xl font-extrabold text-indigo-700 flex items-center">
-            <i class="fa-solid fa-pen-to-square mr-3"></i> Smart Exercise
-        </h2>
-        <span class="text-sm text-gray-500 font-medium bg-gray-100 px-3 py-1 rounded-full">Unit 1: Grammar Basics</span>
-    </div>
+        <!-- SMART EXERCISE TAB -->
+        <div id="exerciseTab" class="workspace-content hidden absolute inset-0 w-full h-full bg-slate-50 overflow-y-auto custom-scroll p-4 sm:p-8">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 w-full max-w-4xl mx-auto">
+                <!-- Tiêu đề -->
+                <div class="flex items-center justify-between border-b pb-4 mb-6">
+                    <h2 class="text-2xl font-extrabold text-indigo-700 flex items-center">
+                        <i class="fa-solid fa-pen-to-square mr-3"></i> Smart Exercise
+                    </h2>
+                    <span class="text-sm text-indigo-500 font-black bg-indigo-50 border border-indigo-100 px-4 py-1.5 rounded-full uppercase">Practice</span>
+                </div>
 
-    <!-- Nơi chứa danh sách câu hỏi -->
-    <div id="question-container" class="space-y-6">
-        <!-- JavaScript sẽ tự động vẽ câu hỏi vào đây -->
-    </div>
+                <!-- Nơi chứa danh sách câu hỏi -->
+                <div id="question-container" class="space-y-6">
+                    <!-- JavaScript sẽ tự động vẽ câu hỏi vào đây -->
+                </div>
 
-    <!-- Bảng kết quả (Mặc định ẩn) -->
-    <div id="result-container" class="mt-6 hidden text-center p-6 rounded-2xl border-2 border-dashed border-indigo-300 transform transition-all scale-95">
-        <h3 id="result-text" class="text-3xl font-black text-indigo-700 mb-2"></h3>
-        <p class="text-gray-600 font-medium">Bật loa để nghe Teacher Emma đánh giá nhé!</p>
-    </div>
+                <!-- Bảng kết quả (Mặc định ẩn) -->
+                <div id="result-container" class="mt-8 hidden text-center p-6 rounded-2xl border-2 border-dashed border-indigo-300 transform transition-all scale-95">
+                    <h3 id="result-text" class="text-3xl font-black text-indigo-700 mb-2"></h3>
+                    <p class="text-gray-600 font-medium">Bật loa để nghe Teacher Emma đánh giá nhé!</p>
+                </div>
 
-    <!-- Nút Nộp Bài -->
-    <button onclick="submitExercise()" class="mt-8 w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transform transition flex justify-center items-center">
-        <i class="fa-solid fa-check-circle mr-2"></i> NỘP BÀI & CHẤM ĐIỂM
-    </button>
-</div>
+                <!-- Nút Nộp Bài -->
+                <button onclick="submitExercise()" class="mt-8 w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transform transition flex justify-center items-center">
+                    <i class="fa-solid fa-check-circle mr-2"></i> NỘP BÀI & CHẤM ĐIỂM
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- AUDIO CONTROLS -->
     <div class="w-full bg-white rounded-3xl border-4 border-slate-100 p-3 flex flex-col lg:flex-row gap-4 shrink-0 mt-3 mb-1">
@@ -148,26 +146,31 @@
   </main>
   
   <script>
-    // BẮT BUỘC DÁN FIREBASE CONFIG VÀ GEMINI API KEY VÀO ĐÂY
+    // ==========================================
+    // CẤU HÌNH FIREBASE VÀ HỆ THỐNG
+    // ==========================================
     const firebaseConfig = {
-  apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
-  authDomain: "roundup-ai-academy.firebaseapp.com",
-  projectId: "roundup-ai-academy",
-  storageBucket: "roundup-ai-academy.firebasestorage.app",
-  messagingSenderId: "723976989630",
-  appId: "1:723976989630:web:45f3de91269e70f604e7ef"
-};
-      const GEMINI_API_KEY = "AQ.Ab8RN6KC" + "DDqEhPiU9DbTohyg_nLih-aiLpwuxFcTMH3gkq4h2w"; 
+      apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
+      authDomain: "roundup-ai-academy.firebaseapp.com",
+      projectId: "roundup-ai-academy",
+      storageBucket: "roundup-ai-academy.firebasestorage.app",
+      messagingSenderId: "723976989630",
+      appId: "1:723976989630:web:45f3de91269e70f604e7ef"
+    };
+    
     const GITHUB_BASE_URL = "https://shopkazoku.github.io/roundup-audio";
     const unitMapping = [
         { unit: 1, name: "Unit 1", startTrack: 1, endTrack: 6 },
         { unit: 2, name: "Unit 2", startTrack: 7, endTrack: 11 },
-        { unit: 3, name: "Unit 3", startTrack: 12, endTrack: 17 } // Thêm tiếp các Unit khác
+        { unit: 3, name: "Unit 3", startTrack: 12, endTrack: 17 }
     ];
 
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth(); const db = firebase.database();
-    let currentUser = null; let currentlyViewingLevel = "starter"; let currentPdfZoom = 'page-width'; 
+    const auth = firebase.auth(); 
+    const db = firebase.database();
+    let currentUser = null; 
+    let currentlyViewingLevel = "starter"; 
+    let currentPdfZoom = 'page-width'; 
 
     auth.onAuthStateChanged((user) => {
       if (user) {
@@ -178,7 +181,10 @@
           currentlyViewingLevel = data.current_level || 'starter'; 
           document.getElementById('courseSelect').innerHTML = `<option>${currentlyViewingLevel.replace('_', ' ').toUpperCase()} CLASS</option>`;
           buildClassroom(); 
-          setTimeout(() => { document.getElementById('loadingOverlay').style.display = 'none'; document.getElementById('mainContent').style.opacity = '1'; }, 500);
+          setTimeout(() => { 
+              document.getElementById('loadingOverlay').style.display = 'none'; 
+              document.getElementById('mainContent').style.opacity = '1'; 
+          }, 500);
         });
       } else { window.location.href = "index.html"; }
     });
@@ -195,7 +201,8 @@
         document.querySelectorAll('.workspace-content').forEach(el => el.classList.add('hidden'));
         document.querySelectorAll('.tab-btn').forEach(el => { el.classList.remove('active', 'bg-indigo-600', 'text-white'); el.classList.add('bg-white', 'text-slate-600'); });
         document.getElementById(tabId).classList.remove('hidden');
-        document.getElementById('btn_' + tabId).classList.add('active'); document.getElementById('btn_' + tabId).classList.remove('bg-white', 'text-slate-600');
+        document.getElementById('btn_' + tabId).classList.add('active'); 
+        document.getElementById('btn_' + tabId).classList.remove('bg-white', 'text-slate-600');
     }
 
     function buildClassroom() {
@@ -225,7 +232,9 @@
         });
     }
 
-    // --- DICTIONARY ---
+    // ==========================================
+    // TÍNH NĂNG TỪ ĐIỂN
+    // ==========================================
     function toggleDict() { document.getElementById('dictSidebar').classList.toggle('translate-x-full'); }
     async function translateWord(word = null) {
         const txt = word || document.getElementById('dictInput').value.trim(); if (!txt) return;
@@ -252,163 +261,124 @@
     });
     document.addEventListener('mousedown', (e) => { if (!dictPopup.contains(e.target)) { dictPopup.classList.add('opacity-0', 'translate-y-2'); setTimeout(() => { dictPopup.classList.add('hidden'); }, 200); } });
 
-    let chatImg = null; 
-function previewImage(input) { 
-    if(input.files && input.files[0]) { 
-        let r = new FileReader(); 
-        r.onload = (e) => { 
-            chatImg = e.target.result; 
-            document.getElementById('imgPreview').src = chatImg; 
-            document.getElementById('imgPreviewContainer').classList.remove('hidden'); 
-        }; 
-        r.readAsDataURL(input.files[0]); 
-    } 
-}
+    // ==========================================
+    // DỮ LIỆU VÀ XỬ LÝ BÀI TẬP (SMART EXERCISE)
+    // ==========================================
+    const exerciseData = [
+        { 
+            q: "She ________ to school everyday.", 
+            options: ["go", "goes", "going"], 
+            ans: 1, 
+            exp: "Chủ ngữ 'She' là ngôi thứ 3 số ít, động từ phải thêm 's' hoặc 'es'. Đáp án đúng là 'goes'." 
+        },
+        { 
+            q: "They ________ playing football right now.", 
+            options: ["is", "am", "are"], 
+            ans: 2, 
+            exp: "Chủ ngữ 'They' số nhiều đi với tobe 'are'. Dấu hiệu 'right now' chỉ thì Hiện tại tiếp diễn." 
+        }
+    ];
 
-function removeImage() { 
-    chatImg = null; 
-    document.getElementById('imgPreviewContainer').classList.add('hidden'); 
-    document.getElementById('imageUpload').value = ""; 
-}
-
-function toggleMicChat() { 
-    alert("Tính năng Voice tạm thời vô hiệu hóa trên mô hình Llama 3. Vui lòng dùng Text!"); 
-}
-   // ==========================================
-// 1. DỮ LIỆU BÀI TẬP (MẪU TEST GIAI ĐOẠN 1)
-// ==========================================
-const exerciseData = [
-    { 
-        q: "She ________ to school everyday.", 
-        options: ["go", "goes", "going"], 
-        ans: 1, 
-        exp: "Chủ ngữ 'She' là ngôi thứ 3 số ít, động từ phải thêm 's' hoặc 'es'. Đáp án đúng là 'goes'." 
-    },
-    { 
-        q: "They ________ playing football right now.", 
-        options: ["is", "am", "are"], 
-        ans: 2, 
-        exp: "Chủ ngữ 'They' số nhiều đi với tobe 'are'. Dấu hiệu 'right now' chỉ thì Hiện tại tiếp diễn." 
-    }
-];
-
-// ==========================================
-// 2. HÀM VẼ GIAO DIỆN CÂU HỎI RA MÀN HÌNH
-// ==========================================
-function renderExercises() {
-    const container = document.getElementById('question-container');
-    container.innerHTML = '';
-    
-    exerciseData.forEach((item, index) => {
-        let optionsHtml = '';
-        item.options.forEach((opt, optIdx) => {
-            optionsHtml += `
-                <label class="flex items-center space-x-3 p-3 border-2 border-gray-100 rounded-xl cursor-pointer hover:bg-indigo-50 hover:border-indigo-300 transition group">
-                    <input type="radio" name="q${index}" value="${optIdx}" class="form-radio h-5 w-5 text-indigo-600">
-                    <span class="text-gray-700 font-medium group-hover:text-indigo-700">${opt}</span>
-                </label>
+    function renderExercises() {
+        const container = document.getElementById('question-container');
+        container.innerHTML = '';
+        
+        exerciseData.forEach((item, index) => {
+            let optionsHtml = '';
+            item.options.forEach((opt, optIdx) => {
+                optionsHtml += `
+                    <label class="flex items-center space-x-3 p-3 border-2 border-gray-100 rounded-xl cursor-pointer hover:bg-indigo-50 hover:border-indigo-300 transition group">
+                        <input type="radio" name="q${index}" value="${optIdx}" class="form-radio h-5 w-5 text-indigo-600">
+                        <span class="text-gray-700 font-medium group-hover:text-indigo-700">${opt}</span>
+                    </label>
+                `;
+            });
+            
+            container.innerHTML += `
+                <div class="p-6 border border-slate-100 bg-slate-50/30 rounded-2xl shadow-sm hover:shadow-md transition">
+                    <p class="font-bold text-lg mb-4 text-gray-800"><span class="text-indigo-600">Câu ${index + 1}:</span> ${item.q}</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        ${optionsHtml}
+                    </div>
+                    <p id="exp-q${index}" class="mt-4 hidden text-sm font-semibold bg-rose-50 text-rose-600 p-3 rounded-lg border border-rose-100"></p>
+                </div>
             `;
         });
-        
-        container.innerHTML += `
-            <div class="p-5 border-2 border-slate-50 bg-slate-50/50 rounded-2xl shadow-sm hover:shadow-md transition">
-                <p class="font-bold text-lg mb-4 text-gray-800"><span class="text-indigo-600">Câu ${index + 1}:</span> ${item.q}</p>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    ${optionsHtml}
-                </div>
-                <!-- Vùng hiển thị giải thích khi làm sai -->
-                <p id="exp-q${index}" class="mt-4 hidden text-sm font-semibold bg-red-100 text-red-600 p-3 rounded-lg border border-red-200"></p>
-            </div>
-        `;
-    });
-}
+    }
 
-// ==========================================
-// 3. HÀM CHẤM ĐIỂM & ĐÁNH GIÁ SAO
-// ==========================================
-function submitExercise() {
-    let correctCount = 0;
-    
-    exerciseData.forEach((item, index) => {
-        const selected = document.querySelector(`input[name="q${index}"]:checked`);
-        const expEl = document.getElementById(`exp-q${index}`);
+    function submitExercise() {
+        let correctCount = 0;
         
-        if (selected && parseInt(selected.value) === item.ans) {
-            correctCount++;
-            expEl.classList.add('hidden'); // Dấu thông báo lỗi đi nếu đúng
+        exerciseData.forEach((item, index) => {
+            const selected = document.querySelector(`input[name="q${index}"]:checked`);
+            const expEl = document.getElementById(`exp-q${index}`);
+            
+            if (selected && parseInt(selected.value) === item.ans) {
+                correctCount++;
+                expEl.classList.add('hidden'); 
+            } else {
+                expEl.innerHTML = `<i class="fa-solid fa-circle-xmark mr-1"></i> Sai rồi! ${item.exp}`;
+                expEl.classList.remove('hidden');
+            }
+        });
+
+        const scorePercent = (correctCount / exerciseData.length) * 100;
+        let stars = 1;
+        let resultText = "";
+        
+        if (scorePercent >= 90) { 
+            stars = 3; 
+            resultText = "⭐⭐⭐ Xuất Sắc! +100 Vàng"; 
+        }
+        else if (scorePercent >= 50) { 
+            stars = 2; 
+            resultText = "⭐⭐ Khá Tốt! +50 Vàng"; 
+        }
+        else { 
+            stars = 1; 
+            resultText = "⭐ Cần cố gắng hơn!"; 
+        }
+
+        const resBox = document.getElementById('result-container');
+        const resText = document.getElementById('result-text');
+        resText.innerHTML = resultText;
+        resBox.classList.remove('hidden');
+        resBox.classList.add('scale-100', 'bg-indigo-50');
+
+        speakTeacherVoice(stars);
+    }
+
+    function speakTeacherVoice(stars) {
+        let speech = new SpeechSynthesisUtterance();
+        speech.lang = 'en-US';
+        speech.pitch = 1.3; 
+        speech.rate = 1.0;
+        
+        if (stars === 3) {
+            speech.text = "Excellent job! You got three stars. Keep it up!";
+        } else if (stars === 2) {
+            speech.text = "Good effort! You got two stars. Let's review a little bit.";
         } else {
-            // In giải thích nếu sai hoặc không chọn
-            expEl.innerHTML = `<i class="fa-solid fa-circle-xmark mr-1"></i> Sai rồi! ${item.exp}`;
-            expEl.classList.remove('hidden');
+            speech.text = "Don't give up! Let's check the mistakes and try again.";
+        }
+        
+        window.speechSynthesis.speak(speech);
+    }
+
+    document.addEventListener('mouseup', function() {
+        let selectedText = window.getSelection().toString().trim();
+        if (selectedText.length > 0 && selectedText.length <= 25) {
+            let wordAudio = new SpeechSynthesisUtterance(selectedText);
+            wordAudio.lang = 'en-US';
+            window.speechSynthesis.speak(wordAudio);
         }
     });
 
-    // Tính phần trăm và phân loại Sao
-    const scorePercent = (correctCount / exerciseData.length) * 100;
-    let stars = 1;
-    let resultText = "";
-    
-    if (scorePercent >= 90) { 
-        stars = 3; 
-        resultText = "⭐⭐⭐ Xuất Sắc! +100 Vàng"; 
-    }
-    else if (scorePercent >= 50) { 
-        stars = 2; 
-        resultText = "⭐⭐ Khá Tốt! +50 Vàng"; 
-    }
-    else { 
-        stars = 1; 
-        resultText = "⭐ Cần cố gắng hơn!"; 
-    }
+    // Kích hoạt vẽ bài tập ngay sau khi code JS được load
+    document.addEventListener('DOMContentLoaded', () => {
+        renderExercises();
+    });
 
-    // Hiển thị bảng kết quả
-    const resBox = document.getElementById('result-container');
-    const resText = document.getElementById('result-text');
-    resText.innerHTML = resultText;
-    resBox.classList.remove('hidden');
-    resBox.classList.add('scale-100', 'bg-indigo-50');
-
-    // Gọi cô giáo đọc kết quả
-    speakTeacherVoice(stars);
-}
-
-// ==========================================
-// 4. VOICE GIÁO VIÊN (SỬ DỤNG LÕI TRÌNH DUYỆT 0đ)
-// ==========================================
-function speakTeacherVoice(stars) {
-    let speech = new SpeechSynthesisUtterance();
-    speech.lang = 'en-US';
-    speech.pitch = 1.3; // Chỉnh giọng cao thanh thoát
-    speech.rate = 1.0;
-    
-    if (stars === 3) {
-        speech.text = "Excellent job! You got three stars. Keep it up!";
-    } else if (stars === 2) {
-        speech.text = "Good effort! You got two stars. Let's review a little bit.";
-    } else {
-        speech.text = "Don't give up! Let's check the mistakes and try again.";
-    }
-    
-    window.speechSynthesis.speak(speech);
-}
-
-// ==========================================
-// 5. SMART DICTIONARY (BÔI ĐEN ĐỌC TỪ NHANH)
-// ==========================================
-document.addEventListener('mouseup', function() {
-    let selectedText = window.getSelection().toString().trim();
-    // Bắt sự kiện nếu quét từ 1 đến 25 ký tự (tránh quét cả đoạn dài)
-    if (selectedText.length > 0 && selectedText.length <= 25) {
-        let wordAudio = new SpeechSynthesisUtterance(selectedText);
-        wordAudio.lang = 'en-US';
-        window.speechSynthesis.speak(wordAudio);
-        // Popup từ điển dịch sang Tiếng Việt sẽ được ráp vào đây ở bản sau
-    }
-});
-
-// Chạy hàm vẽ bài tập ngay khi mở trang web
-window.onload = function() {
-    renderExercises();
-};
+  </script>
 </body>
 </html>
