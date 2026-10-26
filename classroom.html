@@ -102,38 +102,35 @@
             </div>
         </div>
 
-        <!-- TALK WITH TUTOR -->
-        <div id="tutorTab" class="workspace-content hidden absolute inset-0 w-full h-full bg-slate-50 flex flex-col cursor-text">
-            <div class="bg-indigo-600 text-white p-3 shadow-md z-10 flex gap-3 items-center shrink-0">
-                <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"><i class="fa-solid fa-user-graduate text-xl"></i></div>
-                <div><h3 class="font-black text-lg">Study Daily English Tutor</h3><p class="text-xs font-bold opacity-80 uppercase">Always here to help you</p></div>
-            </div>
-            
-            <div id="chatHistory" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scroll pb-6">
-                <div class="flex gap-3 max-w-[90%]">
-                     <div class="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white shrink-0"><i class="fa-solid fa-user-graduate"></i></div>
-                     <div class="bg-white border p-4 rounded-2xl rounded-tl-none shadow-sm text-slate-700 font-bold text-[15px]">
-                         Hello! I am your English Tutor. You can chat, talk, or <span class="text-indigo-600">upload pictures</span> of your exercises. Let's do our best!
-                     </div>
-                </div>
-            </div>
-
-            <div class="bg-white border-t p-3 flex gap-2 items-end shrink-0 z-10">
-                <label class="cursor-pointer text-slate-400 hover:text-indigo-500 p-2 bg-slate-100 rounded-xl">
-                    <i class="fa-solid fa-image text-xl"></i><input type="file" id="imageUpload" accept="image/*" class="hidden" onchange="previewImage(this)">
-                </label>
-                <button id="btnMicChat" onclick="toggleMicChat()" class="text-slate-400 hover:text-rose-500 p-2 bg-slate-100 rounded-xl"><i class="fa-solid fa-microphone text-xl"></i></button>
-                <div class="flex-1 bg-slate-100 rounded-xl border flex flex-col relative">
-                    <div id="imgPreviewContainer" class="hidden relative self-start m-2">
-                        <img id="imgPreview" src="" class="max-h-20 rounded-lg border">
-                        <button onclick="removeImage()" class="absolute -top-2 -right-2 bg-rose-500 text-white w-5 h-5 rounded-full text-[10px]"><i class="fa-solid fa-times"></i></button>
-                    </div>
-                    <textarea id="chatInput" rows="1" class="w-full bg-transparent p-3 focus:outline-none font-bold text-slate-700 resize-none max-h-32" placeholder="Ask your tutor in English..." onkeypress="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendChatMessage(); }"></textarea>
-                </div>
-                <button onclick="sendChatMessage()" class="bg-indigo-600 text-white w-12 h-12 rounded-xl hover:bg-indigo-500 flex items-center justify-center shrink-0"><i class="fa-solid fa-paper-plane text-xl"></i></button>
-            </div>
-        </div>
+     <!-- ========================================== -->
+<!-- KHU VỰC SMART EXERCISE (THAY THẾ CHAT TÚTOR) -->
+<!-- ========================================== -->
+<div id="exercise-panel" class="bg-white rounded-2xl shadow-xl p-6 mt-4 w-full relative">
+    
+    <!-- Tiêu đề -->
+    <div class="flex items-center justify-between border-b pb-4 mb-4">
+        <h2 class="text-2xl font-extrabold text-indigo-700 flex items-center">
+            <i class="fa-solid fa-pen-to-square mr-3"></i> Smart Exercise
+        </h2>
+        <span class="text-sm text-gray-500 font-medium bg-gray-100 px-3 py-1 rounded-full">Unit 1: Grammar Basics</span>
     </div>
+
+    <!-- Nơi chứa danh sách câu hỏi -->
+    <div id="question-container" class="space-y-6">
+        <!-- JavaScript sẽ tự động vẽ câu hỏi vào đây -->
+    </div>
+
+    <!-- Bảng kết quả (Mặc định ẩn) -->
+    <div id="result-container" class="mt-6 hidden text-center p-6 rounded-2xl border-2 border-dashed border-indigo-300 transform transition-all scale-95">
+        <h3 id="result-text" class="text-3xl font-black text-indigo-700 mb-2"></h3>
+        <p class="text-gray-600 font-medium">Bật loa để nghe Teacher Emma đánh giá nhé!</p>
+    </div>
+
+    <!-- Nút Nộp Bài -->
+    <button onclick="submitExercise()" class="mt-8 w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transform transition flex justify-center items-center">
+        <i class="fa-solid fa-check-circle mr-2"></i> NỘP BÀI & CHẤM ĐIỂM
+    </button>
+</div>
 
     <!-- AUDIO CONTROLS -->
     <div class="w-full bg-white rounded-3xl border-4 border-slate-100 p-3 flex flex-col lg:flex-row gap-4 shrink-0 mt-3 mb-1">
@@ -278,125 +275,140 @@ function toggleMicChat() {
     alert("Tính năng Voice tạm thời vô hiệu hóa trên mô hình Llama 3. Vui lòng dùng Text!"); 
 }
    // ==========================================
-// 1. HÀM XỬ LÝ GIAO DIỆN (BẮT ĐƯỢC CHỮ VÀ ẢNH - CHỐNG VỠ KHUNG 100%)
+// 1. DỮ LIỆU BÀI TẬP (MẪU TEST GIAI ĐOẠN 1)
 // ==========================================
-function renderMsg(role, text, id = "") {
-    const h = document.getElementById('chatHistory');
-    const d = document.createElement('div');
-    d.className = role === 'user' ? "flex gap-3 max-w-[85%] ml-auto flex-row-reverse" : "flex gap-3 max-w-[90%]";
-    if (id) d.id = id;
-    const avatar = document.createElement('div');
-    avatar.className = role === 'user' ? "w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center shrink-0" : "w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white shrink-0";
-
-    const icon = document.createElement('i');
-    icon.className = role === 'user' ? "fa-solid fa-user" : "fa-solid fa-user-graduate";
-    avatar.appendChild(icon);
-
-    const msgBox = document.createElement('div');
-    msgBox.className = role === 'user' ? "bg-indigo-600 text-white p-3 rounded-2xl rounded-tr-none break-words" : "bg-white border p-3 rounded-2xl rounded-tl-none break-words";
-    msgBox.innerHTML = text;
-
-    d.appendChild(avatar);
-    d.appendChild(msgBox);
-    h.appendChild(d); 
-    h.scrollTop = h.scrollHeight;
-}
-    async function sendChatMessage() {
-    const inp = document.getElementById('chatInput'); 
-    const txt = inp.value.trim(); 
-    
-    if(!txt && !chatImg) return; 
-    
-    let displayMsg = txt;
-    if (chatImg) {
-        // Đã mã hóa dấu ngoặc thành \x3C và \x3E để an toàn tuyệt đối khi copy
-        displayMsg += "\x3Cbr\x3E\x3Cimg src='" + chatImg + "' style='max-height:120px; border-radius:8px; margin-top:8px; border: 2px solid #e2e8f0;'\x3E";
+const exerciseData = [
+    { 
+        q: "She ________ to school everyday.", 
+        options: ["go", "goes", "going"], 
+        ans: 1, 
+        exp: "Chủ ngữ 'She' là ngôi thứ 3 số ít, động từ phải thêm 's' hoặc 'es'. Đáp án đúng là 'goes'." 
+    },
+    { 
+        q: "They ________ playing football right now.", 
+        options: ["is", "am", "are"], 
+        ans: 2, 
+        exp: "Chủ ngữ 'They' số nhiều đi với tobe 'are'. Dấu hiệu 'right now' chỉ thì Hiện tại tiếp diễn." 
     }
-    renderMsg('user', displayMsg); 
-    
-    inp.value = ""; 
-    inp.style.height = 'auto'; 
-    
-    const currentImg = chatImg;
-    removeImage();
-    
-    const lId = "load_" + Date.now(); 
-    renderMsg('tutor', '\x3Ci class="fa-solid fa-spinner fa-spin mr-2"\x3E\x3C/i\x3ETeacher Emma is reading...', lId);
-    
-    try {
-        const response = await fetchAITutorResponse(txt, currentImg);
-        if (document.getElementById(lId)) document.getElementById(lId).remove();
-        
-        if (!response) {
-            renderMsg('tutor', 'Oops! Could not connect to Emma.');
-            return;
-        }
-        
-        let finalHtml = String(response).replace(/\*\*(.*?)\*\*/g, '\x3Cstrong\x3E$1\x3C/strong\x3E');
-        finalHtml = finalHtml.replace(/\n/g, '\x3Cbr\x3E');
-        renderMsg('tutor', finalHtml);
-
-    } catch (err) {
-        if (document.getElementById(lId)) document.getElementById(lId).remove();
-        renderMsg('tutor', 'System Error: ' + err.message);
-    }
-}
+];
 
 // ==========================================
-// 2. LÕI AI TUTOR SỬ DỤNG GOOGLE GEMINI VISION
+// 2. HÀM VẼ GIAO DIỆN CÂU HỎI RA MÀN HÌNH
 // ==========================================
-async function fetchAITutorResponse(userMessage, base64Image) {
-    try {
-        // Đảm bảo biến GEMINI_API_KEY ở đầu file bắt đầu bằng "AIzaSy..."
-        const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M";        
-        let userPrompt = userMessage || "Please check my attached exercise.";
-        let parts = [{ "text": userPrompt }];
-
-        if (base64Image) {
-            const mimeType = base64Image.split(';')[0].split(':')[1];
-            const base64Data = base64Image.split(',')[1];
-            parts.push({
-                "inlineData": {
-                    "mimeType": mimeType,
-                    "data": base64Data
-                }
-            });
-        }
-
-        const response = await fetch(url, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                "systemInstruction": {
-                    "parts": [{ 
-                        "text": "You are an English Teacher named Emma at Round-Up Academy. You are a real human teacher. YOU MUST COMMUNICATE STRICTLY AND ONLY IN ENGLISH. Do not use Vietnamese. If a student sends an image, analyze it as an English exercise, point out mistakes, correct them, and explain the grammar clearly. Keep your answers friendly, highly pedagogical, and easy to read." 
-                    }]
-                },
-                "contents": [{
-                    "role": "user",
-                    "parts": parts
-                }],
-                "generationConfig": {
-                    "temperature": 0.7
-                }
-            })
+function renderExercises() {
+    const container = document.getElementById('question-container');
+    container.innerHTML = '';
+    
+    exerciseData.forEach((item, index) => {
+        let optionsHtml = '';
+        item.options.forEach((opt, optIdx) => {
+            optionsHtml += `
+                <label class="flex items-center space-x-3 p-3 border-2 border-gray-100 rounded-xl cursor-pointer hover:bg-indigo-50 hover:border-indigo-300 transition group">
+                    <input type="radio" name="q${index}" value="${optIdx}" class="form-radio h-5 w-5 text-indigo-600">
+                    <span class="text-gray-700 font-medium group-hover:text-indigo-700">${opt}</span>
+                </label>
+            `;
         });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error?.message || "API Error");
-        }
-
-        const data = await response.json();
-        return data.candidates[0].content.parts[0].text;
-
-    } catch (error) {
-        console.error("Gemini AI Error: ", error);
-        throw error;
-    }
+        
+        container.innerHTML += `
+            <div class="p-5 border-2 border-slate-50 bg-slate-50/50 rounded-2xl shadow-sm hover:shadow-md transition">
+                <p class="font-bold text-lg mb-4 text-gray-800"><span class="text-indigo-600">Câu ${index + 1}:</span> ${item.q}</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    ${optionsHtml}
+                </div>
+                <!-- Vùng hiển thị giải thích khi làm sai -->
+                <p id="exp-q${index}" class="mt-4 hidden text-sm font-semibold bg-red-100 text-red-600 p-3 rounded-lg border border-red-200"></p>
+            </div>
+        `;
+    });
 }
-  </script>
+
+// ==========================================
+// 3. HÀM CHẤM ĐIỂM & ĐÁNH GIÁ SAO
+// ==========================================
+function submitExercise() {
+    let correctCount = 0;
+    
+    exerciseData.forEach((item, index) => {
+        const selected = document.querySelector(`input[name="q${index}"]:checked`);
+        const expEl = document.getElementById(`exp-q${index}`);
+        
+        if (selected && parseInt(selected.value) === item.ans) {
+            correctCount++;
+            expEl.classList.add('hidden'); // Dấu thông báo lỗi đi nếu đúng
+        } else {
+            // In giải thích nếu sai hoặc không chọn
+            expEl.innerHTML = `<i class="fa-solid fa-circle-xmark mr-1"></i> Sai rồi! ${item.exp}`;
+            expEl.classList.remove('hidden');
+        }
+    });
+
+    // Tính phần trăm và phân loại Sao
+    const scorePercent = (correctCount / exerciseData.length) * 100;
+    let stars = 1;
+    let resultText = "";
+    
+    if (scorePercent >= 90) { 
+        stars = 3; 
+        resultText = "⭐⭐⭐ Xuất Sắc! +100 Vàng"; 
+    }
+    else if (scorePercent >= 50) { 
+        stars = 2; 
+        resultText = "⭐⭐ Khá Tốt! +50 Vàng"; 
+    }
+    else { 
+        stars = 1; 
+        resultText = "⭐ Cần cố gắng hơn!"; 
+    }
+
+    // Hiển thị bảng kết quả
+    const resBox = document.getElementById('result-container');
+    const resText = document.getElementById('result-text');
+    resText.innerHTML = resultText;
+    resBox.classList.remove('hidden');
+    resBox.classList.add('scale-100', 'bg-indigo-50');
+
+    // Gọi cô giáo đọc kết quả
+    speakTeacherVoice(stars);
+}
+
+// ==========================================
+// 4. VOICE GIÁO VIÊN (SỬ DỤNG LÕI TRÌNH DUYỆT 0đ)
+// ==========================================
+function speakTeacherVoice(stars) {
+    let speech = new SpeechSynthesisUtterance();
+    speech.lang = 'en-US';
+    speech.pitch = 1.3; // Chỉnh giọng cao thanh thoát
+    speech.rate = 1.0;
+    
+    if (stars === 3) {
+        speech.text = "Excellent job! You got three stars. Keep it up!";
+    } else if (stars === 2) {
+        speech.text = "Good effort! You got two stars. Let's review a little bit.";
+    } else {
+        speech.text = "Don't give up! Let's check the mistakes and try again.";
+    }
+    
+    window.speechSynthesis.speak(speech);
+}
+
+// ==========================================
+// 5. SMART DICTIONARY (BÔI ĐEN ĐỌC TỪ NHANH)
+// ==========================================
+document.addEventListener('mouseup', function() {
+    let selectedText = window.getSelection().toString().trim();
+    // Bắt sự kiện nếu quét từ 1 đến 25 ký tự (tránh quét cả đoạn dài)
+    if (selectedText.length > 0 && selectedText.length <= 25) {
+        let wordAudio = new SpeechSynthesisUtterance(selectedText);
+        wordAudio.lang = 'en-US';
+        window.speechSynthesis.speak(wordAudio);
+        // Popup từ điển dịch sang Tiếng Việt sẽ được ráp vào đây ở bản sau
+    }
+});
+
+// Chạy hàm vẽ bài tập ngay khi mở trang web
+window.onload = function() {
+    renderExercises();
+};
 </body>
 </html>
