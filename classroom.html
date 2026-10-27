@@ -211,12 +211,13 @@
         changeUnit(); 
     }
 
-    function changeUnit() {
+   function changeUnit() {
         let u = unitMapping[document.getElementById('unitSelect').value]; let trackHTML = '';
         for(let i = u.startTrack; i <= u.endTrack; i++) { let t = i < 10 ? '0'+i : i; trackHTML += `<option value="${GITHUB_BASE_URL}/${currentlyViewingLevel}/track_${t}.mp3">Track ${t}</option>`; }
         document.getElementById('trackSelect').innerHTML = trackHTML;
         changeTrack(document.getElementById('trackSelect').value);
         fetchGrammarData();
+        fetchExerciseData(); // Bơm thêm lệnh hút dữ liệu Smart Exercise từ Google Sheet
     }
     function changeTrack(url) { document.getElementById('audioSource').src = url; document.getElementById('audioPlayer').load(); }
 
@@ -261,23 +262,55 @@
     });
     document.addEventListener('mousedown', (e) => { if (!dictPopup.contains(e.target)) { dictPopup.classList.add('opacity-0', 'translate-y-2'); setTimeout(() => { dictPopup.classList.add('hidden'); }, 200); } });
 
+   // ==========================================
+    // DỮ LIỆU VÀ XỬ LÝ BÀI TẬP (API TỪ GOOGLE SHEETS)
     // ==========================================
-    // DỮ LIỆU VÀ XỬ LÝ BÀI TẬP (TIẾNG ANH)
-    // ==========================================
-    const exerciseData = [
-        { 
-            q: "She ________ to school everyday.", 
-            options: ["go", "goes", "going"], 
-            ans: 1, 
-            exp: "The subject 'She' is 3rd person singular, so the verb takes 's' or 'es'. The correct answer is 'goes'." 
-        },
-        { 
-            q: "They ________ playing football right now.", 
-            options: ["is", "am", "are"], 
-            ans: 2, 
-            exp: "The subject 'They' is plural, so it goes with 'are'. The phrase 'right now' indicates Present Continuous tense." 
+    const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbwtm-mJCRvAiXcbLI_dWEnzDGbqw1sWeBQqISC614dsvuiGkzyx6j-z5RS6jNx0xaX27w/exec";
+    
+    let exerciseData = [];
+    let allExercisesCache = null; // Biến lưu đệm (Cache) để web không phải tải đi tải lại API
+
+    async function fetchExerciseData() {
+        const container = document.getElementById('question-container');
+        const submitBtn = document.querySelector('button[onclick="submitExercise()"]'); // Bắt tự động nút nộp bài
+        
+        // Hiển thị vòng xoay tải dữ liệu siêu mượt
+        container.innerHTML = '<div class="text-center text-indigo-500 mt-10 mb-10"><i class="fa-solid fa-spinner fa-spin text-4xl"></i><p class="mt-4 font-bold">Syncing Smart Exercises...</p></div>';
+        submitBtn.classList.add('hidden'); // Tạm ẩn nút nộp bài khi đang tải
+        document.getElementById('result-container').classList.add('hidden');
+
+        try {
+            // CHỈ GỌI API 1 LẦN DUY NHẤT để lấy toàn bộ CSDL, web sẽ chạy cực nhanh
+            if (!allExercisesCache) {
+                let response = await fetch(SHEET_API_URL);
+                allExercisesCache = await response.json();
+            }
+
+            // Trích xuất Level và Unit hiện tại
+            let currentLevel = currentlyViewingLevel.toLowerCase();
+            let uIdx = parseInt(document.getElementById('unitSelect').value) + 1;
+            let currentUnitKey = "unit_" + uIdx;
+
+            // KIỂM TRA: Nếu Google Sheet có dữ liệu khớp với Level và Unit này
+            if (allExercisesCache[currentLevel] && allExercisesCache[currentLevel][currentUnitKey]) {
+                exerciseData = allExercisesCache[currentLevel][currentUnitKey];
+                renderExercises();
+                submitBtn.classList.remove('hidden'); // Hiện lại nút nộp bài
+            } else {
+                // Trạng thái trống: Khi Boss chưa kịp nhập câu hỏi cho Unit này
+                exerciseData = [];
+                container.innerHTML = `
+                    <div class="bg-slate-50 p-8 rounded-2xl text-center border-2 border-dashed border-slate-200">
+                        <i class="fa-solid fa-folder-open text-slate-300 text-5xl mb-3"></i>
+                        <p class="text-slate-600 font-black text-lg">No exercises available.</p>
+                        <p class="text-slate-400 text-sm mt-1">Exercises for ${currentLevel.toUpperCase()} - Unit ${uIdx} will be updated soon.</p>
+                    </div>`;
+            }
+        } catch (error) {
+            console.error("Lỗi kết nối API Google Sheets:", error);
+            container.innerHTML = '<p class="text-rose-500 font-bold text-center">Connection error. Please try again later.</p>';
         }
-    ];
+    }
 
     function renderExercises() {
         const container = document.getElementById('question-container');
@@ -306,18 +339,13 @@
         });
     }
 
-    // Lấy giọng Nữ tiếng Anh
     function getFemaleVoice() {
         let voices = window.speechSynthesis.getVoices();
-        // Tìm các giọng nữ phổ biến: Zira (Windows), Samantha/Victoria (Mac), Google US English...
         return voices.find(v => v.lang.startsWith('en') && (v.name.includes('Zira') || v.name.includes('Samantha') || v.name.includes('Victoria') || v.name.includes('Google US English'))) || voices.find(v => v.lang.startsWith('en'));
     }
 
-    // Kích hoạt load giọng nói trước để tránh lỗi delay của trình duyệt
     if ('speechSynthesis' in window) {
-        window.speechSynthesis.onvoiceschanged = function() {
-            window.speechSynthesis.getVoices();
-        };
+        window.speechSynthesis.onvoiceschanged = function() { window.speechSynthesis.getVoices(); };
     }
 
     function submitExercise() {
@@ -336,7 +364,6 @@
             }
         });
 
-        // Tính thang điểm 20
         const total = exerciseData.length;
         const score = (correctCount / total) * 20;
         
@@ -395,11 +422,5 @@
             window.speechSynthesis.speak(wordAudio);
         }
     });
-
-    document.addEventListener('DOMContentLoaded', () => {
-        renderExercises();
-    });
-
-  </script>
 </body>
 </html>
