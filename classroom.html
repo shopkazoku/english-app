@@ -103,7 +103,6 @@
         <!-- SMART EXERCISE TAB -->
         <div id="exerciseTab" class="workspace-content hidden absolute inset-0 w-full h-full bg-slate-50 overflow-y-auto custom-scroll p-4 sm:p-8">
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 w-full max-w-4xl mx-auto">
-                <!-- Tiêu đề -->
                 <div class="flex items-center justify-between border-b pb-4 mb-6">
                     <h2 class="text-2xl font-extrabold text-indigo-700 flex items-center">
                         <i class="fa-solid fa-pen-to-square mr-3"></i> Smart Exercise
@@ -111,18 +110,13 @@
                     <span class="text-sm text-indigo-500 font-black bg-indigo-50 border border-indigo-100 px-4 py-1.5 rounded-full uppercase">Practice</span>
                 </div>
 
-                <!-- Nơi chứa danh sách câu hỏi -->
-                <div id="question-container" class="space-y-6">
-                    <!-- JavaScript sẽ tự động vẽ câu hỏi vào đây -->
-                </div>
+                <div id="question-container" class="space-y-6"></div>
 
-               <!-- Bảng kết quả (Mặc định ẩn) -->
                 <div id="result-container" class="mt-8 hidden text-center p-6 rounded-2xl border-2 border-dashed border-indigo-300 transform transition-all scale-95">
                     <h3 id="result-text" class="text-3xl font-black text-indigo-700 mb-2"></h3>
                     <p class="text-gray-600 font-medium">Turn on your speaker to hear Teacher Emma's feedback!</p>
                 </div>
 
-                <!-- Nút Nộp Bài -->
                 <button onclick="submitExercise()" class="mt-8 w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transform transition flex justify-center items-center">
                     <i class="fa-solid fa-check-circle mr-2"></i> SUBMIT & GET SCORE
                 </button>
@@ -145,7 +139,7 @@
     </div>
   </main>
   
- <script>
+  <script>
     // ==========================================
     // CẤU HÌNH FIREBASE VÀ HỆ THỐNG
     // ==========================================
@@ -159,6 +153,8 @@
     };
     
     const GITHUB_BASE_URL = "https://shopkazoku.github.io/roundup-audio";
+    const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbwtm-mJCRvAiXcbLI_dWEnzDGbqw1sWeBQqISC614dsvuiGkzyx6j-z5RS6jNx0xaX27w/exec";
+    
     const unitMapping = [
         { unit: 1, name: "Unit 1", startTrack: 1, endTrack: 6 },
         { unit: 2, name: "Unit 2", startTrack: 7, endTrack: 11 },
@@ -168,26 +164,47 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth(); 
     const db = firebase.database();
+    
     let currentUser = null; 
     let currentlyViewingLevel = "starter"; 
     let currentPdfZoom = 'page-width'; 
+    let exerciseData = [];
+    let allExercisesCache = null;
 
+    // BỌC THÉP CHO VÒNG ĐỜI FIREBASE (ĐẢM BẢO TẮT LOADING)
     auth.onAuthStateChanged((user) => {
       if (user) {
         currentUser = user;
-        db.ref('users/' + user.uid).once('value').then((snapshot) => {
-          let data = snapshot.val() || { coins: 0, current_level: 'starter' };
-          document.getElementById('displayCoins').innerText = data.coins || 0;
-          currentlyViewingLevel = data.current_level || 'starter'; 
-          document.getElementById('courseSelect').innerHTML = `<option>${currentlyViewingLevel.replace('_', ' ').toUpperCase()} CLASS</option>`;
-          buildClassroom(); 
-          setTimeout(() => { 
-              document.getElementById('loadingOverlay').style.display = 'none'; 
-              document.getElementById('mainContent').style.opacity = '1'; 
-          }, 500);
+        db.ref('users/' + user.uid).once('value')
+        .then((snapshot) => {
+          try {
+              let data = snapshot.val() || { coins: 0, current_level: 'starter' };
+              document.getElementById('displayCoins').innerText = data.coins || 0;
+              currentlyViewingLevel = data.current_level || 'starter'; 
+              document.getElementById('courseSelect').innerHTML = `<option>${currentlyViewingLevel.replace('_', ' ').toUpperCase()} CLASS</option>`;
+              buildClassroom(); 
+          } catch(e) { console.error("Lỗi dựng giao diện:", e); }
+        })
+        .catch(err => {
+            console.error("Lỗi đọc Firebase:", err);
+            // Kể cả lỗi API Firebase, web vẫn phải được mở
+            buildClassroom();
+        })
+        .finally(() => {
+            // FINALLY: Lệnh tối cao bắt buộc tắt màn hình loading sau 0.5s
+            setTimeout(() => { 
+                document.getElementById('loadingOverlay').style.display = 'none'; 
+                document.getElementById('mainContent').style.opacity = '1'; 
+            }, 500);
         });
       } else { window.location.href = "index.html"; }
     });
+
+    function switchLevel(levelText) {
+        if(!levelText) return;
+        currentlyViewingLevel = levelText.split(' ')[0].toLowerCase();
+        buildClassroom();
+    }
 
     function goToReading() { window.location.href = `reading.html?level=${currentlyViewingLevel}`; }
     
@@ -206,80 +223,54 @@
     }
 
     function buildClassroom() {
-        zoomPdf('fit');
-        document.getElementById('unitSelect').innerHTML = unitMapping.map((u, i) => `<option value="${i}">${u.name}</option>`).join('');
-        changeUnit(); 
+        try {
+            zoomPdf('fit');
+            document.getElementById('unitSelect').innerHTML = unitMapping.map((u, i) => `<option value="${i}">${u.name}</option>`).join('');
+            changeUnit(); 
+        } catch(e) { console.error("Lỗi buildClassroom:", e); }
     }
 
-    // ĐÃ CHÈN LỆNH GỌI DATA GOOGLE SHEET
     function changeUnit() {
-        let u = unitMapping[document.getElementById('unitSelect').value]; let trackHTML = '';
-        for(let i = u.startTrack; i <= u.endTrack; i++) { let t = i < 10 ? '0'+i : i; trackHTML += `<option value="${GITHUB_BASE_URL}/${currentlyViewingLevel}/track_${t}.mp3">Track ${t}</option>`; }
-        document.getElementById('trackSelect').innerHTML = trackHTML;
-        changeTrack(document.getElementById('trackSelect').value);
-        fetchGrammarData();
-        fetchExerciseData(); // Hút dữ liệu từ Google Sheets
+        try {
+            let selectVal = document.getElementById('unitSelect').value || 0;
+            let u = unitMapping[selectVal] || unitMapping[0]; 
+            let trackHTML = '';
+            for(let i = u.startTrack; i <= u.endTrack; i++) { 
+                let t = i < 10 ? '0'+i : i; 
+                trackHTML += `<option value="${GITHUB_BASE_URL}/${currentlyViewingLevel}/track_${t}.mp3">Track ${t}</option>`; 
+            }
+            document.getElementById('trackSelect').innerHTML = trackHTML;
+            changeTrack(document.getElementById('trackSelect').value);
+            fetchGrammarData();
+            fetchExerciseData(); 
+        } catch(e) { console.error("Lỗi changeUnit:", e); }
     }
-    function changeTrack(url) { document.getElementById('audioSource').src = url; document.getElementById('audioPlayer').load(); }
+    
+    function changeTrack(url) { 
+        if(!url) return;
+        document.getElementById('audioSource').src = url; 
+        document.getElementById('audioPlayer').load(); 
+    }
 
     function fetchGrammarData() {
-        let uIdx = parseInt(document.getElementById('unitSelect').value) + 1;
-        db.ref(`grammar/${currentlyViewingLevel}/unit_${uIdx}`).once('value').then(snap => {
+        let uIdx = parseInt(document.getElementById('unitSelect').value || 0) + 1;
+        db.ref(`grammar/${currentlyViewingLevel}/unit_${uIdx}`).once('value')
+        .then(snap => {
             const data = snap.val(); const examArea = document.getElementById('grammarExamples'); examArea.innerHTML = "";
             if(data) {
                 document.getElementById('gramTitle').innerText = data.title || "Grammar Focus";
                 document.getElementById('gramExplanation').innerText = data.explanation || "";
                 if(data.ex1_en) examArea.innerHTML += `<div class="bg-indigo-50/50 p-4 rounded-xl flex gap-4"><button onclick="readAloudDict('${data.ex1_en.replace(/'/g, "\\'")}')" class="bg-indigo-500 text-white w-10 h-10 rounded-full shrink-0"><i class="fa-solid fa-volume-high"></i></button><div><p class="font-black text-slate-800">${data.ex1_en}</p><p class="text-sm font-bold text-slate-500">${data.ex1_vi}</p></div></div>`;
-            } else { document.getElementById('gramTitle').innerText = "Grammar Details"; document.getElementById('gramExplanation').innerText = "No grammar rules added for this unit yet."; }
-        });
+            } else { 
+                document.getElementById('gramTitle').innerText = "Grammar Details"; 
+                document.getElementById('gramExplanation').innerText = "No grammar rules added for this unit yet."; 
+            }
+        }).catch(e => console.error("Lỗi fetch Grammar:", e));
     }
 
     // ==========================================
-    // TÍNH NĂNG TỪ ĐIỂN
+    // XỬ LÝ API GOOGLE SHEETS & BÀI TẬP
     // ==========================================
-    function toggleDict() { document.getElementById('dictSidebar').classList.toggle('translate-x-full'); }
-    async function translateWord(word = null) {
-        const txt = word || document.getElementById('dictInput').value.trim(); if (!txt) return;
-        document.getElementById('dictInput').value = txt; document.getElementById('dictSidebar').classList.remove('translate-x-full');
-        document.getElementById('dictResult').innerHTML = '<div class="text-center text-indigo-500 mt-10"><i class="fa-solid fa-spinner fa-spin text-4xl"></i></div>';
-        try {
-            let res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=en|vi`); let data = await res.json();
-            document.getElementById('dictResult').innerHTML = `<div class="bg-white rounded-2xl p-5 shadow-sm text-center"><h3 class="text-2xl font-black text-indigo-900 mb-2">${txt}</h3><p class="text-emerald-600 font-black text-xl mb-4">${data.responseData.translatedText}</p><button onclick="readAloudDict('${txt.replace(/'/g, "\\'")}')" class="bg-indigo-100 text-indigo-600 w-14 h-14 rounded-full mx-auto"><i class="fa-solid fa-volume-high text-2xl"></i></button></div>`;
-        } catch(e) {}
-    }
-    function readAloudDict(text) { 
-        if ('speechSynthesis' in window) { 
-            window.speechSynthesis.cancel(); 
-            let u = new SpeechSynthesisUtterance(text); 
-            u.lang='en-US'; 
-            let femaleVoice = getFemaleVoice();
-            if (femaleVoice) u.voice = femaleVoice;
-            window.speechSynthesis.speak(u); 
-        } 
-    }
-
-    const dictPopup = document.getElementById('dictPopup');
-    document.getElementById('grammarTab').addEventListener('mouseup', async (e) => {
-        let txt = window.getSelection().toString().trim();
-        if (txt.length > 0 && txt.length < 40) {
-            document.getElementById('dictPopupWord').innerText = txt; document.getElementById('dictPopupMeaning').innerText = "Translating...";
-            let x = e.clientX; let y = e.clientY + 20;
-            if(x + 260 > window.innerWidth) x = window.innerWidth - 270; if(y + 100 > window.innerHeight) y = e.clientY - 120; 
-            dictPopup.style.left = `${x}px`; dictPopup.style.top = `${y}px`; dictPopup.classList.remove('hidden');
-            setTimeout(() => { dictPopup.classList.remove('opacity-0', 'translate-y-2'); }, 10);
-            try { let res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=en|vi`); let data = await res.json(); document.getElementById('dictPopupMeaning').innerText = data.responseData.translatedText || "Not found."; } catch(err) {}
-        }
-    });
-    document.addEventListener('mousedown', (e) => { if (!dictPopup.contains(e.target)) { dictPopup.classList.add('opacity-0', 'translate-y-2'); setTimeout(() => { dictPopup.classList.add('hidden'); }, 200); } });
-
-    // ==========================================
-    // DỮ LIỆU VÀ XỬ LÝ BÀI TẬP (API TỪ GOOGLE SHEETS)
-    // ==========================================
-    const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbwtm-mJCRvAiXcbLI_dWEnzDGbqw1sWeBQqISC614dsvuiGkzyx6j-z5RS6jNx0xaX27w/exec";
-    
-    let exerciseData = [];
-    let allExercisesCache = null;
-
     async function fetchExerciseData() {
         const container = document.getElementById('question-container');
         const submitBtn = document.querySelector('button[onclick="submitExercise()"]'); 
@@ -295,7 +286,7 @@
             }
 
             let currentLevel = currentlyViewingLevel.toLowerCase();
-            let uIdx = parseInt(document.getElementById('unitSelect').value) + 1;
+            let uIdx = parseInt(document.getElementById('unitSelect').value || 0) + 1;
             let currentUnitKey = "unit_" + uIdx;
 
             if (allExercisesCache[currentLevel] && allExercisesCache[currentLevel][currentUnitKey]) {
@@ -346,15 +337,6 @@
         });
     }
 
-    function getFemaleVoice() {
-        let voices = window.speechSynthesis.getVoices();
-        return voices.find(v => v.lang.startsWith('en') && (v.name.includes('Zira') || v.name.includes('Samantha') || v.name.includes('Victoria') || v.name.includes('Google US English'))) || voices.find(v => v.lang.startsWith('en'));
-    }
-
-    if ('speechSynthesis' in window) {
-        window.speechSynthesis.onvoiceschanged = function() { window.speechSynthesis.getVoices(); };
-    }
-
     function submitExercise() {
         let correctCount = 0;
         
@@ -373,57 +355,87 @@
 
         const total = exerciseData.length;
         const score = total > 0 ? (correctCount / total) * 20 : 0;
+        let resultText = ""; let feedbackLevel = 1;
         
-        let resultText = "";
-        let feedbackLevel = 1;
-        
-        if (score >= 18) { 
-            feedbackLevel = 3; 
-            resultText = `Score: ${score}/20 - Excellent! +100 Coins`; 
-        }
-        else if (score >= 10) { 
-            feedbackLevel = 2; 
-            resultText = `Score: ${score}/20 - Good effort! +50 Coins`; 
-        }
-        else { 
-            feedbackLevel = 1; 
-            resultText = `Score: ${score}/20 - Keep trying!`; 
-        }
+        if (score >= 18) { feedbackLevel = 3; resultText = `Score: ${score}/20 - Excellent! +100 Coins`; }
+        else if (score >= 10) { feedbackLevel = 2; resultText = `Score: ${score}/20 - Good effort! +50 Coins`; }
+        else { feedbackLevel = 1; resultText = `Score: ${score}/20 - Keep trying!`; }
 
         const resBox = document.getElementById('result-container');
-        const resText = document.getElementById('result-text');
-        resText.innerHTML = resultText;
+        resBox.querySelector('#result-text').innerHTML = resultText;
         resBox.classList.remove('hidden');
         resBox.classList.add('scale-100', 'bg-indigo-50');
 
         speakTeacherVoice(feedbackLevel, score);
     }
 
+    // ==========================================
+    // XỬ LÝ VOICE VÀ TỪ ĐIỂN
+    // ==========================================
+    function getFemaleVoice() {
+        let voices = window.speechSynthesis.getVoices();
+        return voices.find(v => v.lang.startsWith('en') && (v.name.includes('Zira') || v.name.includes('Samantha') || v.name.includes('Victoria') || v.name.includes('Google US English'))) || voices.find(v => v.lang.startsWith('en'));
+    }
+
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = function() { window.speechSynthesis.getVoices(); };
+    }
+
     function speakTeacherVoice(level, score) {
         let speech = new SpeechSynthesisUtterance();
-        speech.lang = 'en-US';
-        speech.pitch = 1.3; 
-        speech.rate = 1.0;
-        
+        speech.lang = 'en-US'; speech.pitch = 1.3; speech.rate = 1.0;
         let femaleVoice = getFemaleVoice();
         if (femaleVoice) speech.voice = femaleVoice;
         
-        if (level === 3) {
-            speech.text = `Excellent job! You got ${score} out of 20. Keep it up!`;
-        } else if (level === 2) {
-            speech.text = `Good effort! You got ${score} out of 20. Let's review a little bit.`;
-        } else {
-            speech.text = `Don't give up! You got ${score} out of 20. Let's check the mistakes and try again.`;
-        }
-        
+        if (level === 3) speech.text = `Excellent job! You got ${score} out of 20. Keep it up!`;
+        else if (level === 2) speech.text = `Good effort! You got ${score} out of 20. Let's review a little bit.`;
+        else speech.text = `Don't give up! You got ${score} out of 20. Let's check the mistakes and try again.`;
         window.speechSynthesis.speak(speech);
     }
+
+    function toggleDict() { document.getElementById('dictSidebar').classList.toggle('translate-x-full'); }
+    
+    async function translateWord(word = null) {
+        const txt = word || document.getElementById('dictInput').value.trim(); if (!txt) return;
+        document.getElementById('dictInput').value = txt; document.getElementById('dictSidebar').classList.remove('translate-x-full');
+        document.getElementById('dictResult').innerHTML = '<div class="text-center text-indigo-500 mt-10"><i class="fa-solid fa-spinner fa-spin text-4xl"></i></div>';
+        try {
+            let res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=en|vi`); let data = await res.json();
+            document.getElementById('dictResult').innerHTML = `<div class="bg-white rounded-2xl p-5 shadow-sm text-center"><h3 class="text-2xl font-black text-indigo-900 mb-2">${txt}</h3><p class="text-emerald-600 font-black text-xl mb-4">${data.responseData.translatedText}</p><button onclick="readAloudDict('${txt.replace(/'/g, "\\'")}')" class="bg-indigo-100 text-indigo-600 w-14 h-14 rounded-full mx-auto"><i class="fa-solid fa-volume-high text-2xl"></i></button></div>`;
+        } catch(e) {}
+    }
+
+    function readAloudDict(text) { 
+        if ('speechSynthesis' in window) { 
+            window.speechSynthesis.cancel(); 
+            let u = new SpeechSynthesisUtterance(text); u.lang='en-US'; 
+            let femaleVoice = getFemaleVoice();
+            if (femaleVoice) u.voice = femaleVoice;
+            window.speechSynthesis.speak(u); 
+        } 
+    }
+
+    const dictPopup = document.getElementById('dictPopup');
+    document.getElementById('grammarTab').addEventListener('mouseup', async (e) => {
+        let txt = window.getSelection().toString().trim();
+        if (txt.length > 0 && txt.length < 40) {
+            document.getElementById('dictPopupWord').innerText = txt; document.getElementById('dictPopupMeaning').innerText = "Translating...";
+            let x = e.clientX; let y = e.clientY + 20;
+            if(x + 260 > window.innerWidth) x = window.innerWidth - 270; if(y + 100 > window.innerHeight) y = e.clientY - 120; 
+            dictPopup.style.left = `${x}px`; dictPopup.style.top = `${y}px`; dictPopup.classList.remove('hidden');
+            setTimeout(() => { dictPopup.classList.remove('opacity-0', 'translate-y-2'); }, 10);
+            try { let res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=en|vi`); let data = await res.json(); document.getElementById('dictPopupMeaning').innerText = data.responseData.translatedText || "Not found."; } catch(err) {}
+        }
+    });
+    
+    document.addEventListener('mousedown', (e) => { 
+        if (!dictPopup.contains(e.target)) { dictPopup.classList.add('opacity-0', 'translate-y-2'); setTimeout(() => { dictPopup.classList.add('hidden'); }, 200); } 
+    });
 
     document.addEventListener('mouseup', function() {
         let selectedText = window.getSelection().toString().trim();
         if (selectedText.length > 0 && selectedText.length <= 25) {
-            let wordAudio = new SpeechSynthesisUtterance(selectedText);
-            wordAudio.lang = 'en-US';
+            let wordAudio = new SpeechSynthesisUtterance(selectedText); wordAudio.lang = 'en-US';
             let femaleVoice = getFemaleVoice();
             if (femaleVoice) wordAudio.voice = femaleVoice;
             window.speechSynthesis.speak(wordAudio);
