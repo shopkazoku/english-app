@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Smart Exam v3.0 - Round-Up AI</title>
+  <title>Exam Center - Study Daily</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
@@ -15,410 +15,279 @@
 
   <style>
     body { font-family: 'Nunito', sans-serif; background: #f8fafc; }
-    .choice-btn { transition: all 0.2s; }
-    .choice-btn:active { transform: translateY(2px); box-shadow: none; }
-    .choice-correct { background-color: #10b981 !important; color: white !important; border-color: #059669 !important; box-shadow: 0 4px 0 #059669 !important; }
-    .choice-wrong { background-color: #f43f5e !important; color: white !important; border-color: #be123c !important; box-shadow: 0 4px 0 #be123c !important; }
+    .custom-scroll::-webkit-scrollbar { width: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
   </style>
 </head>
-<!-- FIX: Bỏ class hidden để tránh trắng màn hình -->
-<body class="min-h-screen flex flex-col bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] relative" id="mainBody">
+<body class="h-[100dvh] w-full flex flex-col bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')] relative" id="mainBody">
 
-  <!-- TOPBAR -->
+  <!-- HEADER -->
   <header class="bg-white border-b-2 border-indigo-100 p-3 sm:p-4 flex justify-between items-center shadow-sm z-50 shrink-0">
     <div class="flex items-center space-x-3">
-      <button onclick="window.location.href='dashboard.html'" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-xl flex justify-center items-center text-slate-600 transition shadow-sm border border-slate-200">
-        <i class="fa-solid fa-arrow-left"></i>
+      <button onclick="window.history.back()" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center justify-center text-slate-600 transition shadow-sm border border-slate-200" title="Back">
+          <i class="fa-solid fa-arrow-left"></i>
       </button>
-      <div>
-        <h1 class="font-black text-xl text-indigo-900 leading-tight">Smart Assessment</h1>
-        <p class="text-[10px] font-bold text-indigo-500 uppercase tracking-wider mt-0.5" id="examTitle">Connecting to Cloud...</p>
+      <div class="flex flex-col">
+        <h1 class="font-black text-lg sm:text-xl text-indigo-900 leading-tight">Exam Center</h1>
+        <span id="examSubtitle" class="mt-0.5 text-rose-500 font-bold text-[10px] sm:text-xs uppercase">Official Test</span>
       </div>
     </div>
-    
-    <!-- Bộ đếm ngược thời gian -->
-    <div class="hidden sm:flex items-center bg-slate-800 px-4 py-2 rounded-full shadow-inner border-2 border-slate-700 mr-4">
-        <i class="fa-solid fa-hourglass-half text-amber-400 mr-2 animate-pulse"></i>
-        <span id="timerDisplay" class="font-black text-white tracking-widest">00:00</span>
-    </div>
-
-    <div class="flex items-center bg-amber-50 px-4 py-2 rounded-full border border-amber-200 shadow-sm">
-      <i class="fa-solid fa-coins text-amber-500 mr-2"></i>
-      <span id="displayCoins" class="font-black text-amber-700">...</span>
+    <div class="flex items-center bg-amber-50 px-4 py-2 rounded-xl border border-amber-200 shadow-sm">
+        <i class="fa-solid fa-coins text-amber-500 mr-2 text-lg"></i><span id="displayCoins" class="font-black text-amber-700">...</span>
     </div>
   </header>
 
-  <!-- MAIN EXAM AREA -->
-  <main class="flex-1 flex flex-col items-center justify-center p-4 w-full max-w-4xl mx-auto relative">
-    
-    <!-- Màn hình chờ tải dữ liệu -->
-    <div id="loadingOverlay" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#f8fafc] transition-opacity duration-500">
-        <i class="fa-solid fa-circle-notch fa-spin text-5xl text-indigo-500 mb-4"></i>
-        <p class="font-black text-slate-500 animate-pulse">Fetching Exam from Database...</p>
-    </div>
-
-    <!-- Cảnh báo chống gian lận -->
-    <div id="cheatWarning" class="hidden absolute top-0 w-full max-w-3xl bg-rose-50 border-2 border-rose-200 text-rose-600 p-3 rounded-xl shadow-md flex items-center justify-center font-bold text-sm z-20">
-      <i class="fa-solid fa-shield-halved mr-2"></i> Review Mode: You will not earn coins for this lower-level exam.
-    </div>
-
-    <div class="w-full bg-white rounded-3xl shadow-2xl border-4 border-slate-100 p-5 sm:p-8 relative z-10 flex flex-col mt-4">
-      
-      <!-- Progress Bar -->
-      <div class="w-full flex items-center justify-between mb-8">
-        <span class="text-xs font-black text-slate-400 uppercase tracking-wider">Question <span id="qCurrent">0</span>/<span id="qTotal">0</span></span>
-        <div class="flex-1 mx-4 bg-slate-100 h-4 rounded-full border border-slate-200 overflow-hidden shadow-inner">
-          <div id="progressBar" class="bg-indigo-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
-        </div>
-      </div>
-
-      <!-- Question Text & R&D VOICE BUTTON -->
-      <div class="min-h-[140px] flex flex-col items-center justify-center text-center mb-8 relative">
-        <h2 id="questionText" class="text-2xl sm:text-3xl font-black text-slate-800 leading-tight mb-6 px-4">Loading question...</h2>
-        
-        <!-- NÚT GỌI AI ĐỌC CÂU HỎI -->
-        <button onclick="readCurrentQuestion()" class="group bg-indigo-50 border-2 border-indigo-200 hover:bg-indigo-500 hover:border-indigo-500 text-indigo-500 hover:text-white px-6 py-2 rounded-full font-black text-sm uppercase tracking-widest transition-all shadow-sm flex items-center active:scale-95">
-            <i class="fa-solid fa-volume-high mr-2 group-hover:animate-bounce"></i> Listen
-        </button>
-      </div>
-
-      <!-- Answers Grid -->
-      <div id="answersGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-        <!-- Buttons injected by JS -->
-      </div>
-      
-    </div>
-  </main>
-
-  <!-- BẢN QUYỀN FOOTER CHÍNH THỨC -->
-  <footer class="w-full text-center py-4 shrink-0 z-40 bg-transparent">
-      <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-          &copy; 2026 Son Nguyen. All rights reserved.
-      </p>
-  </footer>
-
-  <!-- Result Modal -->
-  <div id="resultModal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-sm z-[100] hidden flex-col items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full p-8 text-center shadow-2xl border-4 border-emerald-400 relative">
-      <div class="absolute -top-12 left-1/2 transform -translate-x-1/2 text-7xl">
-        <i class="fa-solid fa-trophy text-amber-400 drop-shadow-lg"></i>
-      </div>
-      <h2 class="text-4xl font-black text-slate-800 mt-8 mb-2">COMPLETE!</h2>
-      <p class="text-slate-500 font-bold mb-6">Exam evaluation finished.</p>
-      
-      <div class="bg-slate-50 rounded-2xl p-6 border border-slate-200 mb-6">
-        <p class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">Total Score</p>
-        <p class="text-5xl font-black text-emerald-500"><span id="finalScore">0</span> / 10</p>
-      </div>
-
-      <div id="rewardBox" class="bg-amber-50 rounded-xl p-4 border border-amber-200 mb-6 flex items-center justify-center space-x-3">
-        <i class="fa-solid fa-coins text-4xl text-amber-500"></i>
-        <div class="text-left">
-          <p class="text-xs font-bold text-amber-600 uppercase tracking-wider">Coins Earned</p>
-          <p class="text-2xl font-black text-amber-700">+<span id="earnedCoins">0</span></p>
-        </div>
-      </div>
-
-      <button onclick="window.location.href='dashboard.html'" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-4 rounded-xl shadow-[0_5px_0_#4f46e5] active:shadow-[0_0px_0_#4f46e5] active:translate-y-[5px] transition-all uppercase tracking-widest">
-        RETURN TO DASHBOARD
-      </button>
-    </div>
+  <!-- LOADING OVERLAY -->
+  <div id="loadingOverlay" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white transition-opacity duration-500">
+      <i class="fa-solid fa-file-signature fa-bounce text-5xl text-rose-500 mb-4"></i>
+      <p class="font-black text-slate-500 animate-pulse text-sm">Generating Your Exam...</p>
   </div>
 
-  <audio id="sfxCorrect" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
-  <audio id="sfxWrong" src="https://assets.mixkit.co/active_storage/sfx/2955/2955-preview.mp3"></audio>
+  <!-- NỘI DUNG ĐỀ THI -->
+  <main class="flex-1 w-full max-w-3xl mx-auto p-4 sm:p-8 overflow-y-auto custom-scroll flex flex-col relative opacity-0 transition-opacity duration-500" id="mainContent">
+      
+      <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 sm:p-10 mb-10">
+          <div class="text-center border-b-2 border-dashed border-slate-200 pb-6 mb-8">
+              <i class="fa-solid fa-graduation-cap text-5xl text-indigo-600 mb-4"></i>
+              <h2 id="examTitle" class="text-3xl font-black text-slate-800 uppercase tracking-wide">Loading Exam...</h2>
+              <p class="text-slate-500 font-bold mt-2">Read the questions carefully and select the best answer.</p>
+          </div>
+
+          <!-- Danh sách câu hỏi thi -->
+          <div id="examContainer" class="space-y-8">
+              <!-- JS tự động vẽ câu hỏi -->
+          </div>
+
+          <div id="resultContainer" class="mt-10 hidden text-center p-8 rounded-2xl border-4 border-dashed border-rose-200 bg-rose-50 transform transition-all scale-95">
+              <h3 id="resultText" class="text-4xl font-black text-rose-600 mb-2"></h3>
+              <p id="resultSubtext" class="text-rose-500 font-bold text-lg"></p>
+          </div>
+
+          <button id="submitBtn" onclick="submitExam()" class="mt-10 w-full py-5 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-2xl font-black text-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transform transition flex justify-center items-center">
+              <i class="fa-solid fa-check-double mr-2"></i> SUBMIT EXAM
+          </button>
+      </div>
+  </main>
 
   <script>
     // ==========================================
-    // BOSS DÁN ĐOẠN FIREBASE CONFIG VÀO ĐÂY BẮT BUỘC
+    // CẤU HÌNH HỆ THỐNG
     // ==========================================
-   const firebaseConfig = {
-  apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
-  authDomain: "roundup-ai-academy.firebaseapp.com",
-  projectId: "roundup-ai-academy",
-  storageBucket: "roundup-ai-academy.firebasestorage.app",
-  messagingSenderId: "723976989630",
-  appId: "1:723976989630:web:45f3de91269e70f604e7ef"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
+      authDomain: "roundup-ai-academy.firebaseapp.com",
+      projectId: "roundup-ai-academy",
+      storageBucket: "roundup-ai-academy.firebasestorage.app",
+      messagingSenderId: "723976989630",
+      appId: "1:723976989630:web:45f3de91269e70f604e7ef"
+    };
+    
+    const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbwtm-mJCRvAiXcbLI_dWEnzDGbqw1sWeBQqISC614dsvuiGkzyx6j-z5RS6jNx0xaX27w/exec";
 
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
+    const auth = firebase.auth(); 
     const db = firebase.database();
-
-    let currentUser = null;
-    let userCoins = 0;
-    let userMaxLevelWeight = 1; 
     
-    // R&D: Biến hệ thống Voice
-    let britishFemaleVoice = null;
+    let currentCoins = 0;
+    let examData = [];
     
-    let currentExamData = null;
-    let currentQIndex = 0;
-    let correctCount = 0;
-    let isReviewMode = false;
-    let isClickLocked = false;
-    
-    let timeRemaining = 0;
-    let timerInterval = null;
+    // Bắt tham số URL để biết đang thi loại gì (Ví dụ: exam.html?level=starter&type=midterm)
+    const urlParams = new URLSearchParams(window.location.search);
+    let targetLevel = urlParams.get('level') || 'starter';
+    let examType = urlParams.get('type') || 'entry'; // entry, midterm, final
 
-    // 1. KHỞI TẠO GIỌNG ĐỌC AI (Text-to-Speech)
-    function loadVoices() {
-      let voices = window.speechSynthesis.getVoices();
-      britishFemaleVoice = voices.find(v => v.lang === 'en-GB' && (v.name.includes('Female') || v.name.includes('UK English'))) || voices.find(v => v.lang === 'en-GB') || voices.find(v => v.lang === 'en-US');
-    }
-    if ('speechSynthesis' in window) {
-        window.speechSynthesis.onvoiceschanged = loadVoices;
-    }
-
-    // Xác thực người dùng
+    // ==========================================
+    // KHỞI ĐỘNG HỆ THỐNG & TẢI ĐỀ THI
+    // ==========================================
     auth.onAuthStateChanged((user) => {
       if (user) {
-        currentUser = user;
-        
-        db.ref('users/' + user.uid).once('value').then((snapshot) => {
-          const data = snapshot.val();
-          if (data) {
-            userCoins = data.coins || 0;
-            const currentLevel = data.current_level || 'starter';
-            const levelWeights = { "starter": 1, "level_1": 2, "level_2": 3, "level_3": 4, "level_4": 5, "level_5": 6, "level_6": 7 };
-            userMaxLevelWeight = levelWeights[currentLevel] || 1;
+        db.ref('users/' + user.uid).once('value').then(async (snapshot) => {
+            let data = snapshot.val() || { coins: 0 };
+            currentCoins = data.coins || 0;
+            document.getElementById('displayCoins').innerText = currentCoins;
             
-            document.getElementById('displayCoins').innerText = userCoins;
-            fetchExamFromCloud(); 
-          }
+            // Render Tiêu đề
+            let displayType = examType === 'entry' ? "Entry Test" : (examType === 'midterm' ? "Midterm Exam" : "Final Exam");
+            document.getElementById('examTitle').innerText = `${targetLevel.replace('_', ' ')} - ${displayType}`;
+
+            await loadExamFromGoogleSheets();
+
+            setTimeout(() => { 
+                document.getElementById('loadingOverlay').style.display = 'none'; 
+                document.getElementById('mainContent').style.opacity = '1'; 
+            }, 500);
         });
-      } else { 
-          // FIX LỖI ĐIỀU HƯỚNG TRẮNG MÀN HÌNH
-          window.location.href = "index.html"; 
-      }
+      } else { window.location.href = "index.html"; }
     });
 
-    // 2. KÉO DỮ LIỆU ĐỀ THI TỪ FIREBASE CLOUD VÀ TRỘN NGẪU NHIÊN 20 CÂU
-    function fetchExamFromCloud() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const examId = urlParams.get('id') || 'level_1_entry'; 
-
-      db.ref('exams/' + examId).once('value').then((snapshot) => {
-          const data = snapshot.val();
-          if (data) {
-              // Xử lý dữ liệu Firebase (có thể trả về Array hoặc Object tùy cách Boss Add lúc trước)
-              let questionsArray = [];
-              
-              // Nếu data chứa mảng câu hỏi bên trong (cấu trúc cũ)
-              if (data.questions) {
-                  questionsArray = Array.isArray(data.questions) ? data.questions : Object.values(data.questions);
-              } 
-              // Nếu data chính là danh sách câu hỏi (do đẩy trực tiếp node con)
-              else {
-                  questionsArray = Object.values(data);
-              }
-
-              if (questionsArray.length > 0) {
-                  // ===============================================
-                  // THUẬT TOÁN R&D: TRỘN NGẪU NHIÊN VÀ CẮT 20 CÂU
-                  // ===============================================
-                  questionsArray.sort(() => 0.5 - Math.random()); // Trộn bài
-                  const selectedQuestions = questionsArray.slice(0, 20); // Cắt 20 câu (nếu ít hơn 20 thì lấy hết)
-
-                  // Cấu trúc lại bộ dữ liệu thi
-                  currentExamData = {
-                      title: examId.replace(/_/g, ' ').toUpperCase(),
-                      questions: selectedQuestions,
-                      timeLimit: 15, // Mặc định 15 phút
-                      levelWeight: parseInt(examId.split('_')[1]) || 1
-                  };
-                  
-                  // Ẩn Màn hình Loading
-                  document.getElementById('loadingOverlay').style.opacity = '0';
-                  setTimeout(() => { document.getElementById('loadingOverlay').style.display = 'none'; }, 500);
-                  
-                  // Khởi tạo thông tin UI
-                  document.getElementById('examTitle').innerText = currentExamData.title;
-                  document.getElementById('qTotal').innerText = currentExamData.questions.length;
-                  
-                  // Bật đồng hồ đếm ngược
-                  timeRemaining = currentExamData.timeLimit * 60; 
-                  startTimer();
-
-                  // Check Anti-Cheat (Gian lận Level)
-                  if (currentExamData.levelWeight < userMaxLevelWeight) {
-                    isReviewMode = true;
-                    document.getElementById('cheatWarning').classList.remove('hidden');
-                  }
-
-                  loadVoices(); 
-                  loadQuestion();
-                  return;
-              }
-          }
-          
-          // BÁO LỖI NẾU KHÔNG CÓ DATA
-          document.getElementById('loadingOverlay').innerHTML = `<div class="bg-white p-8 rounded-3xl shadow-xl text-center"><i class="fa-solid fa-triangle-exclamation text-5xl text-rose-500 mb-4"></i><p class="font-black text-slate-700 text-xl mb-6">No questions found in this Exam Bank.</p><button onclick="window.location.href='dashboard.html'" class="bg-slate-800 text-white px-8 py-3 rounded-xl font-bold hover:bg-slate-700 transition">Go Back</button></div>`;
-          
-      }).catch(err => {
-          alert("Error fetching exam: " + err.message);
-      });
-    }
-
-   // 3. ĐỌC CÂU HỎI HIỆN TẠI BẰNG AI
-    function readCurrentQuestion() {
-        if (!currentExamData) return;
+    async function loadExamFromGoogleSheets() {
+        const container = document.getElementById('examContainer');
+        const submitBtn = document.getElementById('submitBtn');
         
-        let textToRead = currentExamData.questions[currentQIndex].q;
-        textToRead = textToRead.replace(/_+/g, " blank ");
-        
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel(); 
-            if (!britishFemaleVoice) loadVoices();
+        try {
+            let res = await fetch(SHEET_API_URL);
+            let masterData = await res.json();
             
-            const utterance = new SpeechSynthesisUtterance(textToRead);
-            if (britishFemaleVoice) utterance.voice = britishFemaleVoice; else utterance.lang = 'en-US'; 
-            utterance.rate = 0.9; 
-            utterance.pitch = 1.0;    
-            
-            window.speechSynthesis.speak(utterance);
-        } else {
-            alert("Your browser does not support Voice features.");
+            if (masterData && masterData.exam && masterData.exam[targetLevel] && masterData.exam[targetLevel][examType]) {
+                examData = masterData.exam[targetLevel][examType];
+                renderExam();
+            } else {
+                examData = [];
+                submitBtn.classList.add('hidden');
+                container.innerHTML = `
+                    <div class="bg-slate-50 p-10 rounded-3xl text-center border-2 border-dashed border-slate-200">
+                        <i class="fa-solid fa-box-open text-6xl text-slate-300 mb-4"></i>
+                        <p class="text-slate-600 font-black text-xl">Exam Not Found</p>
+                        <p class="text-slate-400 mt-2">The ${examType} for ${targetLevel} is not available yet.</p>
+                    </div>`;
+            }
+        } catch (e) {
+            console.error("Lỗi tải đề thi:", e);
+            container.innerHTML = `<p class="text-rose-500 font-bold text-center">Cannot connect to Exam Server.</p>`;
         }
     }
 
-    // ĐỒNG HỒ ĐẾM NGƯỢC
-    function startTimer() {
-        const timerDisplay = document.getElementById('timerDisplay');
-        timerInterval = setInterval(() => {
-            timeRemaining--;
-            let m = Math.floor(timeRemaining / 60);
-            let s = timeRemaining % 60;
-            timerDisplay.innerText = `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
+    function renderExam() {
+        const container = document.getElementById('examContainer');
+        container.innerHTML = '';
+        
+        examData.forEach((item, index) => {
+            let optionsHtml = '';
+            item.options.forEach((opt, optIdx) => {
+                if(opt) { 
+                    optionsHtml += `
+                        <label class="flex items-center space-x-4 p-4 border-2 border-slate-100 rounded-xl cursor-pointer hover:bg-rose-50 hover:border-rose-200 transition group bg-white shadow-sm">
+                            <input type="radio" name="q${index}" value="${optIdx + 1}" class="form-radio h-6 w-6 text-rose-500">
+                            <span class="text-slate-700 font-bold text-lg group-hover:text-rose-700">${opt}</span>
+                        </label>
+                    `;
+                }
+            });
             
-            if(timeRemaining <= 300) { 
-                timerDisplay.parentElement.classList.replace('bg-slate-800', 'bg-rose-600');
-                timerDisplay.parentElement.classList.replace('border-slate-700', 'border-rose-400');
-            }
-
-            if(timeRemaining <= 0) {
-                clearInterval(timerInterval);
-                finishExam(); 
-            }
-        }, 1000);
-    }
-
-    // TẢI CÂU HỎI LÊN MÀN HÌNH
-    function loadQuestion() {
-      if (currentQIndex >= currentExamData.questions.length) {
-        finishExam(); return;
-      }
-
-      isClickLocked = false;
-      const qData = currentExamData.questions[currentQIndex];
-      
-      document.getElementById('qCurrent').innerText = currentQIndex + 1;
-      const progressPercent = ((currentQIndex) / currentExamData.questions.length) * 100;
-      document.getElementById('progressBar').style.width = `${progressPercent}%`;
-
-      document.getElementById('questionText').innerText = qData.q;
-      const grid = document.getElementById('answersGrid');
-      grid.innerHTML = "";
-
-      const shuffledOptions = [...qData.options].sort(() => Math.random() - 0.5);
-
-      shuffledOptions.forEach(opt => {
-        const btn = document.createElement('button');
-        btn.className = "choice-btn w-full py-5 px-6 bg-white border-b-4 border-slate-200 rounded-2xl text-lg sm:text-xl font-black text-slate-600 hover:border-indigo-400 hover:text-indigo-600 focus:outline-none shadow-sm";
-        btn.innerText = opt;
-        btn.onclick = () => checkAnswer(btn, opt, qData.answer);
-        grid.appendChild(btn);
-      });
-    }
-
-    function checkAnswer(btnEl, selected, correct) {
-      if (isClickLocked) return;
-      isClickLocked = true; 
-      window.speechSynthesis.cancel(); 
-
-      const allBtns = document.getElementById('answersGrid').children;
-
-      if (selected === correct) {
-        document.getElementById('sfxCorrect').play();
-        btnEl.classList.add('choice-correct');
-        correctCount++;
-      } else {
-        document.getElementById('sfxWrong').play();
-        btnEl.classList.add('choice-wrong');
-        Array.from(allBtns).forEach(b => {
-          if (b.innerText === correct) b.classList.add('choice-correct');
+            container.innerHTML += `
+                <div class="p-6 sm:p-8 bg-slate-50 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-2 h-full bg-rose-400"></div>
+                    <p class="font-black text-xl mb-6 text-slate-800"><span class="text-rose-500">Q${index + 1}:</span> ${item.q}</p>
+                    <div class="grid grid-cols-1 gap-4">
+                        ${optionsHtml}
+                    </div>
+                    <p id="exp-q${index}" class="mt-6 hidden text-base font-bold bg-rose-100 text-rose-600 p-4 rounded-xl border border-rose-200"></p>
+                </div>
+            `;
         });
-      }
-
-      setTimeout(() => {
-        currentQIndex++;
-        loadQuestion();
-      }, 1500);
     }
 
-    // KẾT THÚC BÀI THI & TÍNH ĐIỂM THANG ĐIỂM 10
-    function finishExam() {
-      clearInterval(timerInterval);
-      document.getElementById('progressBar').style.width = `100%`;
-      document.getElementById('resultModal').classList.remove('hidden');
-      document.getElementById('resultModal').classList.add('flex');
-      
-      confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+    // ==========================================
+    // CHẤM ĐIỂM, THƯỞNG COIN & VOICE AI
+    // ==========================================
+    function getFemaleVoice() {
+        let voices = window.speechSynthesis.getVoices();
+        return voices.find(v => v.lang.startsWith('en') && (v.name.includes('Zira') || v.name.includes('Samantha') || v.name.includes('Victoria') || v.name.includes('Google US English'))) || voices.find(v => v.lang.startsWith('en'));
+    }
 
-      // Tính điểm theo thang điểm 10 (chứ không phải 20)
-      const totalQs = currentExamData.questions.length;
-      const pointsPerQ = 10 / totalQs;
-      const finalScore = Math.round(correctCount * pointsPerQ * 10) / 10; 
-      
-      document.getElementById('finalScore').innerText = finalScore;
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = function() { window.speechSynthesis.getVoices(); };
+    }
 
-      // ====================================================
-      // R&D LOGIC: MỞ KHÓA UNIT HOẶC LEVEL MỚI
-      // ====================================================
-      if (finalScore >= 5) { // Qua môn với 5/10 điểm
-          if (currentUser) {
-              db.ref('users/' + currentUser.uid).once('value').then((snapshot) => {
-                  const userData = snapshot.val();
-                  if (userData) {
-                      const urlParams = newSearchParams(window.location.search);
-                      const examId = urlParams.get('id');
-                      
-                      // Nếu thi đậu Unit Exam
-                      if (examId && examId.includes('_unit_')) {
-                          let currentU = parseInt(userData.current_unit) || 1;
-                          const examUnitNum = parseInt(examId.split('_unit_')[1]);
-                          
-                          if (examUnitNum === currentU) {
-                              let nextUnit = currentU + 1;
-                              db.ref('users/' + currentUser.uid).update({ current_unit: nextUnit });
-                          }
-                      }
-                      
-                      // Nếu thi đậu Entry Test của Level mới
-                      if (examId && examId.includes('_entry')) {
-                          const targetLevelStr = examId.replace('_entry', '');
-                          db.ref('users/' + currentUser.uid).update({ 
-                              current_level: targetLevelStr,
-                              current_unit: 1
-                          });
-                      }
-                  }
-              });
-          }
-      }
-
-      // Tính thưởng Coin
-      let earnedCoins = 0;
-      if (!isReviewMode) {
-        earnedCoins = correctCount * 20 * currentExamData.levelWeight;
-        document.getElementById('earnedCoins').innerText = earnedCoins;
+    function speakTeacherVoice(scorePercent) {
+        let speech = new SpeechSynthesisUtterance();
+        speech.lang = 'en-US'; speech.pitch = 1.3; speech.rate = 1.0;
+        let femaleVoice = getFemaleVoice();
+        if (femaleVoice) speech.voice = femaleVoice;
         
-        if (earnedCoins > 0) {
-          db.ref('users/' + currentUser.uid).update({ coins: userCoins + earnedCoins });
+        if (scorePercent >= 90) speech.text = `Outstanding performance! You passed the exam with flying colors!`;
+        else if (scorePercent >= 50) speech.text = `Good job! You passed the exam, but keep reviewing your materials.`;
+        else speech.text = `You didn't pass this time. Please check your mistakes and try again.`;
+        
+        window.speechSynthesis.speak(speech);
+    }
+
+    function submitExam() {
+        // Khóa nút nộp bài để tránh click đúp
+        document.getElementById('submitBtn').disabled = true;
+        document.getElementById('submitBtn').classList.add('opacity-50', 'cursor-not-allowed');
+
+        let correctCount = 0;
+        
+        examData.forEach((item, index) => {
+            const selected = document.querySelector(`input[name="q${index}"]:checked`);
+            const expEl = document.getElementById(`exp-q${index}`);
+            
+            // Khóa lựa chọn sau khi nộp
+            document.querySelectorAll(`input[name="q${index}"]`).forEach(radio => radio.disabled = true);
+            
+            if (selected && parseInt(selected.value) === item.ans) {
+                correctCount++;
+                // Có thể làm highlight đáp án đúng ở đây nếu muốn
+            } else {
+                expEl.innerHTML = `<i class="fa-solid fa-circle-xmark mr-2"></i> <strong>Incorrect!</strong> ${item.exp}`;
+                expEl.classList.remove('hidden');
+            }
+        });
+
+        const total = examData.length;
+        const scorePercent = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+        
+        let resultText = ""; 
+        let subText = "";
+        let rewardCoins = 0;
+        
+        const resBox = document.getElementById('resultContainer');
+        
+        if (scorePercent >= 90) { 
+            resultText = `${scorePercent}% - EXCELLENT!`; 
+            rewardCoins = 500;
+            subText = `Congratulations! You earned +${rewardCoins} Coins.`;
+            resBox.className = "mt-10 text-center p-8 rounded-2xl border-4 border-dashed border-emerald-300 bg-emerald-50 transform transition-all scale-100";
+            document.getElementById('resultText').className = "text-4xl font-black text-emerald-600 mb-2";
+            document.getElementById('resultSubtext').className = "text-emerald-500 font-bold text-lg";
+            triggerConfetti();
         }
-      } else {
-        document.getElementById('rewardBox').innerHTML = `<p class="text-sm font-bold text-rose-500">Review Mode: 0 Coins</p>`;
-      }
+        else if (scorePercent >= 50) { 
+            resultText = `${scorePercent}% - PASSED!`; 
+            rewardCoins = 200;
+            subText = `Good effort! You earned +${rewardCoins} Coins.`;
+            resBox.className = "mt-10 text-center p-8 rounded-2xl border-4 border-dashed border-amber-300 bg-amber-50 transform transition-all scale-100";
+            document.getElementById('resultText').className = "text-4xl font-black text-amber-600 mb-2";
+            document.getElementById('resultSubtext').className = "text-amber-500 font-bold text-lg";
+            triggerConfetti();
+        }
+        else { 
+            resultText = `${scorePercent}% - FAILED`; 
+            subText = "Please review the lessons and try again.";
+            resBox.className = "mt-10 text-center p-8 rounded-2xl border-4 border-dashed border-rose-300 bg-rose-50 transform transition-all scale-100";
+            document.getElementById('resultText').className = "text-4xl font-black text-rose-600 mb-2";
+            document.getElementById('resultSubtext').className = "text-rose-500 font-bold text-lg";
+        }
+
+        document.getElementById('resultText').innerText = resultText;
+        document.getElementById('resultSubtext').innerText = subText;
+        resBox.classList.remove('hidden');
+
+        // Cập nhật xu vào Firebase nếu pass
+        if (rewardCoins > 0 && auth.currentUser) {
+            let newCoins = currentCoins + rewardCoins;
+            db.ref('users/' + auth.currentUser.uid).update({ coins: newCoins })
+              .then(() => {
+                  document.getElementById('displayCoins').innerText = newCoins;
+                  // Hiệu ứng update xu
+                  document.getElementById('displayCoins').classList.add('text-emerald-500', 'scale-125');
+                  setTimeout(() => document.getElementById('displayCoins').classList.remove('text-emerald-500', 'scale-125'), 1000);
+              });
+        }
+
+        speakTeacherVoice(scorePercent);
+    }
+
+    function triggerConfetti() {
+        var duration = 3 * 1000;
+        var end = Date.now() + duration;
+        (function frame() {
+            confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#f43f5e', '#10b981', '#f59e0b'] });
+            confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#f43f5e', '#10b981', '#f59e0b'] });
+            if (Date.now() < end) requestAnimationFrame(frame);
+        }());
     }
   </script>
 </body>
