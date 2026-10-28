@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Smart Reading - Teacher Tutor</title>
+  <title>Reading - Study Daily</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -18,413 +17,242 @@
     .custom-scroll::-webkit-scrollbar { width: 6px; }
     .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
-    
-    .sentence { transition: all 0.3s ease; padding: 2px 4px; border-radius: 6px; }
-    .sentence.active { background-color: #fef08a; color: #1e3a8a; font-weight: 900; box-shadow: 0 2px 10px rgba(253, 224, 71, 0.5); }
-    .sentence.passed { color: #10b981; }
-    
-    .mic-active { animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; }
-    @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); } 100% { box-shadow: 0 0 0 15px rgba(99, 102, 241, 0); } }
-
-    @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
-    .animate-marquee { display: inline-block; white-space: nowrap; animation: marquee 15s linear infinite; }
+    audio { width: 100%; height: 44px; outline: none; border-radius: 12px; }
+    audio::-webkit-media-controls-panel { background-color: #f1f5f9; }
   </style>
 </head>
-<body class="h-[100dvh] w-full flex flex-col bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')] relative overflow-hidden">
+<body class="h-[100dvh] w-full flex flex-col bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')] relative" id="mainBody">
 
-  <!-- TOPBAR -->
+  <!-- HEADER -->
   <header class="bg-white border-b-2 border-indigo-100 p-3 sm:p-4 flex justify-between items-center shadow-sm z-50 shrink-0">
     <div class="flex items-center space-x-3">
-      <button onclick="window.location.href='classroom.html'" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center justify-center text-slate-600 transition shadow-sm border border-slate-200">
-        <i class="fa-solid fa-arrow-left"></i>
+      <button onclick="window.location.href='classroom.html'" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center justify-center text-slate-600 transition shadow-sm border border-slate-200" title="Back to Classroom">
+          <i class="fa-solid fa-arrow-left"></i>
       </button>
       <div class="flex flex-col">
-        <h1 class="font-black text-lg sm:text-xl text-indigo-900 leading-tight">Reading Tutor</h1>
-        <span class="text-xs font-bold text-indigo-500 uppercase tracking-widest" id="levelTag">Loading...</span>
+        <h1 class="font-black text-lg sm:text-xl text-indigo-900 leading-tight">Reading Practice</h1>
+        <span id="levelDisplay" class="mt-0.5 text-indigo-500 font-bold text-[10px] sm:text-xs uppercase">Loading...</span>
       </div>
     </div>
-    <div class="flex items-center bg-amber-50 px-3 sm:px-4 py-2 rounded-full border border-amber-200 shadow-sm">
-      <i class="fa-solid fa-coins text-amber-500 mr-2 text-lg animate-bounce"></i>
-      <span id="displayCoins" class="font-black text-amber-700 text-lg sm:text-xl">...</span>
+    <div class="flex gap-2">
+        <select id="unitSelect" onchange="loadReadingData()" class="bg-indigo-50 border border-indigo-200 text-indigo-700 font-black px-4 py-2 rounded-xl focus:outline-none text-sm cursor-pointer shadow-sm">
+            <!-- Sẽ được fill bằng JavaScript -->
+        </select>
+        <div class="hidden sm:flex items-center bg-amber-50 px-4 py-2 rounded-xl border border-amber-200 shadow-sm">
+            <i class="fa-solid fa-coins text-amber-500 mr-2 text-lg"></i><span id="displayCoins" class="font-black text-amber-700">...</span>
+        </div>
     </div>
   </header>
 
   <!-- LOADING OVERLAY -->
-  <div id="loadingOverlay" class="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-white mt-16 transition-opacity duration-500">
-      <i id="loadingIcon" class="fa-solid fa-cloud-arrow-down fa-bounce text-5xl text-indigo-500 mb-4"></i>
-      <p id="loadingText" class="font-black text-slate-500 animate-pulse uppercase tracking-widest text-sm mb-4 px-6 text-center">Loading Content...</p>
+  <div id="loadingOverlay" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white transition-opacity duration-500">
+      <i class="fa-solid fa-book-open-reader fa-bounce text-5xl text-indigo-500 mb-4"></i>
+      <p class="font-black text-slate-500 animate-pulse text-sm">Syncing Reading Materials...</p>
   </div>
 
-  <!-- SMART DICTIONARY POPUP -->
-  <div id="dictPopup" class="fixed hidden z-[9999] bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.3)] border-2 border-indigo-100 p-4 w-64 transition-all opacity-0 translate-y-2 pointer-events-auto">
+  <!-- DICTIONARY POPUP -->
+  <div id="dictPopup" class="fixed hidden z-[9999] bg-white rounded-2xl shadow-xl border-2 border-indigo-100 p-4 w-64 opacity-0 translate-y-2 transition-all">
       <div class="flex justify-between items-start mb-2">
-          <h4 id="dictWord" class="font-black text-indigo-900 text-lg leading-tight pr-4">Word</h4>
-          <button onclick="playDictAudio()" class="text-indigo-400 hover:text-indigo-600 transition bg-indigo-50 w-8 h-8 rounded-full flex items-center justify-center shrink-0">
-              <i class="fa-solid fa-volume-high"></i>
-          </button>
+          <h4 id="dictPopupWord" class="font-black text-indigo-900 text-lg">Word</h4>
       </div>
-      <div class="w-full h-[1px] bg-slate-100 mb-2"></div>
-      <p id="dictMeaning" class="text-slate-600 font-bold text-sm">Translating...</p>
+      <p id="dictPopupMeaning" class="text-slate-600 font-bold text-sm">Translating...</p>
   </div>
 
-  <!-- MAIN WORKSPACE -->
-  <main class="flex-1 w-full max-w-4xl mx-auto p-4 flex flex-col min-h-0 relative">
-    
-    <!-- CONTROLS -->
-    <div class="bg-white rounded-3xl border-4 border-indigo-50 shadow-lg p-5 mb-4 shrink-0 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-40">
-        <div class="flex items-center gap-3">
-            <div id="micStatusBtn" class="w-14 h-14 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center text-2xl shadow-inner transition-colors">
-                <i class="fa-solid fa-microphone-slash"></i>
-            </div>
-            <div>
-                <h3 class="font-black text-slate-800 text-lg" id="statusTitle">Ready to read!</h3>
-                <p class="text-sm text-slate-500 font-bold" id="statusMsg">Select text to translate, or click Start</p>
-            </div>
-        </div>
-        
-        <div class="flex gap-2 w-full sm:w-auto">
-            <button onclick="playAIFull()" id="btnAIFull" class="flex-1 sm:w-auto bg-violet-100 hover:bg-violet-200 text-violet-700 font-black px-4 py-3 rounded-xl transition-all flex items-center justify-center border border-violet-200">
-                <i class="fa-solid fa-volume-high mr-2"></i> TEACHER VOICE
-            </button>
-            <button onclick="startKaraokeMode()" id="btnStart" class="flex-1 sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-black px-6 py-3 rounded-xl shadow-[0_4px_0_#4338ca] active:translate-y-[4px] active:shadow-[0_0px_0_#4338ca] transition-all flex items-center justify-center">
-                <i class="fa-solid fa-play mr-2"></i> START READING
-            </button>
-        </div>
-    </div>
+  <!-- NỘI DUNG BÀI ĐỌC -->
+  <main class="flex-1 w-full max-w-4xl mx-auto p-4 sm:p-8 overflow-y-auto custom-scroll flex flex-col relative opacity-0 transition-opacity duration-500" id="mainContent">
+      <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 sm:p-10 mb-20 flex-1 relative">
+          <!-- Audio Player (Chỉ hiện khi có link Audio) -->
+          <div id="audioContainer" class="hidden w-full bg-slate-50 p-3 rounded-2xl border border-slate-200 mb-8 shadow-sm">
+              <audio id="readingAudio" controls class="w-full">
+                  <source id="audioSource" src="" type="audio/mpeg">
+              </audio>
+          </div>
 
-    <!-- READING CONTENT -->
-    <div class="flex-1 bg-white rounded-3xl border-4 border-indigo-50 shadow-xl p-6 sm:p-10 overflow-y-auto custom-scroll relative z-30">
-        <h2 class="text-2xl sm:text-3xl font-black text-indigo-900 mb-6 border-b-2 border-slate-100 pb-4 text-center">Reading Practice</h2>
-        <div id="readingContent" class="text-xl sm:text-2xl text-slate-600 font-bold leading-relaxed space-y-2 text-justify tracking-wide cursor-text">
-            <!-- Rendered by JS -->
-        </div>
-    </div>
+          <div class="text-center mb-10">
+              <span id="unitBadge" class="inline-block bg-indigo-100 text-indigo-700 font-black px-4 py-1.5 rounded-full text-sm uppercase mb-4 tracking-wider">Unit X</span>
+              <h2 id="readingTitle" class="text-3xl sm:text-4xl font-extrabold text-slate-800 leading-tight">Loading Title...</h2>
+          </div>
 
-    <!-- PRO TIP MARQUEE -->
-    <div class="mt-4 w-full max-w-3xl mx-auto bg-indigo-50 border border-indigo-100 rounded-full p-2 overflow-hidden flex items-center relative z-40 shadow-sm">
-        <div class="bg-indigo-50 z-10 px-3 flex items-center text-indigo-500 font-black whitespace-nowrap">
-            <i class="fa-solid fa-lightbulb text-amber-500 mr-2 animate-pulse"></i> PRO TIP:
-        </div>
-        <div class="flex-1 overflow-hidden relative h-5">
-            <div class="absolute animate-marquee text-indigo-700 font-bold text-sm">
-                Highlight any word or sentence in the text to instantly translate and listen to the pronunciation!
-            </div>
-        </div>
-    </div>
-
-    <!-- CLAIM BUTTON -->
-    <div class="mt-2 shrink-0 flex justify-center relative z-40">
-        <button id="btnComplete" onclick="claimCoins()" class="w-full sm:w-1/2 bg-slate-300 text-slate-500 cursor-not-allowed font-black px-6 py-4 rounded-2xl shadow-[0_4px_0_#cbd5e1] transition-all flex items-center justify-center text-lg relative pointer-events-none">
-            <i class="fa-solid fa-lock mr-2" id="claimIcon"></i> <span id="claimText">COMPLETE READING TO CLAIM COINS</span>
-        </button>
-    </div>
-
-    <footer class="w-full text-center py-4 shrink-0 z-40 bg-transparent mt-2">
-      <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-          &copy; 2026 Son Nguyen. All rights reserved.
-      </p>
-    </footer>
-
+          <div id="readingContent" class="text-lg sm:text-xl text-slate-700 leading-relaxed font-medium space-y-6 text-justify cursor-text">
+              <!-- Nội dung bài đọc sẽ được nhúng vào đây -->
+          </div>
+      </div>
   </main>
 
   <script>
     // ==========================================
-    // BOSS DÁN ĐOẠN FIREBASE CONFIG VÀO ĐÂY BẮT BUỘC
+    // CẤU HÌNH HỆ THỐNG
     // ==========================================
     const firebaseConfig = {
-        apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
-        authDomain: "roundup-ai-academy.firebaseapp.com",
-        projectId: "roundup-ai-academy",
-        storageBucket: "roundup-ai-academy.firebasestorage.app",
-        messagingSenderId: "723976989630",
-        appId: "1:723976989630:web:45f3de91269e70f604e7ef"
+      apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
+      authDomain: "roundup-ai-academy.firebaseapp.com",
+      projectId: "roundup-ai-academy",
+      storageBucket: "roundup-ai-academy.firebasestorage.app",
+      messagingSenderId: "723976989630",
+      appId: "1:723976989630:web:45f3de91269e70f604e7ef"
     };
+    
+    const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbwtm-mJCRvAiXcbLI_dWEnzDGbqw1sWeBQqISC614dsvuiGkzyx6j-z5RS6jNx0xaX27w/exec";
+    
+    const unitMapping = [
+        { unit: 1, name: "Unit 1" }, { unit: 2, name: "Unit 2" }, { unit: 3, name: "Unit 3" },
+        { unit: 4, name: "Unit 4" }, { unit: 5, name: "Unit 5" }, { unit: 6, name: "Unit 6" }
+    ];
 
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
+    const auth = firebase.auth(); 
     const db = firebase.database();
     
-    let currentUser = null;
-    let userCoins = 0;
-    let currentLevel = "starter";
-    
-    let targetText = "";
-    let sentences = [];
-    let currentSentenceIndex = -1;
-    let mistakesInCurrent = 0;
-    let isReadingMode = false;
-    let hasClaimed = false;
+    let currentlyViewingLevel = "starter"; 
+    let masterSheetData = null; 
 
+    // Bắt tham số Level từ URL nếu có (VD: reading.html?level=level_1)
+    const urlParams = new URLSearchParams(window.location.search);
+    if(urlParams.has('level')) {
+        currentlyViewingLevel = urlParams.get('level');
+    }
+
+    // ==========================================
+    // KHỞI ĐỘNG HỆ THỐNG
+    // ==========================================
     auth.onAuthStateChanged((user) => {
       if (user) {
-        currentUser = user;
-        db.ref('users/' + user.uid).once('value').then((snapshot) => {
-          const data = snapshot.val();
-          if (data) {
-              userCoins = data.coins || 0;
-              document.getElementById('displayCoins').innerText = userCoins;
-              
-              // LẤY THAM SỐ TỪ CLASSROOM
-              const urlParams = new URLSearchParams(window.location.search);
-              const urlLevel = urlParams.get('level');
-              const urlUnit = urlParams.get('unit') || '1';
-              
-              // Ưu tiên load Level trên URL trước, nếu không có mới load Level mặc định của DB
-              currentLevel = urlLevel || data.current_level || 'starter';
-              const currentUnit = 'unit_' + urlUnit;
-              
-              document.getElementById('levelTag').innerText = `${currentLevel.replace('_', ' ')} - UNIT ${urlUnit}`.toUpperCase();
-              
-              db.ref('readings/' + currentLevel + '/' + currentUnit).once('value').then((readingSnap) => {
-                  const readingData = readingSnap.val();
-                  if(readingData && readingData.text) {
-                      targetText = readingData.text;
-                  } else {
-                      targetText = "Hello! Please ask your teacher to add reading text for this unit in the Admin Panel.";
-                  }
-                  
-                  sentences = targetText.match(/[^.!?]+[.!?]+/g) || [targetText];
-                  document.getElementById('readingContent').innerHTML = sentences.map((s, index) => `<span id="sent-${index}" class="sentence">${s.trim()}</span> `).join('');
-                  
-                  setTimeout(() => {
-                      document.getElementById('loadingOverlay').style.opacity = '0';
-                      setTimeout(() => {
-                          document.getElementById('loadingOverlay').style.display = 'none';
-                      }, 500);
-                  }, 500);
-              });
-          }
+        db.ref('users/' + user.uid).once('value').then(async (snapshot) => {
+            let data = snapshot.val() || { coins: 0, current_level: 'starter' };
+            document.getElementById('displayCoins').innerText = data.coins || 0;
+            
+            // Ưu tiên level từ URL (từ trang Classroom truyền sang), nếu không có thì lấy level gốc của user
+            if(!urlParams.has('level')) currentlyViewingLevel = data.current_level || 'starter';
+            document.getElementById('levelDisplay').innerText = currentlyViewingLevel.replace('_', ' ') + " CLASS";
+
+            buildUnitSelector();
+            await syncGoogleSheetsData();
+            loadReadingData();
+
+            setTimeout(() => { 
+                document.getElementById('loadingOverlay').style.display = 'none'; 
+                document.getElementById('mainContent').style.opacity = '1'; 
+            }, 500);
         });
       } else { window.location.href = "index.html"; }
     });
 
-    const dictPopup = document.getElementById('dictPopup');
-    let currentWordToPlay = '';
-
-    document.getElementById('readingContent').addEventListener('mouseup', async (e) => {
-        if(isReadingMode) return; 
-        
-        let selectedText = window.getSelection().toString().trim();
-        
-        if (selectedText.length > 0 && selectedText.length < 40) {
-            currentWordToPlay = selectedText;
-            document.getElementById('dictWord').innerText = selectedText;
-            document.getElementById('dictMeaning').innerText = "Translating...";
-            
-            let x = e.clientX;
-            let y = e.clientY + 20;
-            if(x + 260 > window.innerWidth) x = window.innerWidth - 270;
-            if(y + 100 > window.innerHeight) y = e.clientY - 120; 
-            
-            dictPopup.style.left = `${x}px`;
-            dictPopup.style.top = `${y}px`;
-            dictPopup.classList.remove('hidden');
-            
-            setTimeout(() => {
-                dictPopup.classList.remove('opacity-0', 'translate-y-2');
-            }, 10);
-
-            try {
-                let res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(selectedText)}&langpair=en|vi`);
-                let data = await res.json();
-                document.getElementById('dictMeaning').innerText = data.responseData.translatedText || "No translation found.";
-            } catch(err) {
-                document.getElementById('dictMeaning').innerText = "Translation error. Please check network.";
-            }
-        }
-    });
-
-    document.addEventListener('mousedown', (e) => {
-        if (!dictPopup.contains(e.target) && e.target.id !== 'readingContent') {
-            dictPopup.classList.add('opacity-0', 'translate-y-2');
-            setTimeout(() => { dictPopup.classList.add('hidden'); }, 200);
-        }
-    });
-
-    function playDictAudio() {
-        if (!currentWordToPlay || !('speechSynthesis' in window)) return;
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(currentWordToPlay);
-        utterance.lang = 'en-US';
-        window.speechSynthesis.speak(utterance);
+    function buildUnitSelector() {
+        document.getElementById('unitSelect').innerHTML = unitMapping.map((u, i) => `<option value="${i + 1}">${u.name}</option>`).join('');
     }
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    let recognition;
-    
-    if(SpeechRecognition) {
-        recognition = new SpeechRecognition();
-        recognition.lang = 'en-US';
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
-
-        recognition.onresult = (event) => {
-            const spokenText = event.results[0][0].transcript;
-            checkPronunciation(spokenText);
-        };
-
-        recognition.onerror = (event) => {
-            updateStatus("Microphone Error!", "Please ensure microphone permissions are granted.", "rose");
-            stopMicUI();
-        };
-
-        recognition.onend = () => {
-            if(isReadingMode && currentSentenceIndex < sentences.length) {
-                try { recognition.start(); } catch(e){}
-            }
-        };
-    }
-
-    function updateStatus(title, msg, color) {
-        document.getElementById('statusTitle').innerText = title;
-        document.getElementById('statusTitle').className = `font-black text-${color}-600 text-lg`;
-        document.getElementById('statusMsg').innerText = msg;
-    }
-
-    function startMicUI() {
-        const mic = document.getElementById('micStatusBtn');
-        mic.className = "w-14 h-14 bg-indigo-500 text-white rounded-full flex items-center justify-center text-2xl shadow-lg mic-active transition-all";
-        mic.innerHTML = '<i class="fa-solid fa-microphone"></i>';
-    }
-
-    function stopMicUI() {
-        const mic = document.getElementById('micStatusBtn');
-        mic.className = "w-14 h-14 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center text-2xl shadow-inner transition-colors";
-        mic.innerHTML = '<i class="fa-solid fa-microphone-slash"></i>';
-    }
-
-    function playAIFull() {
-        if (!('speechSynthesis' in window)) return;
-        window.speechSynthesis.cancel();
-        isReadingMode = false;
-        stopMicUI();
-        try { recognition.stop(); } catch(e){}
-
-        updateStatus("Teacher is reading...", "Listen carefully to the pronunciation", "violet");
-        const utterance = new SpeechSynthesisUtterance(targetText);
-        utterance.lang = 'en-US';
-        utterance.rate = 0.85;
-        
-        utterance.onend = () => {
-            updateStatus("Ready to read!", "Click 'Start Reading' to try", "slate");
-        };
-        window.speechSynthesis.speak(utterance);
-    }
-
-    function startKaraokeMode() {
-        window.speechSynthesis.cancel();
-        isReadingMode = true;
-        currentSentenceIndex = 0;
-        mistakesInCurrent = 0;
-        
-        document.querySelectorAll('.sentence').forEach(el => el.className = 'sentence');
-        document.getElementById('btnStart').innerHTML = '<i class="fa-solid fa-stop mr-2"></i> STOP';
-        document.getElementById('btnStart').setAttribute('onclick', 'stopKaraokeMode()');
-        document.getElementById('btnStart').classList.replace('bg-indigo-600', 'bg-rose-500');
-        document.getElementById('btnStart').classList.replace('shadow-[0_4px_0_#4338ca]', 'shadow-[0_4px_0_#be123c]');
-
-        highlightSentence(currentSentenceIndex);
-        updateStatus("Listening...", "Read the highlighted sentence aloud", "indigo");
-        startMicUI();
-        
-        try { recognition.start(); } catch(e) { }
-    }
-
-    function stopKaraokeMode() {
-        isReadingMode = false;
-        try { recognition.stop(); } catch(e){}
-        stopMicUI();
-        updateStatus("Stopped", "Click 'Start Reading' to restart", "slate");
-        
-        const btn = document.getElementById('btnStart');
-        btn.innerHTML = '<i class="fa-solid fa-play mr-2"></i> START READING';
-        btn.setAttribute('onclick', 'startKaraokeMode()');
-        btn.classList.replace('bg-rose-500', 'bg-indigo-600');
-        btn.classList.replace('shadow-[0_4px_0_#be123c]', 'shadow-[0_4px_0_#4338ca]');
-        document.querySelectorAll('.sentence').forEach(el => el.classList.remove('active'));
-    }
-
-    function highlightSentence(index) {
-        document.querySelectorAll('.sentence').forEach(el => el.classList.remove('active'));
-        if(index < sentences.length) {
-            document.getElementById(`sent-${index}`).classList.add('active');
+    async function syncGoogleSheetsData() {
+        try {
+            let res = await fetch(SHEET_API_URL);
+            masterSheetData = await res.json();
+        } catch(e) {
+            console.error("Lỗi kết nối Google Sheets:", e);
         }
     }
 
-    function checkPronunciation(spokenText) {
-        if(!isReadingMode || currentSentenceIndex >= sentences.length) return;
+    // ==========================================
+    // RÁP NỘI DUNG VÀO GIAO DIỆN
+    // ==========================================
+    function loadReadingData() {
+        let currentLevel = currentlyViewingLevel.toLowerCase();
+        let uIdx = document.getElementById('unitSelect').value;
+        let unitKey = "unit_" + uIdx;
+        
+        document.getElementById('unitBadge').innerText = "Unit " + uIdx;
+        const titleEl = document.getElementById('readingTitle');
+        const contentEl = document.getElementById('readingContent');
+        const audioContainer = document.getElementById('audioContainer');
+        const audioSource = document.getElementById('audioSource');
+        const audioPlayer = document.getElementById('readingAudio');
 
-        const targetClean = sentences[currentSentenceIndex].toLowerCase().replace(/[.,!?]/g, '');
-        const spokenClean = spokenText.toLowerCase().replace(/[.,!?]/g, '');
-        
-        const targetWords = targetClean.split(/\s+/);
-        const spokenWords = spokenClean.split(/\s+/);
-        let matchCount = 0;
-        
-        spokenWords.forEach(word => {
-            if(targetWords.includes(word)) matchCount++;
-        });
-        
-        const matchRate = matchCount / targetWords.length;
-
-        if (matchRate >= 0.6) {
-            document.getElementById(`sent-${currentSentenceIndex}`).classList.replace('active', 'passed');
-            currentSentenceIndex++;
-            mistakesInCurrent = 0;
+        if (masterSheetData && masterSheetData.reading && masterSheetData.reading[currentLevel] && masterSheetData.reading[currentLevel][unitKey]) {
+            let rData = masterSheetData.reading[currentLevel][unitKey];
             
-            if (currentSentenceIndex < sentences.length) {
-                updateStatus("Excellent!", "Keep reading the next sentence", "emerald");
-                highlightSentence(currentSentenceIndex);
+            titleEl.innerText = rData.title || "Reading Practice";
+            // Chuyển ký tự xuống dòng (\n) thành thẻ <br> trong HTML để chia đoạn
+            let formattedContent = (rData.content || "").replace(/\n/g, '<br><br>');
+            contentEl.innerHTML = formattedContent;
+
+            // Xử lý Audio
+            if(rData.audio && rData.audio.trim() !== "") {
+                audioSource.src = rData.audio;
+                audioPlayer.load();
+                audioContainer.classList.remove('hidden');
             } else {
-                stopKaraokeMode();
-                updateStatus("Outstanding!", "You have completed the reading", "emerald");
-                unlockClaimBtn();
+                audioContainer.classList.add('hidden');
+                audioPlayer.pause();
             }
         } else {
-            mistakesInCurrent++;
-            if (mistakesInCurrent >= 3) {
-                updateStatus("Listen to the Teacher!", "Reading this sentence...", "amber");
-                try { recognition.stop(); } catch(e){}
-                stopMicUI();
-                
-                const utterance = new SpeechSynthesisUtterance(sentences[currentSentenceIndex]);
-                utterance.lang = 'en-US';
-                utterance.rate = 0.8;
-                utterance.onend = () => {
-                    mistakesInCurrent = 0;
-                    updateStatus("Listening...", "Read the highlighted sentence again", "indigo");
-                    startMicUI();
-                    try { recognition.start(); } catch(e){}
-                };
-                window.speechSynthesis.speak(utterance);
-            } else {
-                updateStatus("Not quite right!", `Please try again. Mistakes: ${mistakesInCurrent}/3`, "rose");
-            }
+            titleEl.innerText = "Coming Soon";
+            contentEl.innerHTML = `
+                <div class="text-center py-10">
+                    <i class="fa-solid fa-file-circle-xmark text-6xl text-slate-300 mb-4"></i>
+                    <p class="text-slate-500">Reading materials for this unit are being prepared.</p>
+                </div>
+            `;
+            audioContainer.classList.add('hidden');
+            audioPlayer.pause();
         }
     }
 
-    function unlockClaimBtn() {
-        if(hasClaimed) return;
-        const btn = document.getElementById('btnComplete');
-        btn.classList.remove('bg-slate-300', 'text-slate-500', 'cursor-not-allowed', 'pointer-events-none');
-        btn.classList.add('bg-emerald-500', 'hover:bg-emerald-400', 'text-white', 'cursor-pointer');
-        document.getElementById('claimIcon').classList.replace('fa-lock', 'fa-check-circle');
-        document.getElementById('claimText').innerText = "CLAIM +50 COINS";
+    // ==========================================
+    // VOICE EMMA VÀ TỪ ĐIỂN SMART DICTIONARY
+    // ==========================================
+    function getFemaleVoice() {
+        let voices = window.speechSynthesis.getVoices();
+        return voices.find(v => v.lang.startsWith('en') && (v.name.includes('Zira') || v.name.includes('Samantha') || v.name.includes('Victoria') || v.name.includes('Google US English'))) || voices.find(v => v.lang.startsWith('en'));
     }
 
-    function claimCoins() {
-        if(hasClaimed) return;
-        userCoins += 50;
-        db.ref('users/' + currentUser.uid).update({ coins: userCoins }).then(() => {
-            document.getElementById('displayCoins').innerText = userCoins;
-            confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
-            
-            const btn = document.getElementById('btnComplete');
-            btn.innerHTML = "<i class='fa-solid fa-check-double mr-2'></i> CLAIMED!";
-            btn.className = "w-full sm:w-1/2 bg-slate-300 text-slate-500 font-black px-6 py-4 rounded-2xl shadow-[0_4px_0_#cbd5e1] flex items-center justify-center text-lg pointer-events-none";
-            hasClaimed = true;
-        });
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = function() { window.speechSynthesis.getVoices(); };
     }
+
+    const dictPopup = document.getElementById('dictPopup');
+    
+    // Bắt sự kiện bôi đen trong vùng bài đọc
+    document.getElementById('readingContent').addEventListener('mouseup', async (e) => {
+        let txt = window.getSelection().toString().trim();
+        
+        if (txt.length > 0 && txt.length < 40) {
+            // 1. Voice Emma đọc ngay lập tức
+            if ('speechSynthesis' in window) { 
+                window.speechSynthesis.cancel(); 
+                let wordAudio = new SpeechSynthesisUtterance(txt); 
+                wordAudio.lang = 'en-US'; 
+                let femaleVoice = getFemaleVoice();
+                if (femaleVoice) wordAudio.voice = femaleVoice;
+                window.speechSynthesis.speak(wordAudio); 
+            }
+
+            // 2. Hiện Popup dịch nghĩa tiếng Việt
+            document.getElementById('dictPopupWord').innerText = txt; 
+            document.getElementById('dictPopupMeaning').innerText = "Translating...";
+            
+            let x = e.clientX; let y = e.clientY + 20;
+            if(x + 260 > window.innerWidth) x = window.innerWidth - 270; 
+            if(y + 100 > window.innerHeight) y = e.clientY - 120; 
+            
+            dictPopup.style.left = `${x}px`; dictPopup.style.top = `${y}px`; 
+            dictPopup.classList.remove('hidden');
+            setTimeout(() => { dictPopup.classList.remove('opacity-0', 'translate-y-2'); }, 10);
+            
+            try { 
+                let res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=en|vi`); 
+                let data = await res.json(); 
+                document.getElementById('dictPopupMeaning').innerText = data.responseData.translatedText || "Not found."; 
+            } catch(err) {
+                document.getElementById('dictPopupMeaning').innerText = "Error translating.";
+            }
+        }
+    });
+    
+    // Ẩn Popup khi click ra ngoài
+    document.addEventListener('mousedown', (e) => { 
+        if (!dictPopup.contains(e.target)) { 
+            dictPopup.classList.add('opacity-0', 'translate-y-2'); 
+            setTimeout(() => { dictPopup.classList.add('hidden'); }, 200); 
+        } 
+    });
   </script>
 </body>
 </html>
