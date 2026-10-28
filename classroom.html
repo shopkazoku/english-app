@@ -148,7 +148,7 @@
   
   <script>
     // ==========================================
-    // CẤU HÌNH FIREBASE VÀ HỆ THỐNG
+    // CẤU HÌNH HỆ THỐNG VÀ FIREBASE (CHỈ DÙNG CHO USER & COIN)
     // ==========================================
     const firebaseConfig = {
       apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
@@ -175,31 +175,30 @@
     let currentUser = null; 
     let currentlyViewingLevel = "starter"; 
     let currentPdfZoom = 'page-width'; 
-    let exerciseData = [];
-    let allExercisesCache = null;
+    
+    // BIẾN LƯU TRỮ DỮ LIỆU TỔNG TỪ GOOGLE SHEETS
+    let masterSheetData = null; 
+    let currentExerciseData = [];
 
-    // BỌC THÉP CHO VÒNG ĐỜI FIREBASE (ĐẢM BẢO TẮT LOADING)
+    // ==========================================
+    // KHỞI ĐỘNG HỆ THỐNG (ĐỒNG BỘ GOOGLE SHEETS TRƯỚC KHI VẼ GIAO DIỆN)
+    // ==========================================
     auth.onAuthStateChanged((user) => {
       if (user) {
         currentUser = user;
         db.ref('users/' + user.uid).once('value')
-        .then((snapshot) => {
+        .then(async (snapshot) => {
           try {
               let data = snapshot.val() || { coins: 0, current_level: 'starter' };
               document.getElementById('displayCoins').innerText = data.coins || 0;
-              
-              // Lấy mã level chuẩn (ví dụ: 'level_6')
               currentlyViewingLevel = data.current_level || 'starter'; 
-              
-              // Điều chỉnh menu dropdown về đúng level của học sinh
               document.getElementById('courseSelect').value = currentlyViewingLevel;
               
+              // HÚT TOÀN BỘ DATA TỪ GOOGLE SHEETS 1 LẦN DUY NHẤT
+              await syncGoogleSheetsData();
+              
               buildClassroom(); 
-          } catch(e) { console.error("Lỗi dựng giao diện:", e); }
-        })
-        .catch(err => {
-            console.error("Lỗi đọc Firebase:", err);
-            buildClassroom();
+          } catch(e) { console.error("Lỗi khởi tạo:", e); }
         })
         .finally(() => {
             setTimeout(() => { 
@@ -210,10 +209,20 @@
       } else { window.location.href = "index.html"; }
     });
 
-    // Hàm chuyển lớp đã được sửa lại: Nhận mã chuẩn 'level_6' thay vì tự cắt chữ
-    function switchLevel(levelValue) {
-        if(!levelValue) return;
-        currentlyViewingLevel = levelValue; 
+    async function syncGoogleSheetsData() {
+        try {
+            let res = await fetch(SHEET_API_URL);
+            masterSheetData = await res.json();
+            console.log("Đã tải thành công Dữ liệu Hệ sinh thái:", masterSheetData);
+        } catch(e) {
+            console.error("Lỗi kết nối Google Sheets:", e);
+            masterSheetData = { exercise: {}, grammar: {}, reading: {}, exam: {} };
+        }
+    }
+
+    function switchLevel(levelText) {
+        if(!levelText) return;
+        currentlyViewingLevel = levelText.split(' ')[0].toLowerCase();
         buildClassroom();
     }
 
@@ -234,27 +243,25 @@
     }
 
     function buildClassroom() {
-        try {
-            zoomPdf('fit');
-            document.getElementById('unitSelect').innerHTML = unitMapping.map((u, i) => `<option value="${i}">${u.name}</option>`).join('');
-            changeUnit(); 
-        } catch(e) { console.error("Lỗi buildClassroom:", e); }
+        zoomPdf('fit');
+        document.getElementById('unitSelect').innerHTML = unitMapping.map((u, i) => `<option value="${i}">${u.name}</option>`).join('');
+        changeUnit(); 
     }
 
     function changeUnit() {
-        try {
-            let selectVal = document.getElementById('unitSelect').value || 0;
-            let u = unitMapping[selectVal] || unitMapping[0]; 
-            let trackHTML = '';
-            for(let i = u.startTrack; i <= u.endTrack; i++) { 
-                let t = i < 10 ? '0'+i : i; 
-                trackHTML += `<option value="${GITHUB_BASE_URL}/${currentlyViewingLevel}/track_${t}.mp3">Track ${t}</option>`; 
-            }
-            document.getElementById('trackSelect').innerHTML = trackHTML;
-            changeTrack(document.getElementById('trackSelect').value);
-            fetchGrammarData();
-            fetchExerciseData(); 
-        } catch(e) { console.error("Lỗi changeUnit:", e); }
+        let selectVal = document.getElementById('unitSelect').value || 0;
+        let u = unitMapping[selectVal] || unitMapping[0]; 
+        let trackHTML = '';
+        for(let i = u.startTrack; i <= u.endTrack; i++) { 
+            let t = i < 10 ? '0'+i : i; 
+            trackHTML += `<option value="${GITHUB_BASE_URL}/${currentlyViewingLevel}/track_${t}.mp3">Track ${t}</option>`; 
+        }
+        document.getElementById('trackSelect').innerHTML = trackHTML;
+        changeTrack(document.getElementById('trackSelect').value);
+        
+        // Điều phối vẽ giao diện từ Cache Data
+        renderGrammarFromSheet();
+        renderExerciseFromSheet(); 
     }
     
     function changeTrack(url) { 
@@ -263,95 +270,82 @@
         document.getElementById('audioPlayer').load(); 
     }
 
-    function fetchGrammarData() {
+    // ==========================================
+    // VẼ GIAO DIỆN TỪ GOOGLE SHEETS TRỰC TIẾP
+    // ==========================================
+    function renderGrammarFromSheet() {
+        let currentLevel = currentlyViewingLevel.toLowerCase();
         let uIdx = parseInt(document.getElementById('unitSelect').value || 0) + 1;
-        db.ref(`grammar/${currentlyViewingLevel}/unit_${uIdx}`).once('value')
-        .then(snap => {
-            const data = snap.val(); const examArea = document.getElementById('grammarExamples'); examArea.innerHTML = "";
-            if(data) {
-                document.getElementById('gramTitle').innerText = data.title || "Grammar Focus";
-                document.getElementById('gramExplanation').innerText = data.explanation || "";
-                if(data.ex1_en) examArea.innerHTML += `<div class="bg-indigo-50/50 p-4 rounded-xl flex gap-4"><button onclick="readAloudDict('${data.ex1_en.replace(/'/g, "\\'")}')" class="bg-indigo-500 text-white w-10 h-10 rounded-full shrink-0"><i class="fa-solid fa-volume-high"></i></button><div><p class="font-black text-slate-800">${data.ex1_en}</p><p class="text-sm font-bold text-slate-500">${data.ex1_vi}</p></div></div>`;
-            } else { 
-                document.getElementById('gramTitle').innerText = "Grammar Details"; 
-                document.getElementById('gramExplanation').innerText = "No grammar rules added for this unit yet."; 
-            }
-        }).catch(e => console.error("Lỗi fetch Grammar:", e));
-    }
-
-    // ==========================================
-    // XỬ LÝ API GOOGLE SHEETS & BÀI TẬP
-    // ==========================================
-    async function fetchExerciseData() {
-        const container = document.getElementById('question-container');
-        const submitBtn = document.querySelector('button[onclick="submitExercise()"]'); 
+        let unitKey = "unit_" + uIdx;
         
-        container.innerHTML = '<div class="text-center text-indigo-500 mt-10 mb-10"><i class="fa-solid fa-spinner fa-spin text-4xl"></i><p class="mt-4 font-bold">Syncing Smart Exercises...</p></div>';
-        if(submitBtn) submitBtn.classList.add('hidden'); 
-        document.getElementById('result-container').classList.add('hidden');
+        const examArea = document.getElementById('grammarExamples'); 
+        examArea.innerHTML = "";
 
-        try {
-            if (!allExercisesCache) {
-                let response = await fetch(SHEET_API_URL);
-                allExercisesCache = await response.json();
+        if (masterSheetData && masterSheetData.grammar && masterSheetData.grammar[currentLevel] && masterSheetData.grammar[currentLevel][unitKey]) {
+            let gData = masterSheetData.grammar[currentLevel][unitKey];
+            document.getElementById('gramTitle').innerText = gData.title || "Grammar Focus";
+            document.getElementById('gramExplanation').innerText = gData.explanation || "";
+            if(gData.ex1_en) {
+                examArea.innerHTML += `<div class="bg-indigo-50/50 p-4 rounded-xl flex gap-4"><button onclick="readAloudDict('${gData.ex1_en.replace(/'/g, "\\'")}')" class="bg-indigo-500 text-white w-10 h-10 rounded-full shrink-0"><i class="fa-solid fa-volume-high"></i></button><div><p class="font-black text-slate-800">${gData.ex1_en}</p><p class="text-sm font-bold text-slate-500">${gData.ex1_vi}</p></div></div>`;
             }
-
-            let currentLevel = currentlyViewingLevel.toLowerCase();
-            let uIdx = parseInt(document.getElementById('unitSelect').value || 0) + 1;
-            let currentUnitKey = "unit_" + uIdx;
-
-            if (allExercisesCache[currentLevel] && allExercisesCache[currentLevel][currentUnitKey]) {
-                exerciseData = allExercisesCache[currentLevel][currentUnitKey];
-                renderExercises();
-                if(submitBtn) submitBtn.classList.remove('hidden'); 
-            } else {
-                exerciseData = [];
-                container.innerHTML = `
-                    <div class="bg-slate-50 p-8 rounded-2xl text-center border-2 border-dashed border-slate-200">
-                        <i class="fa-solid fa-folder-open text-slate-300 text-5xl mb-3"></i>
-                        <p class="text-slate-600 font-black text-lg">No exercises available.</p>
-                        <p class="text-slate-400 text-sm mt-1">Exercises for ${currentLevel.toUpperCase()} - Unit ${uIdx} will be updated soon.</p>
-                    </div>`;
-            }
-        } catch (error) {
-            console.error("Lỗi kết nối API Google Sheets:", error);
-            container.innerHTML = '<p class="text-rose-500 font-bold text-center">Connection error. Please try again later.</p>';
+        } else {
+            document.getElementById('gramTitle').innerText = "Grammar Details"; 
+            document.getElementById('gramExplanation').innerText = "No grammar rules added for this unit yet."; 
         }
     }
 
-    function renderExercises() {
+    function renderExerciseFromSheet() {
         const container = document.getElementById('question-container');
-        container.innerHTML = '';
+        const submitBtn = document.querySelector('button[onclick="submitExercise()"]'); 
+        document.getElementById('result-container').classList.add('hidden');
         
-        exerciseData.forEach((item, index) => {
-            let optionsHtml = '';
-            item.options.forEach((opt, optIdx) => {
-                if(opt) { 
-                    optionsHtml += `
-                        <label class="flex items-center space-x-3 p-3 border-2 border-gray-100 rounded-xl cursor-pointer hover:bg-indigo-50 hover:border-indigo-300 transition group">
-                            <input type="radio" name="q${index}" value="${optIdx + 1}" class="form-radio h-5 w-5 text-indigo-600">
-                            <span class="text-gray-700 font-medium group-hover:text-indigo-700">${opt}</span>
-                        </label>
-                    `;
-                }
-            });
+        let currentLevel = currentlyViewingLevel.toLowerCase();
+        let uIdx = parseInt(document.getElementById('unitSelect').value || 0) + 1;
+        let unitKey = "unit_" + uIdx;
+
+        if (masterSheetData && masterSheetData.exercise && masterSheetData.exercise[currentLevel] && masterSheetData.exercise[currentLevel][unitKey]) {
+            currentExerciseData = masterSheetData.exercise[currentLevel][unitKey];
+            if(submitBtn) submitBtn.classList.remove('hidden'); 
             
-            container.innerHTML += `
-                <div class="p-6 border border-slate-100 bg-slate-50/30 rounded-2xl shadow-sm hover:shadow-md transition">
-                    <p class="font-bold text-lg mb-4 text-gray-800"><span class="text-indigo-600">Question ${index + 1}:</span> ${item.q}</p>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        ${optionsHtml}
+            container.innerHTML = '';
+            currentExerciseData.forEach((item, index) => {
+                let optionsHtml = '';
+                item.options.forEach((opt, optIdx) => {
+                    if(opt) { 
+                        optionsHtml += `
+                            <label class="flex items-center space-x-3 p-3 border-2 border-gray-100 rounded-xl cursor-pointer hover:bg-indigo-50 hover:border-indigo-300 transition group">
+                                <input type="radio" name="q${index}" value="${optIdx + 1}" class="form-radio h-5 w-5 text-indigo-600">
+                                <span class="text-gray-700 font-medium group-hover:text-indigo-700">${opt}</span>
+                            </label>
+                        `;
+                    }
+                });
+                container.innerHTML += `
+                    <div class="p-6 border border-slate-100 bg-slate-50/30 rounded-2xl shadow-sm hover:shadow-md transition">
+                        <p class="font-bold text-lg mb-4 text-gray-800"><span class="text-indigo-600">Question ${index + 1}:</span> ${item.q}</p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            ${optionsHtml}
+                        </div>
+                        <p id="exp-q${index}" class="mt-4 hidden text-sm font-semibold bg-rose-50 text-rose-600 p-3 rounded-lg border border-rose-100"></p>
                     </div>
-                    <p id="exp-q${index}" class="mt-4 hidden text-sm font-semibold bg-rose-50 text-rose-600 p-3 rounded-lg border border-rose-100"></p>
-                </div>
-            `;
-        });
+                `;
+            });
+        } else {
+            currentExerciseData = [];
+            if(submitBtn) submitBtn.classList.add('hidden'); 
+            container.innerHTML = `
+                <div class="bg-slate-50 p-8 rounded-2xl text-center border-2 border-dashed border-slate-200">
+                    <i class="fa-solid fa-folder-open text-slate-300 text-5xl mb-3"></i>
+                    <p class="text-slate-600 font-black text-lg">No exercises available.</p>
+                    <p class="text-slate-400 text-sm mt-1">Exercises for ${currentLevel.toUpperCase()} - Unit ${uIdx} will be updated soon.</p>
+                </div>`;
+        }
     }
 
     function submitExercise() {
         let correctCount = 0;
         
-        exerciseData.forEach((item, index) => {
+        currentExerciseData.forEach((item, index) => {
             const selected = document.querySelector(`input[name="q${index}"]:checked`);
             const expEl = document.getElementById(`exp-q${index}`);
             
@@ -364,7 +358,7 @@
             }
         });
 
-        const total = exerciseData.length;
+        const total = currentExerciseData.length;
         const score = total > 0 ? (correctCount / total) * 20 : 0;
         let resultText = ""; let feedbackLevel = 1;
         
