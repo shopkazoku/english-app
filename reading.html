@@ -57,7 +57,7 @@
   </header>
 
   <!-- LOADING OVERLAY -->
-  <div id="loadingOverlay" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white transition-opacity duration-500">
+  <div id="loadingOverlay" class="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-white transition-opacity duration-500">
       <i class="fa-solid fa-book-open-reader fa-bounce text-5xl text-indigo-500 mb-4"></i>
       <p class="font-black text-slate-500 animate-pulse text-sm">Syncing Materials...</p>
   </div>
@@ -149,9 +149,13 @@
     const urlParams = new URLSearchParams(window.location.search);
     if(urlParams.has('level')) currentlyViewingLevel = urlParams.get('level');
 
-    auth.onAuthStateChanged((user) => {
+    // ==========================================
+    // KHỞI ĐỘNG BỌC THÉP TỰ ĐỘNG TẮT LOADING
+    // ==========================================
+    auth.onAuthStateChanged(async (user) => {
       if (user) {
-        db.ref('users/' + user.uid).once('value').then(async (snapshot) => {
+        try {
+            const snapshot = await db.ref('users/' + user.uid).once('value');
             let data = snapshot.val() || { coins: 0, current_level: 'starter' };
             document.getElementById('displayCoins').innerText = data.coins || 0;
             
@@ -161,14 +165,23 @@
             buildUnitSelector();
             await syncGoogleSheetsData();
             loadReadingData();
-
-            setTimeout(() => { 
-                document.getElementById('loadingOverlay').style.display = 'none'; 
-                document.getElementById('mainContent').style.opacity = '1'; 
-            }, 500);
-        });
+        } catch (e) {
+            console.error("Initialization Error:", e);
+        } finally {
+            hideLoading();
+        }
       } else { window.location.href = "index.html"; }
     });
+
+    function hideLoading() {
+        let overlay = document.getElementById('loadingOverlay');
+        let content = document.getElementById('mainContent');
+        if (overlay) overlay.style.display = 'none';
+        if (content) content.style.opacity = '1';
+    }
+
+    // CÔNG TẮC BẢO HIỂM: Tự tắt Loading sau 2.5s dù lỗi mạng
+    window.addEventListener('load', () => { setTimeout(hideLoading, 2500); });
 
     function buildUnitSelector() {
         document.getElementById('unitSelect').innerHTML = unitMapping.map((u, i) => `<option value="${i + 1}">${u.name}</option>`).join('');
@@ -207,7 +220,6 @@
                 sentences.forEach(s => {
                     let cleanSentence = s.trim();
                     if(cleanSentence) {
-                        // Gọi hàm handleSentenceClick thay vì mở thẳng Lab
                         pHTML += `<span class="sentence-block" onclick="handleSentenceClick('${cleanSentence.replace(/'/g, "\\'")}')">${cleanSentence}</span> `;
                     }
                 });
@@ -224,4 +236,134 @@
             }
         } else {
             titleEl.innerText = "Coming Soon";
-            contentEl.innerHTML = `<div class="text-center py-10"><i class="fa-solid fa-file-circle-xmark text-6xl text-slate-300 mb-4"></i><p class="text-slate
+            contentEl.innerHTML = `<div class="text-center py-10"><i class="fa-solid fa-file-circle-xmark text-6xl text-slate-300 mb-4"></i><p class="text-slate-500 font-bold">Materials for this unit are being updated.</p></div>`;
+            audioContainer.classList.add('hidden');
+        }
+    }
+
+    // ==========================================
+    // THUẬT TOÁN ĐIỀU HƯỚNG: BÔI ĐEN vs CLICK
+    // ==========================================
+    function handleSentenceClick(sentence) {
+        let selectedText = window.getSelection().toString().trim();
+        if (selectedText.length > 0) return; 
+        openPronunciationModal(sentence);
+    }
+
+    const dictPopup = document.getElementById('dictPopup');
+    
+    document.getElementById('readingContent').addEventListener('mouseup', async (e) => {
+        let txt = window.getSelection().toString().trim();
+        if (txt.length > 0 && txt.length < 40) {
+            if ('speechSynthesis' in window) { 
+                window.speechSynthesis.cancel(); 
+                let wordAudio = new SpeechSynthesisUtterance(txt); wordAudio.lang = 'en-US'; 
+                let voices = window.speechSynthesis.getVoices();
+                let femaleVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Zira') || v.name.includes('Samantha') || v.name.includes('Victoria'))) || voices.find(v => v.lang.startsWith('en'));
+                if (femaleVoice) wordAudio.voice = femaleVoice;
+                window.speechSynthesis.speak(wordAudio); 
+            }
+
+            document.getElementById('dictPopupWord').innerText = txt; 
+            document.getElementById('dictPopupMeaning').innerText = "Translating...";
+            
+            let x = e.clientX; let y = e.clientY + 20;
+            if(x + 260 > window.innerWidth) x = window.innerWidth - 270; 
+            if(y + 100 > window.innerHeight) y = e.clientY - 120; 
+            
+            dictPopup.style.left = `${x}px`; dictPopup.style.top = `${y}px`; 
+            dictPopup.classList.remove('hidden');
+            setTimeout(() => { dictPopup.classList.remove('opacity-0', 'translate-y-2'); }, 10);
+            
+            try { 
+                let res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=en|vi`); 
+                let data = await res.json(); 
+                document.getElementById('dictPopupMeaning').innerText = data.responseData.translatedText || "Not found."; 
+            } catch(err) {
+                document.getElementById('dictPopupMeaning').innerText = "Error translating.";
+            }
+        }
+    });
+    
+    document.addEventListener('mousedown', (e) => { 
+        if (!dictPopup.contains(e.target)) { 
+            dictPopup.classList.add('opacity-0', 'translate-y-2'); 
+            setTimeout(() => { dictPopup.classList.add('hidden'); }, 200); 
+        } 
+    });
+
+    // ==========================================
+    // SPEECH RECOGNITION & EVALUATION ALGORITHM
+    // ==========================================
+    let isRecording = false; let currentTargetSentence = "";
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition; let recognition = null;
+    
+    if (SpeechRecognition) {
+        recognition = new SpeechRecognition(); recognition.lang = 'en-US'; recognition.interimResults = false; recognition.maxAlternatives = 1;
+        recognition.onresult = function(event) {
+            let spokenText = event.results[0][0].transcript; evaluatePronunciation(currentTargetSentence, spokenText); stopRecordingAnimation();
+        };
+        recognition.onerror = function(event) {
+            document.getElementById('resultKaraoke').innerHTML = `<p class="text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation"></i> Microphone access denied or error occurred.</p>`; stopRecordingAnimation();
+        };
+        recognition.onend = function() { stopRecordingAnimation(); };
+    }
+
+    function openPronunciationModal(sentence) {
+        currentTargetSentence = sentence; document.getElementById('targetSentence').innerText = sentence;
+        document.getElementById('resultKaraoke').innerHTML = '<p class="text-slate-400 font-bold">Tap the microphone and read aloud...</p>';
+        document.getElementById('pronunciationModal').classList.remove('hidden'); document.getElementById('pronunciationModal').classList.add('flex');
+    }
+
+    function closePronunciationModal() {
+        document.getElementById('pronunciationModal').classList.add('hidden'); document.getElementById('pronunciationModal').classList.remove('flex');
+        if (isRecording && recognition) recognition.stop(); stopRecordingAnimation();
+    }
+
+    function toggleRecording() {
+        if (!recognition) { alert("Speech recognition is not supported in this browser. Please use Google Chrome."); return; }
+        if (isRecording) { recognition.stop(); } else {
+            document.getElementById('resultKaraoke').innerHTML = '<p class="text-indigo-500 font-bold animate-pulse"><i class="fa-solid fa-ear-listen mr-2"></i> Listening...</p>';
+            recognition.start(); isRecording = true; document.getElementById('micBtn').classList.add('recording-pulse');
+        }
+    }
+
+    function stopRecordingAnimation() { isRecording = false; document.getElementById('micBtn').classList.remove('recording-pulse'); }
+
+    function evaluatePronunciation(expected, spoken) {
+        let cleanExpected = expected.toLowerCase().replace(/[.,!?"():;]/g, "").trim(); let cleanSpoken = spoken.toLowerCase().replace(/[.,!?"():;]/g, "").trim();
+        let expectedWords = cleanExpected.split(/\s+/); let spokenWords = cleanSpoken.split(/\s+/);
+        let htmlResult = `<p class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-3">Evaluation</p><div class="text-2xl leading-loose font-black flex flex-wrap justify-center">`;
+        let correctCount = 0; let spokenPool = [...spokenWords];
+
+        expectedWords.forEach(word => {
+            if (word === "") return;
+            let matchIndex = spokenPool.indexOf(word);
+            if (matchIndex !== -1) {
+                htmlResult += `<span class="text-emerald-500 mx-1 border-b-4 border-emerald-200 rounded px-1">${word}</span>`; correctCount++; spokenPool.splice(matchIndex, 1); 
+            } else {
+                htmlResult += `<span class="text-rose-500 mx-1 border-b-4 border-rose-200 rounded px-1">${word}</span>`;
+            }
+        });
+        
+        htmlResult += `</div>`;
+        let accuracy = expectedWords.length > 0 ? Math.round((correctCount / expectedWords.length) * 100) : 0;
+        let scoreHtml = "";
+        
+        if (accuracy >= 80) scoreHtml = `<p class="text-emerald-600 font-black text-xl mt-4"><i class="fa-solid fa-star text-amber-400 mr-2"></i>Excellent! Accuracy: ${accuracy}%</p>`;
+        else if (accuracy >= 50) scoreHtml = `<p class="text-amber-500 font-black text-xl mt-4">Good effort! Accuracy: ${accuracy}%</p>`;
+        else scoreHtml = `<p class="text-rose-500 font-black text-xl mt-4">Keep practicing! Accuracy: ${accuracy}%</p>`;
+        
+        document.getElementById('resultKaraoke').innerHTML = htmlResult + scoreHtml;
+    }
+
+    function playTargetAudio() {
+        if ('speechSynthesis' in window) { 
+            window.speechSynthesis.cancel(); let u = new SpeechSynthesisUtterance(currentTargetSentence); u.lang = 'en-US'; u.rate = 0.9; 
+            let voices = window.speechSynthesis.getVoices(); let femaleVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Zira') || v.name.includes('Samantha') || v.name.includes('Victoria'))) || voices.find(v => v.lang.startsWith('en'));
+            if (femaleVoice) u.voice = femaleVoice; window.speechSynthesis.speak(u); 
+        }
+    }
+  </script>
+</body>
+</html>
