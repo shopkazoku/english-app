@@ -149,19 +149,24 @@
               <button onclick="closeModal('gameModal')" class="w-8 h-8 flex items-center justify-center bg-violet-700 rounded-full hover:bg-rose-500 transition"><i class="fa-solid fa-xmark"></i></button>
           </div>
           <div class="p-6 flex-1 overflow-y-auto custom-scroll flex flex-col items-center">
+              <!-- Khu vực vẽ người treo cổ (Bọc thép bằng SVG) -->
               <div class="w-full flex justify-center mb-6">
-                  <div class="w-40 h-40 bg-slate-50 border-4 border-slate-200 rounded-2xl flex items-center justify-center text-5xl relative">
-                      <div class="absolute left-6 bottom-4 w-24 h-2 bg-slate-400 rounded"></div>
-                      <div class="absolute left-10 bottom-4 w-2 h-28 bg-slate-400 rounded"></div>
-                      <div class="absolute left-10 top-4 w-16 h-2 bg-slate-400 rounded"></div>
-                      <div class="absolute left-24 top-4 w-2 h-6 bg-rose-400 rounded"></div>
-                      <div id="hm-head" class="absolute left-21 top-10 text-3xl hidden">😟</div>
-                      <div id="hm-body" class="absolute left-24 top-16 w-1 h-8 bg-slate-800 hidden"></div>
-                      <div id="hm-arm-l" class="absolute left-20 top-18 w-5 h-1 bg-slate-800 -rotate-45 hidden"></div>
-                      <div id="hm-arm-r" class="absolute left-24 top-18 w-5 h-1 bg-slate-800 rotate-45 hidden"></div>
-                      <div id="hm-leg-l" class="absolute left-21 top-24 w-1 h-6 bg-slate-800 rotate-12 hidden"></div>
-                      <div id="hm-leg-r" class="absolute left-25 top-24 w-1 h-6 bg-slate-800 -rotate-12 hidden"></div>
+                  <div class="w-40 h-40 bg-slate-50 border-4 border-slate-200 rounded-2xl flex items-center justify-center p-2 relative shadow-inner">
+                      <svg viewBox="0 0 100 100" class="w-full h-full" fill="none" stroke-linecap="round">
+                          <!-- Khung treo (Luôn hiện) -->
+                          <path d="M10,95 H50 M30,95 V10 M30,10 H60 M60,10 V20" class="stroke-slate-400" stroke-width="4"/>
+                          <line x1="60" y1="10" x2="60" y2="25" class="stroke-rose-400" stroke-width="4"/>
+                          
+                          <!-- Các bộ phận cơ thể (Ẩn mặc định) -->
+                          <circle id="hm-head" cx="60" cy="33" r="8" class="hidden fill-rose-100 stroke-slate-800" stroke-width="3"/>
+                          <line id="hm-body" x1="60" y1="41" x2="60" y2="65" class="hidden stroke-slate-800" stroke-width="3"/>
+                          <line id="hm-arm-l" x1="60" y1="45" x2="45" y2="55" class="hidden stroke-slate-800" stroke-width="3"/>
+                          <line id="hm-arm-r" x1="60" y1="45" x2="75" y2="55" class="hidden stroke-slate-800" stroke-width="3"/>
+                          <line id="hm-leg-l" x1="60" y1="65" x2="48" y2="85" class="hidden stroke-slate-800" stroke-width="3"/>
+                          <line id="hm-leg-r" x1="60" y1="65" x2="72" y2="85" class="hidden stroke-slate-800" stroke-width="3"/>
+                      </svg>
                   </div>
+              </div>
               </div>
               <div class="mb-8 font-black text-rose-500 tracking-wider">MISTAKES: <span id="mistakesCount">0</span> / 6</div>
               <div id="wordDisplay" class="flex flex-wrap justify-center gap-2 mb-10 min-h-[50px]"></div>
