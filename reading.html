@@ -26,8 +26,11 @@
         100% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
     }
     
-    .sentence-block { transition: all 0.2s ease; border-radius: 8px; padding: 2px 4px; }
+    .sentence-block { transition: all 0.2s ease; border-radius: 8px; padding: 2px 4px; display: inline; }
     .sentence-block:hover { background-color: #e0e7ff; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    
+    /* Giao diện Popup Từ điển */
+    ::selection { background: #c7d2fe; color: #3730a3; }
   </style>
 </head>
 <body class="h-[100dvh] w-full flex flex-col bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')] relative" id="mainBody">
@@ -59,6 +62,15 @@
       <p class="font-black text-slate-500 animate-pulse text-sm">Syncing Materials...</p>
   </div>
 
+  <!-- DICTIONARY POPUP (SMART DICTIONARY) -->
+  <div id="dictPopup" class="fixed hidden z-[9999] bg-white rounded-2xl shadow-xl border-2 border-indigo-100 p-4 w-64 opacity-0 translate-y-2 transition-all">
+      <div class="flex justify-between items-start mb-2">
+          <h4 id="dictPopupWord" class="font-black text-indigo-900 text-lg">Word</h4>
+          <i class="fa-solid fa-volume-high text-indigo-400 bg-indigo-50 w-8 h-8 rounded-full flex items-center justify-center text-sm"></i>
+      </div>
+      <p id="dictPopupMeaning" class="text-slate-600 font-bold text-sm">Translating...</p>
+  </div>
+
   <!-- MAIN CONTENT -->
   <main class="flex-1 w-full max-w-4xl mx-auto p-4 sm:p-8 overflow-y-auto custom-scroll flex flex-col relative opacity-0 transition-opacity duration-500" id="mainContent">
       <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 sm:p-10 mb-20 flex-1 relative">
@@ -72,10 +84,15 @@
           <div class="text-center mb-10">
               <span id="unitBadge" class="inline-block bg-indigo-100 text-indigo-700 font-black px-4 py-1.5 rounded-full text-sm uppercase mb-4 tracking-wider">Unit X</span>
               <h2 id="readingTitle" class="text-3xl sm:text-4xl font-extrabold text-slate-800 leading-tight">Loading Title...</h2>
-              <p class="text-sm font-bold text-emerald-600 mt-3"><i class="fa-solid fa-hand-pointer animate-pulse mr-1"></i> Click any sentence to practice pronunciation</p>
+              
+              <!-- Hướng dẫn sử dụng 2 chức năng -->
+              <div class="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-6 mt-4">
+                  <p class="text-sm font-bold text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100"><i class="fa-solid fa-highlighter mr-1"></i> Highlight text to translate</p>
+                  <p class="text-sm font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100"><i class="fa-solid fa-microphone-lines mr-1"></i> Click sentence to practice</p>
+              </div>
           </div>
 
-          <div id="readingContent" class="text-lg sm:text-xl text-slate-700 leading-relaxed font-medium space-y-4 text-justify">
+          <div id="readingContent" class="text-lg sm:text-xl text-slate-700 leading-relaxed font-medium space-y-4 text-justify relative z-10 cursor-text">
               <!-- JS splits sentences and injects here -->
           </div>
       </div>
@@ -93,17 +110,13 @@
               <p class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Original Sentence</p>
               <p id="targetSentence" class="text-2xl font-extrabold text-slate-800 text-center mb-8"></p>
               
-              <!-- Evaluation Result Area -->
               <div id="resultKaraoke" class="w-full bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center mb-8 min-h-[120px] flex flex-col justify-center items-center">
                   <p class="text-slate-400 font-bold">Tap the microphone and read aloud...</p>
               </div>
 
               <div class="flex items-center gap-6">
                   <button onclick="playTargetAudio()" class="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-full text-xl shadow-sm hover:bg-indigo-200 transition" title="Listen"><i class="fa-solid fa-volume-high"></i></button>
-                  
-                  <button id="micBtn" onclick="toggleRecording()" class="w-20 h-20 bg-rose-500 text-white rounded-full text-3xl shadow-lg hover:scale-105 transition transform flex items-center justify-center" title="Record">
-                      <i class="fa-solid fa-microphone"></i>
-                  </button>
+                  <button id="micBtn" onclick="toggleRecording()" class="w-20 h-20 bg-rose-500 text-white rounded-full text-3xl shadow-lg hover:scale-105 transition transform flex items-center justify-center" title="Record"><i class="fa-solid fa-microphone"></i></button>
               </div>
           </div>
       </div>
@@ -130,11 +143,8 @@
     ];
 
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth(); 
-    const db = firebase.database();
-    
-    let currentlyViewingLevel = "starter"; 
-    let masterSheetData = null; 
+    const auth = firebase.auth(); const db = firebase.database();
+    let currentlyViewingLevel = "starter"; let masterSheetData = null; 
 
     const urlParams = new URLSearchParams(window.location.search);
     if(urlParams.has('level')) currentlyViewingLevel = urlParams.get('level');
@@ -165,10 +175,8 @@
     }
 
     async function syncGoogleSheetsData() {
-        try {
-            let res = await fetch(SHEET_API_URL);
-            masterSheetData = await res.json();
-        } catch(e) { console.error("Data Sync Error:", e); }
+        try { let res = await fetch(SHEET_API_URL); masterSheetData = await res.json(); } 
+        catch(e) { console.error("Data Sync Error:", e); }
     }
 
     // ==========================================
@@ -195,11 +203,12 @@
             
             paragraphs.forEach(p => {
                 let sentences = p.match(/[^.!?]+[.!?]+/g) || [p];
-                let pHTML = '<p class="mb-4">';
+                let pHTML = '<p class="mb-6">';
                 sentences.forEach(s => {
                     let cleanSentence = s.trim();
                     if(cleanSentence) {
-                        pHTML += `<span class="sentence-block" onclick="openPronunciationModal('${cleanSentence.replace(/'/g, "\\'")}')">${cleanSentence}</span> `;
+                        // Gọi hàm handleSentenceClick thay vì mở thẳng Lab
+                        pHTML += `<span class="sentence-block" onclick="handleSentenceClick('${cleanSentence.replace(/'/g, "\\'")}')">${cleanSentence}</span> `;
                     }
                 });
                 pHTML += '</p>';
@@ -209,157 +218,10 @@
             contentEl.innerHTML = finalHtml;
 
             if(rData.audio && rData.audio.trim() !== "") {
-                document.getElementById('audioSource').src = rData.audio;
-                audioPlayer.load();
-                audioContainer.classList.remove('hidden');
+                document.getElementById('audioSource').src = rData.audio; audioPlayer.load(); audioContainer.classList.remove('hidden');
             } else {
-                audioContainer.classList.add('hidden');
-                audioPlayer.pause();
+                audioContainer.classList.add('hidden'); audioPlayer.pause();
             }
         } else {
             titleEl.innerText = "Coming Soon";
-            contentEl.innerHTML = `
-                <div class="text-center py-10">
-                    <i class="fa-solid fa-file-circle-xmark text-6xl text-slate-300 mb-4"></i>
-                    <p class="text-slate-500 font-bold">Materials for this unit are being updated.</p>
-                </div>
-            `;
-            audioContainer.classList.add('hidden');
-        }
-    }
-
-    // ==========================================
-    // SPEECH RECOGNITION & EVALUATION ALGORITHM
-    // ==========================================
-    let isRecording = false;
-    let currentTargetSentence = "";
-    
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    let recognition = null;
-    
-    if (SpeechRecognition) {
-        recognition = new SpeechRecognition();
-        recognition.lang = 'en-US';
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
-
-        recognition.onresult = function(event) {
-            let spokenText = event.results[0][0].transcript;
-            evaluatePronunciation(currentTargetSentence, spokenText);
-            stopRecordingAnimation();
-        };
-
-        recognition.onerror = function(event) {
-            document.getElementById('resultKaraoke').innerHTML = `<p class="text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation"></i> Microphone access denied or error occurred.</p>`;
-            stopRecordingAnimation();
-        };
-        
-        recognition.onend = function() {
-            stopRecordingAnimation();
-        };
-    }
-
-    function openPronunciationModal(sentence) {
-        currentTargetSentence = sentence;
-        document.getElementById('targetSentence').innerText = sentence;
-        document.getElementById('resultKaraoke').innerHTML = '<p class="text-slate-400 font-bold">Tap the microphone and read aloud...</p>';
-        document.getElementById('pronunciationModal').classList.remove('hidden');
-        document.getElementById('pronunciationModal').classList.add('flex');
-    }
-
-    function closePronunciationModal() {
-        document.getElementById('pronunciationModal').classList.add('hidden');
-        document.getElementById('pronunciationModal').classList.remove('flex');
-        if (isRecording && recognition) recognition.stop();
-        stopRecordingAnimation();
-    }
-
-    function toggleRecording() {
-        if (!recognition) {
-            alert("Speech recognition is not supported in this browser. Please use Google Chrome.");
-            return;
-        }
-
-        if (isRecording) {
-            recognition.stop();
-        } else {
-            document.getElementById('resultKaraoke').innerHTML = '<p class="text-indigo-500 font-bold animate-pulse"><i class="fa-solid fa-ear-listen mr-2"></i> Listening...</p>';
-            recognition.start();
-            isRecording = true;
-            document.getElementById('micBtn').classList.add('recording-pulse');
-        }
-    }
-
-    function stopRecordingAnimation() {
-        isRecording = false;
-        document.getElementById('micBtn').classList.remove('recording-pulse');
-    }
-
-    // THE CORE EVALUATION ALGORITHM (STRING MATCHING)
-    function evaluatePronunciation(expected, spoken) {
-        // 1. Normalize: Remove all punctuation except apostrophes, convert to lowercase
-        let cleanExpected = expected.toLowerCase().replace(/[.,!?"():;]/g, "").trim();
-        let cleanSpoken = spoken.toLowerCase().replace(/[.,!?"():;]/g, "").trim();
-        
-        // 2. Split into arrays of words
-        let expectedWords = cleanExpected.split(/\s+/);
-        let spokenWords = cleanSpoken.split(/\s+/);
-        
-        let htmlResult = `<p class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-3">Evaluation</p><div class="text-2xl leading-loose font-black flex flex-wrap justify-center">`;
-        let correctCount = 0;
-        
-        // Create a pool of spoken words to handle duplicate words correctly
-        let spokenPool = [...spokenWords];
-
-        // 3. Compare word by word
-        expectedWords.forEach(word => {
-            if (word === "") return;
-            
-            let matchIndex = spokenPool.indexOf(word);
-            if (matchIndex !== -1) {
-                // Correct match
-                htmlResult += `<span class="text-emerald-500 mx-1 border-b-4 border-emerald-200 rounded px-1">${word}</span>`;
-                correctCount++;
-                spokenPool.splice(matchIndex, 1); // Remove from pool to avoid double-counting duplicates
-            } else {
-                // Incorrect or missed
-                htmlResult += `<span class="text-rose-500 mx-1 border-b-4 border-rose-200 rounded px-1">${word}</span>`;
-            }
-        });
-        
-        htmlResult += `</div>`;
-        
-        // 4. Calculate Accuracy
-        let accuracy = expectedWords.length > 0 ? Math.round((correctCount / expectedWords.length) * 100) : 0;
-        let scoreHtml = "";
-        
-        if (accuracy >= 80) {
-            scoreHtml = `<p class="text-emerald-600 font-black text-xl mt-4"><i class="fa-solid fa-star text-amber-400 mr-2"></i>Excellent! Accuracy: ${accuracy}%</p>`;
-        } else if (accuracy >= 50) {
-            scoreHtml = `<p class="text-amber-500 font-black text-xl mt-4">Good effort! Accuracy: ${accuracy}%</p>`;
-        } else {
-            scoreHtml = `<p class="text-rose-500 font-black text-xl mt-4">Keep practicing! Accuracy: ${accuracy}%</p>`;
-        }
-        
-        // 5. Inject back to UI
-        document.getElementById('resultKaraoke').innerHTML = htmlResult + scoreHtml;
-    }
-
-    // TTS Audio Output
-    function playTargetAudio() {
-        if ('speechSynthesis' in window) { 
-            window.speechSynthesis.cancel(); 
-            let u = new SpeechSynthesisUtterance(currentTargetSentence); 
-            u.lang = 'en-US'; 
-            u.rate = 0.9; 
-            
-            let voices = window.speechSynthesis.getVoices();
-            let femaleVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Zira') || v.name.includes('Samantha') || v.name.includes('Victoria') || v.name.includes('Google US English'))) || voices.find(v => v.lang.startsWith('en'));
-            if (femaleVoice) u.voice = femaleVoice;
-            
-            window.speechSynthesis.speak(u); 
-        }
-    }
-  </script>
-</body>
-</html>
+            contentEl.innerHTML = `<div class="text-center py-10"><i class="fa-solid fa-file-circle-xmark text-6xl text-slate-300 mb-4"></i><p class="text-slate
