@@ -241,4 +241,342 @@
 
   <!-- MODAL: SPEED QUIZ -->
   <div id="speedquizModal" class="fixed inset-0 z-[9999] bg-slate-900/80 backdrop-blur-sm hidden flex-col items-center justify-center p-4">
-      <div class="bg-white rounded-3xl shadow-2xl w-
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden transform transition-all scale-100 flex flex-col max-h-[90vh]">
+          <div class="bg-rose-500 p-4 flex justify-between items-center text-white shrink-0">
+              <h3 class="font-black text-xl flex items-center"><i class="fa-solid fa-bolt mr-2"></i> Speed Quiz</h3>
+              <div class="flex items-center gap-3">
+                  <span class="bg-rose-600 px-3 py-1.5 rounded-lg font-black text-sm hidden sm:inline-block">Score: <span id="sqScore">0</span>/10</span>
+                  <div id="sq-timer-box" class="font-black text-rose-100 text-lg flex items-center bg-rose-700 px-3 py-1 rounded-lg transition-colors"><i class="fa-solid fa-clock mr-2"></i><span id="sq-timer-text">01:00</span></div>
+                  <button onclick="closeModal('speedquizModal')" class="w-8 h-8 flex items-center justify-center bg-rose-600 rounded-full hover:bg-rose-800 transition"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+          </div>
+          <div class="p-6 sm:p-10 flex-1 overflow-y-auto custom-scroll flex flex-col items-center justify-center bg-slate-50 w-full relative">
+              <div id="sqPlayArea" class="w-full max-w-2xl flex flex-col items-center">
+                  <p class="text-slate-400 font-bold mb-4 uppercase tracking-widest text-sm text-center">What is the meaning of?</p>
+                  <div class="w-full bg-white border-2 border-slate-100 shadow-sm rounded-3xl py-10 mb-8 flex justify-center items-center px-4">
+                      <h2 id="sqQuestionWord" class="text-4xl sm:text-5xl font-black text-rose-500 text-center uppercase tracking-wide">...</h2>
+                  </div>
+                  <div id="sqOptionsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full"></div>
+              </div>
+              <div id="sqResultArea" class="hidden flex-col items-center mt-2 w-full animate-bounce">
+                  <h4 id="sq-resultMessage" class="text-5xl font-black mb-4"></h4>
+                  <p id="sq-finalScore" class="text-slate-500 font-bold mb-8 text-xl">You got <span id="sq-finalScoreNumber" class="text-rose-600 font-black">0</span> correct answers.</p>
+                  <div id="sq-action-btns" class="flex gap-4"></div>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <!-- MODAL: WORD SEARCH -->
+  <div id="wordsearchModal" class="fixed inset-0 z-[9999] bg-slate-900/80 backdrop-blur-sm hidden flex-col items-center justify-center p-2 sm:p-4">
+      <div class="bg-white rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden transform transition-all scale-100 flex flex-col max-h-[95vh]">
+          <div class="bg-indigo-500 p-3 sm:p-4 flex justify-between items-center text-white shrink-0">
+              <h3 class="font-black text-lg sm:text-xl flex items-center"><i class="fa-solid fa-magnifying-glass mr-2"></i> Word Search</h3>
+              <div class="flex items-center gap-2 sm:gap-3">
+                  <div id="ws-timer-box" class="font-black text-indigo-100 text-sm sm:text-lg flex items-center bg-indigo-700 px-2 sm:px-3 py-1 rounded-lg transition-colors"><i class="fa-solid fa-clock mr-1 sm:mr-2"></i><span id="ws-timer-text">01:00</span></div>
+                  <button onclick="closeModal('wordsearchModal')" class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center bg-indigo-600 rounded-full hover:bg-rose-500 transition"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+          </div>
+          
+          <div class="p-3 sm:p-6 flex-1 overflow-y-auto custom-scroll flex flex-col items-center bg-slate-50">
+              <div class="w-full flex flex-col lg:flex-row gap-4 sm:gap-6 items-center lg:items-start justify-center">
+                  <div id="wsGridArea" class="bg-white p-1 sm:p-2 rounded-xl sm:rounded-2xl border-2 sm:border-4 border-indigo-100 shadow-sm w-full max-w-[340px] sm:max-w-[420px] shrink-0">
+                      <div id="wsGrid" class="grid grid-cols-10 gap-0.5 sm:gap-1 bg-indigo-50 p-1 sm:p-2 rounded-lg sm:rounded-xl"></div>
+                  </div>
+                  <div id="wsWordsList" class="bg-white p-3 sm:p-5 rounded-xl sm:rounded-2xl border-2 border-slate-100 shadow-sm w-full max-w-[340px] lg:w-64 shrink-0 flex flex-col">
+                      <h4 class="font-black text-slate-700 mb-2 sm:mb-4 border-b-2 border-indigo-50 pb-1 sm:pb-2 text-sm sm:text-base">Find these words:</h4>
+                      <ul id="wsTargets" class="flex flex-row flex-wrap lg:flex-col gap-2 sm:gap-3 font-bold text-xs sm:text-lg text-slate-600 uppercase tracking-widest"></ul>
+                      <button onclick="clearWordSearchSelection()" class="mt-4 sm:mt-6 w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 rounded-lg sm:rounded-xl transition text-xs sm:text-sm">
+                          <i class="fa-solid fa-eraser mr-1"></i> Clear Selection
+                      </button>
+                  </div>
+              </div>
+              <div id="wsResultArea" class="hidden flex-col items-center mt-4 sm:mt-8 w-full animate-bounce">
+                  <h4 id="ws-resultMessage" class="text-3xl sm:text-5xl font-black mb-4 sm:mb-6 text-emerald-500 text-center">MISSION ACCOMPLISHED!</h4>
+                  <div id="ws-action-btns" class="flex gap-2 sm:gap-4"></div>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // CÔNG TẮC BẢO HIỂM CHỐNG KẸT MÀN HÌNH (GỌI TRỰC TIẾP)
+    // ==========================================
+    function hideLoading() {
+        let overlay = document.getElementById('loadingOverlay');
+        let content = document.getElementById('mainContent');
+        if(overlay) overlay.style.display = 'none';
+        if(content) content.style.opacity = '1';
+    }
+    // Cưỡng chế ẩn Loading sau 2 giây bất chấp mọi lỗi mạng
+    setTimeout(hideLoading, 2000);
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
+      authDomain: "roundup-ai-academy.firebaseapp.com",
+      projectId: "roundup-ai-academy",
+      storageBucket: "roundup-ai-academy.firebasestorage.app",
+      messagingSenderId: "723976989630",
+      appId: "1:723976989630:web:45f3de91269e70f604e7ef"
+    };
+    
+    const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbwtm-mJCRvAiXcbLI_dWEnzDGbqw1sWeBQqISC614dsvuiGkzyx6j-z5RS6jNx0xaX27w/exec";
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth(); const db = firebase.database();
+    let currentUser = null, currentCoins = 0, arenaData = null; 
+    let gameTimerInterval = null, gameTimeLeft = 60;
+
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        currentUser = user;
+        try {
+            if (!arenaData) await loadArenaData();
+            db.ref('users/' + user.uid).on('value', (snapshot) => {
+                let data = snapshot.val() || { coins: 0 };
+                updateCoinDisplay(data.coins);
+                hideLoading(); // Tắt Loading ngay khi Firebase đồng bộ xong
+            });
+        } catch (e) { 
+            console.error(e); 
+        }
+      } else { window.location.href = "index.html"; }
+    });
+
+    function updateCoinDisplay(newCoins) {
+        currentCoins = newCoins; const coinEl = document.getElementById('displayCoins'); coinEl.innerText = newCoins;
+        coinEl.classList.add('scale-125', 'text-rose-500'); setTimeout(() => coinEl.classList.remove('scale-125', 'text-rose-500'), 300);
+    }
+
+    async function loadArenaData() {
+        try {
+            let res = await fetch(SHEET_API_URL); let masterData = await res.json();
+            if (masterData && masterData.game) {
+                arenaData = masterData.game;
+                if (arenaData['hangman']?.cost) document.getElementById('hangmanCost').innerText = arenaData['hangman'].cost;
+                if (arenaData['memory']?.cost) document.getElementById('memoryCost').innerText = arenaData['memory'].cost;
+                if (arenaData['scramble']?.cost) document.getElementById('scrambleCost').innerText = arenaData['scramble'].cost;
+                if (arenaData['speedquiz']?.cost) document.getElementById('speedquizCost').innerText = arenaData['speedquiz'].cost;
+                if (arenaData['wordsearch']?.cost) document.getElementById('wordsearchCost').innerText = arenaData['wordsearch'].cost;
+            }
+        } catch (e) { console.error("Lỗi tải Arena API:", e); }
+    }
+
+    function closeModal(modalId) {
+        clearInterval(gameTimerInterval); document.getElementById(modalId).classList.add('hidden'); document.getElementById(modalId).classList.remove('flex');
+    }
+
+    function startGameTimer(boxId, textId, onTimeoutCallback) {
+        clearInterval(gameTimerInterval); gameTimeLeft = 60;
+        document.getElementById(textId).innerText = "01:00"; document.getElementById(boxId).classList.remove('timer-urgent');
+        gameTimerInterval = setInterval(() => {
+            gameTimeLeft--; document.getElementById(textId).innerText = `00:${gameTimeLeft.toString().padStart(2, '0')}`;
+            if (gameTimeLeft <= 10 && gameTimeLeft > 0) document.getElementById(boxId).classList.add('timer-urgent');
+            if (gameTimeLeft <= 0) { clearInterval(gameTimerInterval); document.getElementById(boxId).classList.remove('timer-urgent'); onTimeoutCallback(); }
+        }, 1000);
+    }
+
+    function requestPlayGame(gameType) {
+        if (!arenaData || !arenaData[gameType]) { alert("Game chưa có data trên Google Sheets hoặc API bị lỗi!"); return; }
+        let cost = parseInt(arenaData[gameType].cost) || 0; let dataString = arenaData[gameType].gameData;
+        if (!dataString) { alert("Kho từ vựng rỗng!"); return; }
+        if (currentCoins < cost) { alert(`Bạn cần ${cost} Xu để chơi. Hãy cày thêm bài tập nhé!`); return; }
+        let newBalance = currentCoins - cost;
+        db.ref('users/' + currentUser.uid).update({ coins: newBalance }).then(() => {
+            if (gameType === 'hangman') startHangman(dataString);
+            if (gameType === 'memory') startMemory(dataString);
+            if (gameType === 'scramble') startScramble(dataString);
+            if (gameType === 'speedquiz') startSpeedQuiz(dataString);
+            if (gameType === 'wordsearch') startWordSearch(dataString);
+        }).catch(err => alert("Lỗi ví tiền, hãy thử lại."));
+    }
+
+    // ==========================================
+    // LOGIC HANGMAN, MEMORY, SCRAMBLE, SPEEDQUIZ 
+    // ==========================================
+    let hm_currentWord = "", hm_guessedLetters = [], hm_mistakes = 0; const hm_maxMistakes = 6;
+    function playNextHangmanFree() { startHangman(arenaData['hangman'].gameData); }
+    function startHangman(dataString) {
+        let wArr = dataString.split(',').map(w => w.trim().toUpperCase()).filter(w => w.length > 0); hm_currentWord = wArr[Math.floor(Math.random() * wArr.length)]; hm_guessedLetters = []; hm_mistakes = 0;
+        document.getElementById('mistakesCount').innerText = hm_mistakes; document.getElementById('gameResult').classList.add('hidden'); document.getElementById('keyboard').classList.remove('hidden'); document.getElementById('correctWordWas').classList.add('hidden');
+        ['head', 'body', 'arm-l', 'arm-r', 'leg-l', 'leg-r'].forEach(part => { document.getElementById(`hm-${part}`).classList.add('hidden'); });
+        drawWord(); drawKeyboard(); document.getElementById('gameModal').classList.remove('hidden'); document.getElementById('gameModal').classList.add('flex');
+        startGameTimer('hm-timer-box', 'hm-timer-text', () => endHangman(false, true));
+    }
+    function drawWord() {
+        const c = document.getElementById('wordDisplay'); c.innerHTML = '';
+        for (let char of hm_currentWord) {
+            if (char === ' ') c.innerHTML += `<div class="w-8"></div>`;
+            else { let isG = hm_guessedLetters.includes(char); c.innerHTML += `<div class="w-10 h-12 flex items-center justify-center text-2xl font-black border-b-4 ${isG ? 'border-violet-500 bg-violet-50 text-violet-700' : 'border-slate-300 bg-white text-transparent'} rounded-t-sm shadow-sm">${isG ? char : ''}</div>`; }
+        }
+    }
+    function drawKeyboard() {
+        const k = document.getElementById('keyboard'); k.innerHTML = '';
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(letter => { let isG = hm_guessedLetters.includes(letter); k.innerHTML += `<button onclick="handleGuess('${letter}')" id="key-${letter}" class="keyboard-key w-10 h-12 font-black text-lg rounded-lg shadow-sm border-b-4 ${isG ? 'bg-slate-200 text-slate-400 border-slate-300' : 'bg-white text-slate-700 border-slate-200 hover:bg-violet-100 hover:text-violet-700'} " ${isG ? 'disabled' : ''}>${letter}</button>`; });
+    }
+    function handleGuess(letter) {
+        if (hm_guessedLetters.includes(letter) || hm_mistakes >= hm_maxMistakes) return; hm_guessedLetters.push(letter);
+        let kb = document.getElementById(`key-${letter}`); if(kb) { kb.disabled = true; kb.className = "keyboard-key w-10 h-12 font-black text-lg rounded-lg shadow-sm border-b-4 bg-slate-200 text-slate-400 border-slate-300"; }
+        if (hm_currentWord.includes(letter)) { drawWord(); if (hm_currentWord.split('').filter(c => c !== ' ').every(c => hm_guessedLetters.includes(c))) endHangman(true); } 
+        else { hm_mistakes++; document.getElementById('mistakesCount').innerText = hm_mistakes; const parts = ['head', 'body', 'arm-l', 'arm-r', 'leg-l', 'leg-r']; if (hm_mistakes <= parts.length) document.getElementById(`hm-${parts[hm_mistakes - 1]}`).classList.remove('hidden'); if (hm_mistakes >= hm_maxMistakes) endHangman(false, false); }
+    }
+    function endHangman(isWin, isTimeout = false) {
+        clearInterval(gameTimerInterval); document.getElementById('hm-timer-box').classList.remove('timer-urgent'); document.getElementById('keyboard').classList.add('hidden'); document.getElementById('gameResult').classList.remove('hidden');
+        const btns = document.getElementById('hm-action-btns'); let cost = arenaData['hangman'].cost;
+        if (isWin) { document.getElementById('resultMessage').innerText = "YOU SAVED HIM!"; document.getElementById('resultMessage').className = "text-4xl font-black mb-4 text-emerald-500"; btns.innerHTML = `<button onclick="closeModal('gameModal')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-black px-6 py-3 rounded-xl transition">Quit</button><button onclick="playNextHangmanFree()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black px-8 py-3 rounded-xl shadow-lg hover:-translate-y-1 transition">Next (Free)</button>`; confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); } 
+        else { document.getElementById('resultMessage').innerText = isTimeout ? "TIME'S UP!" : "GAME OVER!"; document.getElementById('resultMessage').className = "text-4xl font-black mb-4 text-rose-500"; document.getElementById('theWord').innerText = hm_currentWord; document.getElementById('correctWordWas').classList.remove('hidden'); btns.innerHTML = `<button onclick="closeModal('gameModal')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-black px-6 py-3 rounded-xl transition">Quit</button><button onclick="requestPlayGame('hangman')" class="bg-amber-500 hover:bg-amber-600 text-white font-black px-8 py-3 rounded-xl shadow-lg hover:-translate-y-1 transition">Retry (-${cost} <i class="fa-solid fa-coins text-sm ml-1"></i>)</button>`; }
+    }
+
+    let mem_cards = [], mem_hasFlippedCard = false, mem_lockBoard = false, mem_firstCard, mem_secondCard, mem_flips = 0, mem_matched = 0;
+    function playNextMemoryFree() { startMemory(arenaData['memory'].gameData); }
+    function startMemory(dataString) {
+        let words = dataString.split(',').map(w => w.trim().toUpperCase()).filter(w => w.length > 0); let sel = words.sort(() => 0.5 - Math.random()).slice(0, 6);
+        mem_cards = [...sel, ...sel].sort(() => 0.5 - Math.random()); mem_flips = 0; mem_matched = 0; mem_hasFlippedCard = false; mem_lockBoard = false;
+        document.getElementById('flipCount').innerText = mem_flips; document.getElementById('memoryResult').classList.add('hidden'); document.getElementById('memoryGrid').classList.remove('hidden');
+        const grid = document.getElementById('memoryGrid'); grid.innerHTML = '';
+        mem_cards.forEach((word) => { grid.innerHTML += `<div class="memory-card h-24 sm:h-32" data-word="${word}" onclick="flipMemoryCard(this)"><div class="memory-card-inner"><div class="memory-card-front text-4xl"><i class="fa-solid fa-question opacity-50"></i></div><div class="memory-card-back text-sm sm:text-base font-black px-2">${word}</div></div></div>`; });
+        document.getElementById('memoryModal').classList.remove('hidden'); document.getElementById('memoryModal').classList.add('flex'); startGameTimer('mem-timer-box', 'mem-timer-text', () => endMemory(false, true));
+    }
+    function flipMemoryCard(card) {
+        if (mem_lockBoard || card === mem_firstCard || card.classList.contains('matched')) return; card.classList.add('flipped');
+        if (!mem_hasFlippedCard) { mem_hasFlippedCard = true; mem_firstCard = card; return; }
+        mem_secondCard = card; mem_flips++; document.getElementById('flipCount').innerText = mem_flips;
+        if(mem_firstCard.dataset.word === mem_secondCard.dataset.word) {
+            mem_firstCard.classList.add('matched'); mem_secondCard.classList.add('matched');
+            if ('speechSynthesis' in window) { window.speechSynthesis.cancel(); let u = new SpeechSynthesisUtterance(mem_firstCard.dataset.word); u.lang = 'en-US'; window.speechSynthesis.speak(u); }
+            mem_hasFlippedCard = false; mem_lockBoard = false; mem_firstCard = null; mem_secondCard = null; mem_matched += 2; if (mem_matched === mem_cards.length) { setTimeout(() => endMemory(true, false), 500); }
+        } else { mem_lockBoard = true; setTimeout(() => { mem_firstCard.classList.remove('flipped'); mem_secondCard.classList.remove('flipped'); mem_hasFlippedCard = false; mem_lockBoard = false; mem_firstCard = null; mem_secondCard = null; }, 1000); }
+    }
+    function endMemory(isWin, isTimeout = false) {
+        clearInterval(gameTimerInterval); document.getElementById('mem-timer-box').classList.remove('timer-urgent'); document.getElementById('memoryGrid').classList.add('hidden'); document.getElementById('memoryResult').classList.remove('hidden'); document.getElementById('memoryResult').classList.add('flex');
+        const btns = document.getElementById('mem-action-btns'); let cost = arenaData['memory'].cost;
+        if (isWin) { document.getElementById('mem-resultMessage').innerText = "EXCELLENT MEMORY!"; document.getElementById('mem-resultMessage').className = "text-4xl font-black mb-6 text-emerald-500"; btns.innerHTML = `<button onclick="closeModal('memoryModal')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-black px-6 py-3 rounded-xl transition">Quit</button><button onclick="playNextMemoryFree()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black px-8 py-3 rounded-xl shadow-lg hover:-translate-y-1 transition">Next (Free)</button>`; confetti({ particleCount: 150, spread: 80, origin: { y: 0.5 } }); } 
+        else { document.getElementById('mem-resultMessage').innerText = isTimeout ? "TIME'S UP!" : "GAME OVER!"; document.getElementById('mem-resultMessage').className = "text-4xl font-black mb-6 text-rose-500"; btns.innerHTML = `<button onclick="closeModal('memoryModal')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-black px-6 py-3 rounded-xl transition">Quit</button><button onclick="requestPlayGame('memory')" class="bg-amber-500 hover:bg-amber-600 text-white font-black px-8 py-3 rounded-xl shadow-lg hover:-translate-y-1 transition">Retry (-${cost} <i class="fa-solid fa-coins text-sm ml-1"></i>)</button>`; }
+    }
+
+    let scr_currentWord = "";
+    function playNextScrambleFree() { startScramble(arenaData['scramble'].gameData); }
+    function startScramble(dataString) {
+        let wArr = dataString.split(',').map(w => w.trim().toUpperCase()).filter(w => w.length > 2); scr_currentWord = wArr[Math.floor(Math.random() * wArr.length)];
+        let scrambled = scr_currentWord; let attempts = 0; while (scrambled === scr_currentWord && attempts < 10) { scrambled = scrambled.split('').sort(() => 0.5 - Math.random()).join(''); attempts++; }
+        document.getElementById('scrambleError').classList.add('hidden'); document.getElementById('scrambleResult').classList.add('hidden'); document.getElementById('scrambleInputContainer').classList.remove('hidden'); document.getElementById('scrambleSubmitBtn').classList.remove('hidden'); document.getElementById('scrambleInput').value = ''; document.getElementById('scr-correctWordWas').classList.add('hidden');
+        const display = document.getElementById('scrambleWordDisplay'); display.innerHTML = '';
+        for(let char of scrambled) { if(char === ' ') display.innerHTML += `<div class="w-8"></div>`; else display.innerHTML += `<div class="scramble-letter bg-white border-4 border-sky-200 text-sky-600 font-black text-3xl sm:text-4xl w-12 h-14 sm:w-16 sm:h-16 flex items-center justify-center rounded-xl shadow-sm cursor-default">${char}</div>`; }
+        document.getElementById('scrambleModal').classList.remove('hidden'); document.getElementById('scrambleModal').classList.add('flex'); setTimeout(() => document.getElementById('scrambleInput').focus(), 100); startGameTimer('scr-timer-box', 'scr-timer-text', () => endScramble(false, true));
+    }
+    function checkScrambleAnswer() {
+        let answer = document.getElementById('scrambleInput').value.trim().toUpperCase();
+        if (answer === scr_currentWord) { endScramble(true, false); } else { let errEl = document.getElementById('scrambleError'); errEl.classList.remove('hidden'); document.getElementById('scrambleInput').value = ''; document.getElementById('scrambleInput').focus(); setTimeout(() => errEl.classList.add('hidden'), 1500); }
+    }
+    document.getElementById('scrambleInput').addEventListener('keypress', function (e) { if (e.key === 'Enter') checkScrambleAnswer(); });
+    function endScramble(isWin, isTimeout = false) {
+        clearInterval(gameTimerInterval); document.getElementById('scr-timer-box').classList.remove('timer-urgent'); document.getElementById('scrambleInputContainer').classList.add('hidden'); document.getElementById('scrambleSubmitBtn').classList.add('hidden'); document.getElementById('scrambleResult').classList.remove('hidden'); document.getElementById('scrambleResult').classList.add('flex');
+        const btns = document.getElementById('scr-action-btns'); let cost = arenaData['scramble'].cost;
+        if (isWin) { document.getElementById('scr-resultMessage').innerText = "BRILLIANT!"; document.getElementById('scr-resultMessage').className = "text-4xl font-black mb-4 text-emerald-500"; btns.innerHTML = `<button onclick="closeModal('scrambleModal')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-black px-6 py-3 rounded-xl transition">Quit</button><button onclick="playNextScrambleFree()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black px-8 py-3 rounded-xl shadow-lg hover:-translate-y-1 transition">Next (Free)</button>`; if ('speechSynthesis' in window) { window.speechSynthesis.cancel(); let u = new SpeechSynthesisUtterance(scr_currentWord); u.lang = 'en-US'; window.speechSynthesis.speak(u); } confetti({ particleCount: 150, spread: 80, origin: { y: 0.5 } }); } 
+        else { document.getElementById('scr-resultMessage').innerText = isTimeout ? "TIME'S UP!" : "GAME OVER!"; document.getElementById('scr-resultMessage').className = "text-4xl font-black mb-4 text-rose-500"; document.getElementById('scr-theWord').innerText = scr_currentWord; document.getElementById('scr-correctWordWas').classList.remove('hidden'); btns.innerHTML = `<button onclick="closeModal('scrambleModal')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-black px-6 py-3 rounded-xl transition">Quit</button><button onclick="requestPlayGame('scramble')" class="bg-amber-500 hover:bg-amber-600 text-white font-black px-8 py-3 rounded-xl shadow-lg hover:-translate-y-1 transition">Retry (-${cost} <i class="fa-solid fa-coins text-sm ml-1"></i>)</button>`; }
+    }
+
+    let sq_dictionary = []; let sq_score = 0; const sq_targetScore = 10;
+    function playNextSpeedQuizFree() { startSpeedQuiz(arenaData['speedquiz'].gameData); }
+    function startSpeedQuiz(dataString) {
+        let rawPairs = dataString.split(','); sq_dictionary = [];
+        for (let pair of rawPairs) { let splitPair = pair.split('='); if (splitPair.length === 2) { let en = splitPair[0].trim().toUpperCase(); let vi = splitPair[1].trim(); if (en && vi) sq_dictionary.push({ en: en, vi: vi }); } }
+        if (sq_dictionary.length < 4) { alert("Vui lòng nhập ít nhất 4 cặp từ theo mẫu 'Tiếng Anh = Tiếng Việt' vào Sheet."); return; }
+        sq_score = 0; document.getElementById('sqScore').innerText = sq_score; document.getElementById('sqPlayArea').classList.remove('hidden'); document.getElementById('sqResultArea').classList.add('hidden'); document.getElementById('speedquizModal').classList.remove('hidden'); document.getElementById('speedquizModal').classList.add('flex');
+        loadQuizQuestion(); startGameTimer('sq-timer-box', 'sq-timer-text', () => endSpeedQuiz(false, true));
+    }
+    function loadQuizQuestion() {
+        let currentPair = sq_dictionary[Math.floor(Math.random() * sq_dictionary.length)]; document.getElementById('sqQuestionWord').innerText = currentPair.en;
+        if ('speechSynthesis' in window) { window.speechSynthesis.cancel(); let u = new SpeechSynthesisUtterance(currentPair.en); u.lang = 'en-US'; window.speechSynthesis.speak(u); }
+        let options = [currentPair.vi]; let attempts = 0; while (options.length < 4 && attempts < 50) { let randomWrong = sq_dictionary[Math.floor(Math.random() * sq_dictionary.length)].vi; if (!options.includes(randomWrong)) options.push(randomWrong); attempts++; }
+        options.sort(() => 0.5 - Math.random()); const grid = document.getElementById('sqOptionsGrid'); grid.innerHTML = '';
+        options.forEach(opt => { grid.innerHTML += `<button onclick="checkQuizAnswer(this, '${encodeURIComponent(opt)}', '${encodeURIComponent(currentPair.vi)}')" class="quiz-btn w-full bg-white text-slate-700 font-black text-lg py-5 px-4 rounded-2xl border-4 border-slate-100 shadow-sm hover:border-rose-300 hover:text-rose-600 focus:outline-none">${opt}</button>`; });
+    }
+    function checkQuizAnswer(btnElement, encodedSelected, encodedCorrect) {
+        document.querySelectorAll('.quiz-btn').forEach(b => b.disabled = true); let selectedVi = decodeURIComponent(encodedSelected); let correctVi = decodeURIComponent(encodedCorrect);
+        if (selectedVi === correctVi) { btnElement.classList.add('quiz-correct'); sq_score++; document.getElementById('sqScore').innerText = sq_score; if (sq_score >= sq_targetScore) { setTimeout(() => endSpeedQuiz(true, false), 400); } else { setTimeout(loadQuizQuestion, 400); } } 
+        else { btnElement.classList.add('quiz-wrong'); document.querySelectorAll('.quiz-btn').forEach(b => { if (b.innerText === correctVi) b.classList.add('quiz-correct'); }); setTimeout(loadQuizQuestion, 1000); }
+    }
+    function endSpeedQuiz(isWin, isTimeout = false) {
+        clearInterval(gameTimerInterval); document.getElementById('sq-timer-box').classList.remove('timer-urgent'); document.getElementById('sqPlayArea').classList.add('hidden'); document.getElementById('sqResultArea').classList.remove('hidden'); document.getElementById('sqResultArea').classList.add('flex'); document.getElementById('sq-finalScoreNumber').innerText = sq_score;
+        const btns = document.getElementById('sq-action-btns'); let cost = arenaData['speedquiz'].cost;
+        if (isWin) { document.getElementById('sq-resultMessage').innerText = "LIGHTNING FAST!"; document.getElementById('sq-resultMessage').className = "text-5xl font-black mb-4 text-emerald-500"; btns.innerHTML = `<button onclick="closeModal('speedquizModal')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-black px-6 py-3 rounded-xl transition">Quit</button><button onclick="playNextSpeedQuizFree()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black px-8 py-3 rounded-xl shadow-lg hover:-translate-y-1 transition">Next (Free)</button>`; confetti({ particleCount: 200, spread: 90, origin: { y: 0.5 } }); } 
+        else { document.getElementById('sq-resultMessage').innerText = "TIME'S UP!"; document.getElementById('sq-resultMessage').className = "text-5xl font-black mb-4 text-rose-500"; btns.innerHTML = `<button onclick="closeModal('speedquizModal')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-black px-6 py-3 rounded-xl transition">Quit</button><button onclick="requestPlayGame('speedquiz')" class="bg-amber-500 hover:bg-amber-600 text-white font-black px-8 py-3 rounded-xl shadow-lg hover:-translate-y-1 transition">Retry (-${cost} <i class="fa-solid fa-coins text-sm ml-1"></i>)</button>`; }
+    }
+
+    const ws_gridSize = 10;
+    let ws_grid = []; let ws_targetWords = []; let ws_selectedCells = []; let ws_foundWordsCount = 0;
+
+    function playNextWordSearchFree() { startWordSearch(arenaData['wordsearch'].gameData); }
+    function startWordSearch(dataString) {
+        let wArr = dataString.split(',').map(w => w.trim().toUpperCase()).filter(w => w.length > 3 && w.length <= 8);
+        if (wArr.length < 4) { alert("Cần ít nhất 4 từ (mỗi từ từ 4-8 chữ cái)."); return; }
+        let selected = wArr.sort(() => 0.5 - Math.random()).slice(0, 4); ws_targetWords = selected.map(word => ({ word: word, found: false })); ws_foundWordsCount = 0; ws_selectedCells = [];
+        generateWordSearchGrid(selected);
+        const listEl = document.getElementById('wsTargets'); listEl.innerHTML = '';
+        ws_targetWords.forEach((target, index) => { listEl.innerHTML += `<li id="ws-target-${index}" class="bg-indigo-50 px-2 py-1 rounded-lg lg:bg-transparent lg:p-0"><i class="fa-solid fa-circle-chevron-right text-indigo-300 mr-1 sm:mr-2 hidden lg:inline"></i>${target.word}</li>`; });
+        document.getElementById('wsGridArea').classList.remove('hidden'); document.getElementById('wsWordsList').classList.remove('hidden'); document.getElementById('wsResultArea').classList.add('hidden');
+        document.getElementById('wordsearchModal').classList.remove('hidden'); document.getElementById('wordsearchModal').classList.add('flex'); startGameTimer('ws-timer-box', 'ws-timer-text', () => endWordSearch(false, true));
+    }
+    function generateWordSearchGrid(words) {
+        ws_grid = Array(ws_gridSize).fill(null).map(() => Array(ws_gridSize).fill(''));
+        words.forEach(word => {
+            let placed = false; let attempts = 0;
+            while (!placed && attempts < 100) {
+                let dir = Math.floor(Math.random() * 3); let dr = [0, 1, 1][dir]; let dc = [1, 0, 1][dir];
+                let r = Math.floor(Math.random() * ws_gridSize); let c = Math.floor(Math.random() * ws_gridSize);
+                if (r + dr * word.length <= ws_gridSize && c + dc * word.length <= ws_gridSize) {
+                    let canPlace = true;
+                    for (let i = 0; i < word.length; i++) { if (ws_grid[r + dr * i][c + dc * i] !== '' && ws_grid[r + dr * i][c + dc * i] !== word[i]) { canPlace = false; break; } }
+                    if (canPlace) { for (let i = 0; i < word.length; i++) { ws_grid[r + dr * i][c + dc * i] = word[i]; } placed = true; }
+                } attempts++;
+            }
+        });
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; const gridEl = document.getElementById('wsGrid'); gridEl.innerHTML = '';
+        for (let r = 0; r < ws_gridSize; r++) {
+            for (let c = 0; c < ws_gridSize; c++) {
+                if (ws_grid[r][c] === '') ws_grid[r][c] = alphabet[Math.floor(Math.random() * alphabet.length)];
+                gridEl.innerHTML += `<div id="ws-cell-${r}-${c}" onclick="handleWordSearchClick(${r}, ${c})" class="ws-cell aspect-square w-full bg-white border border-indigo-100 sm:border-2 rounded sm:rounded-md text-center flex items-center justify-center font-black text-indigo-700 text-xs sm:text-base shadow-sm">${ws_grid[r][c]}</div>`;
+            }
+        }
+    }
+    function handleWordSearchClick(r, c) {
+        let cellId = `ws-cell-${r}-${c}`; let cellEl = document.getElementById(cellId);
+        if (cellEl.classList.contains('ws-found')) return;
+        let existIndex = ws_selectedCells.findIndex(cell => cell.r === r && cell.c === c);
+        if (existIndex !== -1) { ws_selectedCells.splice(existIndex, 1); cellEl.classList.remove('ws-selected'); return; }
+        ws_selectedCells.push({ r: r, c: c, letter: ws_grid[r][c] }); cellEl.classList.add('ws-selected'); checkWordSearchWin();
+    }
+    function clearWordSearchSelection() {
+        ws_selectedCells.forEach(cell => { let el = document.getElementById(`ws-cell-${cell.r}-${cell.c}`); if (!el.classList.contains('ws-found')) el.classList.remove('ws-selected'); }); ws_selectedCells = [];
+    }
+    function checkWordSearchWin() {
+        if (ws_selectedCells.length < 4) return; 
+        let selectedWord = ws_selectedCells.map(c => c.letter).join(''); let reversedWord = selectedWord.split('').reverse().join('');
+        let foundTarget = ws_targetWords.find(t => !t.found && (t.word === selectedWord || t.word === reversedWord));
+        if (foundTarget) {
+            foundTarget.found = true; ws_foundWordsCount++;
+            ws_selectedCells.forEach(cell => { let el = document.getElementById(`ws-cell-${cell.r}-${cell.c}`); el.classList.remove('ws-selected'); el.classList.add('ws-found'); });
+            let targetIndex = ws_targetWords.indexOf(foundTarget); document.getElementById(`ws-target-${targetIndex}`).classList.add('word-strike');
+            if ('speechSynthesis' in window) { window.speechSynthesis.cancel(); let u = new SpeechSynthesisUtterance(foundTarget.word); u.lang = 'en-US'; window.speechSynthesis.speak(u); }
+            ws_selectedCells = [];
+            if (ws_foundWordsCount >= ws_targetWords.length) { setTimeout(() => endWordSearch(true, false), 500); }
+        }
+    }
+    function endWordSearch(isWin, isTimeout = false) {
+        clearInterval(gameTimerInterval); document.getElementById('ws-timer-box').classList.remove('timer-urgent');
+        document.getElementById('wsGridArea').classList.add('hidden'); document.getElementById('wsWordsList').classList.add('hidden'); document.getElementById('wsResultArea').classList.remove('hidden'); document.getElementById('wsResultArea').classList.add('flex');
+        const btns = document.getElementById('ws-action-btns'); let cost = arenaData['wordsearch'].cost;
+        if (isWin) {
+            document.getElementById('ws-resultMessage').innerText = "EAGLE EYES!"; document.getElementById('ws-resultMessage').className = "text-3xl sm:text-5xl font-black mb-4 sm:mb-6 text-emerald-500 text-center";
+            btns.innerHTML = `<button onclick="closeModal('wordsearchModal')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-black px-4 sm:px-6 py-2 sm:py-3 rounded-xl transition">Quit</button><button onclick="playNextWordSearchFree()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black px-6 sm:px-8 py-2 sm:py-3 rounded-xl shadow-lg hover:-translate-y-1 transition">Next (Free)</button>`;
+            confetti({ particleCount: 200, spread: 90, origin: { y: 0.5 } });
+        } else {
+            document.getElementById('ws-resultMessage').innerText = "TIME'S UP!"; document.getElementById('ws-resultMessage').className = "text-3xl sm:text-5xl font-black mb-4 sm:mb-6 text-rose-500 text-center";
+            btns.innerHTML = `<button onclick="closeModal('wordsearchModal')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-black px-4 sm:px-6 py-2 sm:py-3 rounded-xl transition">Quit</button><button onclick="requestPlayGame('wordsearch')" class="bg-amber-500 hover:bg-amber-600 text-white font-black px-6 sm:px-8 py-2 sm:py-3 rounded-xl shadow-lg hover:-translate-y-1 transition">Retry (-${cost} <i class="fa-solid fa-coins text-sm ml-1"></i>)</button>`;
+        }
+    }
+  </script>
+</body>
+</html>
