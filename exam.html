@@ -18,19 +18,22 @@
     .custom-scroll::-webkit-scrollbar { width: 6px; }
     .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+    
+    .option-label { transition: all 0.2s ease; cursor: pointer; }
+    .option-input:checked + .option-content { background-color: #e0e7ff; border-color: #6366f1; color: #4338ca; font-weight: 900; }
+    .option-input:checked + .option-content .custom-radio { background-color: #6366f1; border-color: #6366f1; }
   </style>
 </head>
 <body class="h-[100dvh] w-full flex flex-col bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')] relative" id="mainBody">
 
-  <!-- HEADER -->
-  <header class="bg-white border-b-2 border-indigo-100 p-3 sm:p-4 flex justify-between items-center shadow-sm z-50 shrink-0">
+  <header class="bg-white border-b-2 border-emerald-100 p-3 sm:p-4 flex justify-between items-center shadow-sm z-50 shrink-0">
     <div class="flex items-center space-x-3">
-      <button onclick="window.history.back()" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center justify-center text-slate-600 transition shadow-sm border border-slate-200" title="Back">
+      <button onclick="window.location.href='dashboard.html'" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center justify-center text-slate-600 transition shadow-sm border border-slate-200">
           <i class="fa-solid fa-arrow-left"></i>
       </button>
       <div class="flex flex-col">
-        <h1 class="font-black text-lg sm:text-xl text-indigo-900 leading-tight">Exam Center</h1>
-        <span id="examSubtitle" class="mt-0.5 text-rose-500 font-bold text-[10px] sm:text-xs uppercase">Official Test</span>
+        <h1 class="font-black text-lg sm:text-xl text-emerald-700 leading-tight">Exam Center</h1>
+        <span id="examTypeDisplay" class="mt-0.5 text-emerald-500 font-bold text-[10px] sm:text-xs uppercase">Loading...</span>
       </div>
     </div>
     <div class="flex items-center bg-amber-50 px-4 py-2 rounded-xl border border-amber-200 shadow-sm">
@@ -38,42 +41,59 @@
     </div>
   </header>
 
-  <!-- LOADING OVERLAY -->
   <div id="loadingOverlay" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white transition-opacity duration-500">
-      <i class="fa-solid fa-file-signature fa-bounce text-5xl text-rose-500 mb-4"></i>
-      <p class="font-black text-slate-500 animate-pulse text-sm">Generating Your Exam...</p>
+      <i class="fa-solid fa-file-signature fa-bounce text-5xl text-emerald-500 mb-4"></i>
+      <p class="font-black text-slate-500 animate-pulse text-sm">Generating Exam...</p>
   </div>
 
-  <!-- NỘI DUNG ĐỀ THI -->
-  <main class="flex-1 w-full max-w-3xl mx-auto p-4 sm:p-8 overflow-y-auto custom-scroll flex flex-col relative opacity-0 transition-opacity duration-500" id="mainContent">
-      
-      <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 sm:p-10 mb-10">
-          <div class="text-center border-b-2 border-dashed border-slate-200 pb-6 mb-8">
-              <i class="fa-solid fa-graduation-cap text-5xl text-indigo-600 mb-4"></i>
-              <h2 id="examTitle" class="text-3xl font-black text-slate-800 uppercase tracking-wide">Loading Exam...</h2>
-              <p class="text-slate-500 font-bold mt-2">Read the questions carefully and select the best answer.</p>
+  <main class="flex-1 w-full max-w-4xl mx-auto p-4 sm:p-8 overflow-y-auto custom-scroll flex flex-col relative opacity-0 transition-opacity duration-500" id="mainContent">
+      <div id="examContainer" class="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 sm:p-10 mb-20">
+          
+          <div class="text-center mb-10 border-b-2 border-slate-100 pb-8">
+              <span id="badgeDisplay" class="inline-block bg-emerald-100 text-emerald-700 font-black px-4 py-1.5 rounded-full text-sm uppercase mb-4 tracking-wider">Exam</span>
+              <h2 id="examTitle" class="text-3xl sm:text-4xl font-extrabold text-slate-800 leading-tight">Ready?</h2>
+              <p class="text-sm font-bold text-slate-500 mt-3" id="examSubtitle">Choose the best answer for each question.</p>
           </div>
 
-          <!-- Danh sách câu hỏi thi -->
-          <div id="examContainer" class="space-y-8">
-              <!-- JS tự động vẽ câu hỏi -->
+          <div id="questionsArea" class="space-y-8">
+              <!-- JS generates questions here -->
           </div>
 
-          <div id="resultContainer" class="mt-10 hidden text-center p-8 rounded-2xl border-4 border-dashed border-rose-200 bg-rose-50 transform transition-all scale-95">
-              <h3 id="resultText" class="text-4xl font-black text-rose-600 mb-2"></h3>
-              <p id="resultSubtext" class="text-rose-500 font-bold text-lg"></p>
+          <div class="mt-12 flex justify-center">
+              <button id="btnSubmitExam" onclick="submitExam()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black px-12 py-4 rounded-2xl shadow-lg hover:-translate-y-1 transition transform flex items-center justify-center gap-2 text-xl w-full max-w-md hidden">
+                  SUBMIT EXAM <i class="fa-solid fa-check-double"></i>
+              </button>
           </div>
-
-          <button id="submitBtn" onclick="submitExam()" class="mt-10 w-full py-5 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-2xl font-black text-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transform transition flex justify-center items-center">
-              <i class="fa-solid fa-check-double mr-2"></i> SUBMIT EXAM
-          </button>
       </div>
   </main>
 
+  <!-- RESULT MODAL -->
+  <div id="resultModal" class="fixed inset-0 z-[9999] bg-slate-900/80 backdrop-blur-sm hidden flex-col items-center justify-center p-4">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all scale-100 text-center flex flex-col">
+          
+          <div id="resultHeader" class="p-8 pb-4">
+              <!-- Render by JS -->
+          </div>
+
+          <div class="px-8 pb-8 flex flex-col items-center">
+              <div class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-6 mb-6">
+                  <p class="text-slate-500 font-bold uppercase tracking-widest text-sm mb-1">Your Score</p>
+                  <p class="text-5xl font-black text-slate-800"><span id="scoreAchieved">0</span> <span class="text-2xl text-slate-400">/ <span id="scoreTotal">0</span></span></p>
+                  <p id="percentageDisplay" class="font-bold text-lg mt-2"></p>
+              </div>
+
+              <div id="rewardBox" class="w-full mb-6">
+                  <!-- Render by JS -->
+              </div>
+
+              <button onclick="window.location.href='dashboard.html'" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-black py-4 rounded-xl shadow-lg transition">
+                  BACK TO DASHBOARD
+              </button>
+          </div>
+      </div>
+  </div>
+
   <script>
-    // ==========================================
-    // CẤU HÌNH HỆ THỐNG
-    // ==========================================
     const firebaseConfig = {
       apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
       authDomain: "roundup-ai-academy.firebaseapp.com",
@@ -89,205 +109,179 @@
     const auth = firebase.auth(); 
     const db = firebase.database();
     
+    let currentUser = null;
     let currentCoins = 0;
     let examData = [];
     
-    // Bắt tham số URL để biết đang thi loại gì (Ví dụ: exam.html?level=starter&type=midterm)
+    // Parse URL
     const urlParams = new URLSearchParams(window.location.search);
-    let targetLevel = urlParams.get('level') || 'starter';
-    let examType = urlParams.get('type') || 'entry'; // entry, midterm, final
+    const targetLevel = urlParams.get('level') || 'general'; // vd: level_1, level_4
+    const examType = urlParams.get('type') || 'exam';       // entry hoặc exam
 
-    // ==========================================
-    // KHỞI ĐỘNG HỆ THỐNG & TẢI ĐỀ THI
-    // ==========================================
-    auth.onAuthStateChanged((user) => {
+    auth.onAuthStateChanged(async (user) => {
       if (user) {
-        db.ref('users/' + user.uid).once('value').then(async (snapshot) => {
-            let data = snapshot.val() || { coins: 0 };
-            currentCoins = data.coins || 0;
-            document.getElementById('displayCoins').innerText = currentCoins;
-            
-            // Render Tiêu đề
-            let displayType = examType === 'entry' ? "Entry Test" : (examType === 'midterm' ? "Midterm Exam" : "Final Exam");
-            document.getElementById('examTitle').innerText = `${targetLevel.replace('_', ' ')} - ${displayType}`;
-
-            await loadExamFromGoogleSheets();
-
-            setTimeout(() => { 
-                document.getElementById('loadingOverlay').style.display = 'none'; 
-                document.getElementById('mainContent').style.opacity = '1'; 
-            }, 500);
-        });
+        currentUser = user;
+        try {
+            db.ref('users/' + user.uid).on('value', (snapshot) => {
+                let data = snapshot.val() || { coins: 0 };
+                document.getElementById('displayCoins').innerText = data.coins || 0;
+                currentCoins = data.coins || 0;
+            });
+            await loadExamData();
+        } catch (e) { console.error(e); } 
+        finally { hideLoading(); }
       } else { window.location.href = "index.html"; }
     });
 
-    async function loadExamFromGoogleSheets() {
-        const container = document.getElementById('examContainer');
-        const submitBtn = document.getElementById('submitBtn');
-        
+    function hideLoading() {
+        document.getElementById('loadingOverlay').style.display = 'none'; 
+        document.getElementById('mainContent').style.opacity = '1';
+    }
+    window.addEventListener('load', () => { setTimeout(hideLoading, 2500); });
+
+    async function loadExamData() {
         try {
             let res = await fetch(SHEET_API_URL);
             let masterData = await res.json();
             
+            // Setup Giao diện theo Type
+            if (examType === 'entry') {
+                document.getElementById('examTypeDisplay').innerText = "PLACEMENT TEST";
+                document.getElementById('badgeDisplay').innerText = "ENTRY TEST";
+                document.getElementById('badgeDisplay').className = "inline-block bg-amber-100 text-amber-700 font-black px-4 py-1.5 rounded-full text-sm uppercase mb-4 tracking-wider";
+                document.getElementById('examTitle').innerText = "Unlock " + targetLevel.replace('_', ' ').toUpperCase();
+                document.getElementById('examSubtitle').innerText = "Score 70% or higher to unlock this level.";
+            } else {
+                document.getElementById('examTypeDisplay').innerText = "FINAL EXAM";
+                document.getElementById('badgeDisplay').innerText = "REWARD EXAM";
+                document.getElementById('examTitle').innerText = "Earn Coins";
+                document.getElementById('examSubtitle').innerText = "Answer correctly to earn coins for the Game Arena.";
+            }
+
             if (masterData && masterData.exam && masterData.exam[targetLevel] && masterData.exam[targetLevel][examType]) {
                 examData = masterData.exam[targetLevel][examType];
-                renderExam();
+                renderQuestions();
             } else {
-                examData = [];
-                submitBtn.classList.add('hidden');
-                container.innerHTML = `
-                    <div class="bg-slate-50 p-10 rounded-3xl text-center border-2 border-dashed border-slate-200">
-                        <i class="fa-solid fa-box-open text-6xl text-slate-300 mb-4"></i>
-                        <p class="text-slate-600 font-black text-xl">Exam Not Found</p>
-                        <p class="text-slate-400 mt-2">The ${examType} for ${targetLevel} is not available yet.</p>
+                document.getElementById('questionsArea').innerHTML = `
+                    <div class="text-center py-10">
+                        <i class="fa-solid fa-file-circle-xmark text-6xl text-slate-300 mb-4"></i>
+                        <p class="text-slate-500 font-bold">This exam is currently being updated. Please check back later.</p>
                     </div>`;
             }
-        } catch (e) {
-            console.error("Lỗi tải đề thi:", e);
-            container.innerHTML = `<p class="text-rose-500 font-bold text-center">Cannot connect to Exam Server.</p>`;
-        }
+        } catch (e) { console.error("Lỗi tải Exam API:", e); }
     }
 
-    function renderExam() {
-        const container = document.getElementById('examContainer');
-        container.innerHTML = '';
+    function renderQuestions() {
+        const qArea = document.getElementById('questionsArea');
+        if (examData.length === 0) return;
         
-        examData.forEach((item, index) => {
+        qArea.innerHTML = '';
+        examData.forEach((q, index) => {
             let optionsHtml = '';
-            item.options.forEach((opt, optIdx) => {
-                if(opt) { 
+            q.options.forEach((opt, oIndex) => {
+                if(opt) {
                     optionsHtml += `
-                        <label class="flex items-center space-x-4 p-4 border-2 border-slate-100 rounded-xl cursor-pointer hover:bg-rose-50 hover:border-rose-200 transition group bg-white shadow-sm">
-                            <input type="radio" name="q${index}" value="${optIdx + 1}" class="form-radio h-6 w-6 text-rose-500">
-                            <span class="text-slate-700 font-bold text-lg group-hover:text-rose-700">${opt}</span>
+                        <label class="option-label block relative w-full mb-3">
+                            <input type="radio" name="q_${index}" value="${oIndex}" class="option-input peer sr-only">
+                            <div class="option-content w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-4 flex items-center hover:bg-slate-100">
+                                <div class="custom-radio w-6 h-6 rounded-full border-2 border-slate-300 mr-4 flex-shrink-0 flex items-center justify-center">
+                                    <i class="fa-solid fa-check text-white text-xs opacity-0 peer-checked:opacity-100 transition"></i>
+                                </div>
+                                <span class="text-slate-700 font-bold">${opt}</span>
+                            </div>
                         </label>
                     `;
                 }
             });
-            
-            container.innerHTML += `
-                <div class="p-6 sm:p-8 bg-slate-50 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-2 h-full bg-rose-400"></div>
-                    <p class="font-black text-xl mb-6 text-slate-800"><span class="text-rose-500">Q${index + 1}:</span> ${item.q}</p>
-                    <div class="grid grid-cols-1 gap-4">
+
+            qArea.innerHTML += `
+                <div class="question-block bg-white border-2 border-slate-100 p-6 sm:p-8 rounded-2xl shadow-sm" id="question_box_${index}">
+                    <h3 class="text-xl font-black text-slate-800 mb-6"><span class="text-emerald-500 mr-2">Q${index + 1}.</span> ${q.q}</h3>
+                    <div class="options-group">
                         ${optionsHtml}
                     </div>
-                    <p id="exp-q${index}" class="mt-6 hidden text-base font-bold bg-rose-100 text-rose-600 p-4 rounded-xl border border-rose-200"></p>
                 </div>
             `;
         });
-    }
 
-    // ==========================================
-    // CHẤM ĐIỂM, THƯỞNG COIN & VOICE AI
-    // ==========================================
-    function getFemaleVoice() {
-        let voices = window.speechSynthesis.getVoices();
-        return voices.find(v => v.lang.startsWith('en') && (v.name.includes('Zira') || v.name.includes('Samantha') || v.name.includes('Victoria') || v.name.includes('Google US English'))) || voices.find(v => v.lang.startsWith('en'));
-    }
-
-    if ('speechSynthesis' in window) {
-        window.speechSynthesis.onvoiceschanged = function() { window.speechSynthesis.getVoices(); };
-    }
-
-    function speakTeacherVoice(scorePercent) {
-        let speech = new SpeechSynthesisUtterance();
-        speech.lang = 'en-US'; speech.pitch = 1.3; speech.rate = 1.0;
-        let femaleVoice = getFemaleVoice();
-        if (femaleVoice) speech.voice = femaleVoice;
-        
-        if (scorePercent >= 90) speech.text = `Outstanding performance! You passed the exam with flying colors!`;
-        else if (scorePercent >= 50) speech.text = `Good job! You passed the exam, but keep reviewing your materials.`;
-        else speech.text = `You didn't pass this time. Please check your mistakes and try again.`;
-        
-        window.speechSynthesis.speak(speech);
+        document.getElementById('btnSubmitExam').classList.remove('hidden');
     }
 
     function submitExam() {
-        // Khóa nút nộp bài để tránh click đúp
-        document.getElementById('submitBtn').disabled = true;
-        document.getElementById('submitBtn').classList.add('opacity-50', 'cursor-not-allowed');
-
-        let correctCount = 0;
+        let score = 0;
+        let total = examData.length;
         
-        examData.forEach((item, index) => {
-            const selected = document.querySelector(`input[name="q${index}"]:checked`);
-            const expEl = document.getElementById(`exp-q${index}`);
+        examData.forEach((q, index) => {
+            let selected = document.querySelector(`input[name="q_${index}"]:checked`);
+            let qBox = document.getElementById(`question_box_${index}`);
             
-            // Khóa lựa chọn sau khi nộp
-            document.querySelectorAll(`input[name="q${index}"]`).forEach(radio => radio.disabled = true);
-            
-            if (selected && parseInt(selected.value) === item.ans) {
-                correctCount++;
-                // Có thể làm highlight đáp án đúng ở đây nếu muốn
-            } else {
-                expEl.innerHTML = `<i class="fa-solid fa-circle-xmark mr-2"></i> <strong>Incorrect!</strong> ${item.exp}`;
-                expEl.classList.remove('hidden');
+            // Xóa UI cũ
+            qBox.querySelectorAll('.option-content').forEach(el => {
+                el.classList.remove('bg-rose-50', 'border-rose-300', 'bg-emerald-50', 'border-emerald-300', 'text-emerald-700', 'text-rose-700');
+            });
+
+            if (selected) {
+                let sVal = parseInt(selected.value);
+                if (sVal === q.ans) {
+                    score++;
+                }
             }
         });
 
-        const total = examData.length;
-        const scorePercent = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+        let percentage = Math.round((score / total) * 100);
         
-        let resultText = ""; 
-        let subText = "";
-        let rewardCoins = 0;
+        // Cập nhật giao diện Modal
+        document.getElementById('scoreAchieved').innerText = score;
+        document.getElementById('scoreTotal').innerText = total;
         
-        const resBox = document.getElementById('resultContainer');
+        const header = document.getElementById('resultHeader');
+        const percentageDisplay = document.getElementById('percentageDisplay');
+        const rewardBox = document.getElementById('rewardBox');
         
-        if (scorePercent >= 90) { 
-            resultText = `${scorePercent}% - EXCELLENT!`; 
-            rewardCoins = 500;
-            subText = `Congratulations! You earned +${rewardCoins} Coins.`;
-            resBox.className = "mt-10 text-center p-8 rounded-2xl border-4 border-dashed border-emerald-300 bg-emerald-50 transform transition-all scale-100";
-            document.getElementById('resultText').className = "text-4xl font-black text-emerald-600 mb-2";
-            document.getElementById('resultSubtext').className = "text-emerald-500 font-bold text-lg";
-            triggerConfetti();
-        }
-        else if (scorePercent >= 50) { 
-            resultText = `${scorePercent}% - PASSED!`; 
-            rewardCoins = 200;
-            subText = `Good effort! You earned +${rewardCoins} Coins.`;
-            resBox.className = "mt-10 text-center p-8 rounded-2xl border-4 border-dashed border-amber-300 bg-amber-50 transform transition-all scale-100";
-            document.getElementById('resultText').className = "text-4xl font-black text-amber-600 mb-2";
-            document.getElementById('resultSubtext').className = "text-amber-500 font-bold text-lg";
-            triggerConfetti();
-        }
-        else { 
-            resultText = `${scorePercent}% - FAILED`; 
-            subText = "Please review the lessons and try again.";
-            resBox.className = "mt-10 text-center p-8 rounded-2xl border-4 border-dashed border-rose-300 bg-rose-50 transform transition-all scale-100";
-            document.getElementById('resultText').className = "text-4xl font-black text-rose-600 mb-2";
-            document.getElementById('resultSubtext').className = "text-rose-500 font-bold text-lg";
+        // THEO LOGIC: THI ENTRY (VƯỢT CẤP) HAY THI LẤY XU?
+        if (examType === 'entry') {
+            if (percentage >= 70) {
+                // PASS VƯỢT CẤP
+                percentageDisplay.className = "font-black text-xl mt-2 text-emerald-500";
+                percentageDisplay.innerText = `${percentage}% - PASSED!`;
+                header.innerHTML = `<i class="fa-solid fa-unlock-keyhole text-6xl text-emerald-500 mb-4"></i><h3 class="text-3xl font-black text-slate-800">Level Unlocked!</h3>`;
+                rewardBox.innerHTML = `<p class="font-bold text-slate-500">You have successfully unlocked <span class="text-emerald-500 font-black">${targetLevel.replace('_', ' ').toUpperCase()}</span>.</p>`;
+                
+                // MỞ KHÓA FIREBASE
+                db.ref(`users/${currentUser.uid}/unlocked_levels/${targetLevel}`).set(true);
+                confetti({ particleCount: 150, spread: 80, origin: { y: 0.5 } });
+            } else {
+                // FAIL
+                percentageDisplay.className = "font-black text-xl mt-2 text-rose-500";
+                percentageDisplay.innerText = `${percentage}% - FAILED`;
+                header.innerHTML = `<i class="fa-solid fa-lock text-6xl text-rose-400 mb-4"></i><h3 class="text-3xl font-black text-slate-800">Keep Trying</h3>`;
+                rewardBox.innerHTML = `<p class="font-bold text-slate-500">You need at least 70% to unlock this level. Review your basics and try again!</p>`;
+            }
+        } else {
+            // LOGIC THI LẤY XU (GENERAL EXAM)
+            let earnedCoins = score * 10; // Mỗi câu đúng 10 xu
+            percentageDisplay.className = "font-black text-xl mt-2 text-amber-500";
+            percentageDisplay.innerText = `Accuracy: ${percentage}%`;
+            
+            if (score > 0) {
+                header.innerHTML = `<i class="fa-solid fa-sack-dollar text-6xl text-amber-400 mb-4"></i><h3 class="text-3xl font-black text-slate-800">Great Job!</h3>`;
+                rewardBox.innerHTML = `
+                    <div class="bg-amber-50 border-2 border-amber-200 rounded-xl p-4 inline-block px-8">
+                        <p class="text-sm font-bold text-amber-700 uppercase tracking-widest mb-1">Reward</p>
+                        <p class="text-3xl font-black text-amber-500">+${earnedCoins} <i class="fa-solid fa-coins text-xl"></i></p>
+                    </div>`;
+                
+                // CỘNG XU VÀO FIREBASE
+                db.ref(`users/${currentUser.uid}`).update({ coins: currentCoins + earnedCoins });
+                confetti({ particleCount: 150, spread: 80, origin: { y: 0.5 } });
+            } else {
+                header.innerHTML = `<i class="fa-solid fa-face-frown-open text-6xl text-slate-400 mb-4"></i><h3 class="text-3xl font-black text-slate-800">No Coins Earned</h3>`;
+                rewardBox.innerHTML = `<p class="font-bold text-slate-500">You need correct answers to earn coins. Keep practicing!</p>`;
+            }
         }
 
-        document.getElementById('resultText').innerText = resultText;
-        document.getElementById('resultSubtext').innerText = subText;
-        resBox.classList.remove('hidden');
-
-        // Cập nhật xu vào Firebase nếu pass
-        if (rewardCoins > 0 && auth.currentUser) {
-            let newCoins = currentCoins + rewardCoins;
-            db.ref('users/' + auth.currentUser.uid).update({ coins: newCoins })
-              .then(() => {
-                  document.getElementById('displayCoins').innerText = newCoins;
-                  // Hiệu ứng update xu
-                  document.getElementById('displayCoins').classList.add('text-emerald-500', 'scale-125');
-                  setTimeout(() => document.getElementById('displayCoins').classList.remove('text-emerald-500', 'scale-125'), 1000);
-              });
-        }
-
-        speakTeacherVoice(scorePercent);
-    }
-
-    function triggerConfetti() {
-        var duration = 3 * 1000;
-        var end = Date.now() + duration;
-        (function frame() {
-            confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#f43f5e', '#10b981', '#f59e0b'] });
-            confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#f43f5e', '#10b981', '#f59e0b'] });
-            if (Date.now() < end) requestAnimationFrame(frame);
-        }());
+        document.getElementById('resultModal').classList.remove('hidden');
+        document.getElementById('resultModal').classList.add('flex');
     }
   </script>
 </body>
