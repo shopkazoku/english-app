@@ -42,7 +42,6 @@
 </head>
 <body class="h-[100dvh] w-full flex flex-col bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')] relative overflow-hidden" id="mainBody">
 
-  <!-- HEADER -->
   <header class="bg-white border-b-2 border-indigo-100 p-3 sm:p-4 flex justify-between items-center shadow-sm z-50 shrink-0">
     <div class="flex items-center space-x-3">
       <button onclick="window.location.href='dashboard.html'" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center justify-center text-slate-600 transition shadow-sm border border-slate-200">
@@ -59,7 +58,6 @@
     </div>
   </header>
 
-  <!-- LOADING OVERLAY -->
   <div id="loadingOverlay" class="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-white transition-opacity duration-500">
       <i class="fa-solid fa-ghost fa-bounce text-5xl text-violet-500 mb-4"></i>
       <p class="font-black text-slate-500 animate-pulse text-sm">Loading Arena...</p>
@@ -71,10 +69,8 @@
           <p class="text-slate-500 font-bold mt-2">Spend your coins to play. Win fast to play again for free!</p>
       </div>
 
-      <!-- DANH SÁCH GAME -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          
-          <!-- GAME 1: HANGMAN -->
+          <!-- HANGMAN -->
           <div class="bg-white rounded-3xl p-6 shadow-lg border-2 border-slate-100 hover:border-violet-300 hover:shadow-xl transition transform hover:-translate-y-1 relative overflow-hidden flex flex-col">
               <div class="absolute -right-4 -top-4 w-24 h-24 bg-violet-100 rounded-full z-0 opacity-50"></div>
               <div class="relative z-10 flex-1 flex flex-col">
@@ -88,7 +84,7 @@
               </div>
           </div>
 
-          <!-- GAME 2: MEMORY MATCH -->
+          <!-- MEMORY MATCH -->
           <div class="bg-white rounded-3xl p-6 shadow-lg border-2 border-slate-100 hover:border-emerald-300 hover:shadow-xl transition transform hover:-translate-y-1 relative overflow-hidden flex flex-col">
               <div class="absolute -right-4 -top-4 w-24 h-24 bg-emerald-100 rounded-full z-0 opacity-50"></div>
               <div class="relative z-10 flex-1 flex flex-col">
@@ -102,7 +98,7 @@
               </div>
           </div>
 
-          <!-- GAME 3: WORD SCRAMBLE -->
+          <!-- WORD SCRAMBLE -->
           <div class="bg-white rounded-3xl p-6 shadow-lg border-2 border-slate-100 hover:border-sky-300 hover:shadow-xl transition transform hover:-translate-y-1 relative overflow-hidden flex flex-col">
               <div class="absolute -right-4 -top-4 w-24 h-24 bg-sky-100 rounded-full z-0 opacity-50"></div>
               <div class="relative z-10 flex-1 flex flex-col">
@@ -115,7 +111,6 @@
                   </div>
               </div>
           </div>
-
       </div>
   </main>
 
@@ -236,26 +231,35 @@
     let gameTimerInterval = null, gameTimeLeft = 60;
 
     // ==========================================
-    // KHỞI ĐỘNG HỆ THỐNG VÀ FIREBASE
+    // KHỞI ĐỘNG HỆ THỐNG - ĐÃ BỌC THÉP
     // ==========================================
     auth.onAuthStateChanged(async (user) => {
       if (user) {
         currentUser = user;
-        
         try {
             if (!arenaData) await loadArenaData();
             db.ref('users/' + user.uid).on('value', (snapshot) => {
                 let data = snapshot.val() || { coins: 0 };
                 updateCoinDisplay(data.coins);
             });
-        } catch (e) { console.error(e); }
-        finally {
-            setTimeout(() => { 
-                document.getElementById('loadingOverlay').style.display = 'none'; 
-                document.getElementById('mainContent').style.opacity = '1'; 
-            }, 500);
+        } catch (e) { 
+            console.error("Lỗi Firebase/Data:", e); 
+        } finally {
+            // Đảm bảo lệnh tắt loading luôn chạy
+            hideLoading();
         }
       } else { window.location.href = "index.html"; }
+    });
+
+    function hideLoading() {
+        document.getElementById('loadingOverlay').style.display = 'none'; 
+        document.getElementById('mainContent').style.opacity = '1';
+    }
+
+    // [CÔNG TẮC BẢO HIỂM TỐI CAO]
+    // Chống kẹt màn hình tuyệt đối: Bất chấp lỗi mạng, sau 2.5s sẽ cưỡng chế mở Arena
+    window.addEventListener('load', () => {
+        setTimeout(hideLoading, 2500);
     });
 
     function updateCoinDisplay(newCoins) {
@@ -272,13 +276,12 @@
             let masterData = await res.json();
             if (masterData && masterData.game) {
                 arenaData = masterData.game;
-                if (arenaData['hangman']?.cost) document.getElementById('hangmanCost').innerText = arenaData['hangman'].cost;
-                if (arenaData['memory']?.cost) document.getElementById('memoryCost').innerText = arenaData['memory'].cost;
-                if (arenaData['scramble']?.cost) document.getElementById('scrambleCost').innerText = arenaData['scramble'].cost;
+                if (arenaData['hangman'] && arenaData['hangman'].cost) document.getElementById('hangmanCost').innerText = arenaData['hangman'].cost;
+                if (arenaData['memory'] && arenaData['memory'].cost) document.getElementById('memoryCost').innerText = arenaData['memory'].cost;
+                if (arenaData['scramble'] && arenaData['scramble'].cost) document.getElementById('scrambleCost').innerText = arenaData['scramble'].cost;
             }
         } catch (e) { 
-            console.error("Lỗi tải Arena:", e); 
-            alert("Đường truyền dữ liệu Game đang bị gián đoạn, vui lòng thử lại sau!");
+            console.error("Lỗi tải Arena API:", e); 
         }
     }
 
@@ -306,7 +309,7 @@
     }
 
     function requestPlayGame(gameType) {
-        if (!arenaData || !arenaData[gameType]) { alert("Game chưa có data trên Google Sheets!"); return; }
+        if (!arenaData || !arenaData[gameType]) { alert("Game chưa có data trên Google Sheets hoặc API bị lỗi mạng!"); return; }
         let cost = parseInt(arenaData[gameType].cost) || 0;
         let dataString = arenaData[gameType].gameData;
         if (!dataString) { alert("Kho từ vựng rỗng!"); return; }
@@ -317,7 +320,7 @@
             if (gameType === 'hangman') startHangman(dataString);
             if (gameType === 'memory') startMemory(dataString);
             if (gameType === 'scramble') startScramble(dataString);
-        });
+        }).catch(err => alert("Lỗi ví tiền, hãy thử lại."));
     }
 
     // ==========================================
@@ -431,7 +434,7 @@
     }
 
     // ==========================================
-    // LOGIC GAME 3: WORD SCRAMBLE
+    // LOGIC WORD SCRAMBLE
     // ==========================================
     let scr_currentWord = "";
     function playNextScrambleFree() { startScramble(arenaData['scramble'].gameData); }
@@ -476,7 +479,7 @@
             if ('speechSynthesis' in window) { window.speechSynthesis.cancel(); let u = new SpeechSynthesisUtterance(scr_currentWord); u.lang = 'en-US'; window.speechSynthesis.speak(u); }
             confetti({ particleCount: 150, spread: 80, origin: { y: 0.5 } });
         } else {
-            document.getElementById('scr-resultMessage').innerText = "TIME'S UP!"; document.getElementById('scr-resultMessage').className = "text-4xl font-black mb-4 text-rose-500";
+            document.getElementById('scr-resultMessage').innerText = isTimeout ? "TIME'S UP!" : "GAME OVER!"; document.getElementById('scr-resultMessage').className = "text-4xl font-black mb-4 text-rose-500";
             document.getElementById('scr-theWord').innerText = scr_currentWord; document.getElementById('scr-correctWordWas').classList.remove('hidden');
             btns.innerHTML = `<button onclick="closeModal('scrambleModal')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-black px-6 py-3 rounded-xl transition">Quit</button><button onclick="requestPlayGame('scramble')" class="bg-amber-500 hover:bg-amber-600 text-white font-black px-8 py-3 rounded-xl shadow-lg hover:-translate-y-1 transition">Retry (-${cost} <i class="fa-solid fa-coins text-sm ml-1"></i>)</button>`;
         }
