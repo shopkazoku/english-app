@@ -17,14 +17,12 @@
     .custom-scroll::-webkit-scrollbar { width: 6px; }
     .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
-    
     .level-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     .level-card:hover { transform: translateY(-4px); }
   </style>
 </head>
 <body class="h-[100dvh] w-full flex flex-col bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')] relative" id="mainBody">
 
-  <!-- HEADER TỔNG QUAN -->
   <header class="bg-indigo-600 text-white p-4 sm:p-6 flex justify-between items-center shadow-lg z-50 shrink-0">
     <div class="flex items-center space-x-4">
       <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-2xl font-black shadow-inner border border-white/30">
@@ -37,27 +35,22 @@
     </div>
     
     <div class="flex items-center gap-4">
-        <!-- Ví Xu -->
         <div class="flex items-center bg-white/10 px-4 py-2 rounded-xl border border-white/20 shadow-sm backdrop-blur-sm">
             <i class="fa-solid fa-coins text-amber-300 mr-2 text-xl fa-spin-hover"></i>
-            <span id="displayCoins" class="font-black text-white text-xl">...</span>
+            <span id="displayCoins" class="font-black text-white text-xl">0</span>
         </div>
-        <!-- Nút Đăng xuất -->
         <button onclick="handleLogout()" class="w-10 h-10 bg-rose-500 hover:bg-rose-600 rounded-xl flex items-center justify-center text-white transition shadow-sm border border-rose-400" title="Logout">
             <i class="fa-solid fa-right-from-bracket"></i>
         </button>
     </div>
   </header>
 
-  <!-- LOADING OVERLAY -->
   <div id="loadingOverlay" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-900/80 backdrop-blur-sm transition-opacity duration-500 text-white">
       <i class="fa-solid fa-rocket fa-bounce text-6xl text-indigo-400 mb-6"></i>
       <p class="font-black animate-pulse text-lg tracking-widest uppercase">Initializing Profile...</p>
   </div>
 
   <main class="flex-1 w-full max-w-5xl mx-auto p-4 sm:p-8 overflow-y-auto custom-scroll flex flex-col opacity-0 transition-opacity duration-500" id="mainContent">
-      
-      <!-- LỐI TẮT NHANH (QUICK ACCESS) -->
       <div class="grid grid-cols-2 gap-4 sm:gap-6 mb-10">
           <div onclick="window.location.href='arena.html'" class="bg-gradient-to-br from-amber-400 to-orange-500 rounded-3xl p-6 text-white shadow-lg cursor-pointer hover:shadow-xl hover:-translate-y-1 transition transform relative overflow-hidden group">
               <div class="absolute -right-6 -bottom-6 opacity-20 group-hover:scale-110 transition duration-500"><i class="fa-solid fa-gamepad text-9xl"></i></div>
@@ -78,16 +71,22 @@
           </div>
       </div>
 
-      <!-- BẢN ĐỒ LỘ TRÌNH (TỰ ĐỘNG SINH RA BỞI JS) -->
       <div id="roadmapContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
-          <!-- Các khối Level sẽ được nhúng vào đây -->
+          <!-- JS Render -->
       </div>
   </main>
 
   <script>
-    // ==========================================
-    // CẤU HÌNH HỆ THỐNG
-    // ==========================================
+    // 1. CÔNG TẮC BẢO HIỂM TỐI CAO - Kích hoạt ngay lập tức không chờ đợi!
+    function hideLoading() {
+        const overlay = document.getElementById('loadingOverlay');
+        const content = document.getElementById('mainContent');
+        if(overlay) overlay.style.display = 'none';
+        if(content) content.style.opacity = '1';
+    }
+    // Cưỡng chế ẩn màn hình sau 2 giây dù cho mạng có lỗi
+    setTimeout(hideLoading, 2000);
+
     const firebaseConfig = {
       apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
       authDomain: "roundup-ai-academy.firebaseapp.com",
@@ -113,47 +112,94 @@
         { id: 'level_6', name: 'Level 6', icon: 'fa-star', desc: 'Native-like intuition' }
     ];
 
-    // ==========================================
-    // KHỞI ĐỘNG VÀ BỌC THÉP HỆ THỐNG
-    // ==========================================
     auth.onAuthStateChanged((user) => {
       if (user) {
         currentUser = user;
         document.getElementById('userEmailDisplay').innerText = user.email;
 
-        try {
-            db.ref('users/' + user.uid).on('value', (snapshot) => {
-                let data = snapshot.val() || {};
-                
-                let unlocked = data.unlocked_levels || {};
-                if (!unlocked['starter']) {
-                    unlocked['starter'] = true;
-                    db.ref('users/' + user.uid + '/unlocked_levels/starter').set(true);
-                }
+        // Firebase Sync
+        db.ref('users/' + user.uid).on('value', (snapshot) => {
+            let data = snapshot.val() || {};
+            
+            // Xử lý an toàn nếu Firebase chưa có dữ liệu unlocked_levels
+            let unlocked = data.unlocked_levels || {};
+            
+            // Mở khóa Starter nội bộ (Không ghi ngược lên Firebase để tránh lặp vô hạn)
+            unlocked['starter'] = true;
 
-                document.getElementById('displayCoins').innerText = data.coins || 0;
-                renderRoadmap(unlocked);
-                hideLoading();
-            });
-        } catch (e) {
-            console.error("Firebase Database Error:", e);
-        }
+            document.getElementById('displayCoins').innerText = data.coins || 0;
+            renderRoadmap(unlocked);
+            
+            // Tắt Loading ngay khi có data
+            hideLoading();
+        });
       } else { 
         window.location.href = "index.html"; 
       }
     });
 
-    // Hàm ẩn Loading
-    function hideLoading() {
-        const overlay = document.getElementById('loadingOverlay');
-        const content = document.getElementById('mainContent');
-        if(overlay) overlay.style.display = 'none';
-        if(content) content.style.opacity = '1';
+    function renderRoadmap(unlockedLevelsObj) {
+        const container = document.getElementById('roadmapContainer');
+        container.innerHTML = '';
+
+        SYSTEM_LEVELS.forEach((levelDef) => {
+            let isUnlocked = !!unlockedLevelsObj[levelDef.id];
+            
+            let cardHtml = `
+                <div class="level-card bg-white rounded-3xl p-6 border-2 ${isUnlocked ? 'border-indigo-100 shadow-lg' : 'border-slate-100 shadow-sm opacity-80'} flex flex-col relative overflow-hidden">
+                    
+                    ${isUnlocked 
+                        ? `<div class="absolute -right-4 -top-4 w-24 h-24 bg-indigo-50 rounded-full z-0"></div>` 
+                        : `<div class="absolute -right-4 -top-4 w-24 h-24 bg-slate-50 rounded-full z-0"></div>`
+                    }
+
+                    <div class="relative z-10 flex items-center justify-between mb-4">
+                        <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl ${isUnlocked ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-400'}">
+                            <i class="fa-solid ${levelDef.icon}"></i>
+                        </div>
+                        ${isUnlocked 
+                            ? `<span class="bg-emerald-100 text-emerald-600 font-black px-3 py-1 rounded-lg text-xs uppercase tracking-wider"><i class="fa-solid fa-unlock mr-1"></i> Unlocked</span>` 
+                            : `<span class="bg-slate-100 text-slate-500 font-black px-3 py-1 rounded-lg text-xs uppercase tracking-wider"><i class="fa-solid fa-lock mr-1"></i> Locked</span>`
+                        }
+                    </div>
+
+                    <h3 class="text-2xl font-black ${isUnlocked ? 'text-slate-800' : 'text-slate-500'} relative z-10 mb-1">${levelDef.name}</h3>
+                    <p class="text-slate-400 font-bold text-sm relative z-10 flex-1 mb-6">${levelDef.desc}</p>
+
+                    <div class="relative z-10 mt-auto">
+                        ${isUnlocked 
+                            ? `<button onclick="enterClassroom('${levelDef.id}')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3 rounded-xl shadow-md transition flex justify-center items-center gap-2">
+                                Enter Classroom <i class="fa-solid fa-arrow-right"></i>
+                               </button>`
+                            : `<button onclick="takeEntryTest('${levelDef.id}', '${levelDef.name}')" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-3 rounded-xl shadow-md transition flex justify-center items-center gap-2">
+                                Take Entry Test <i class="fa-solid fa-key"></i>
+                               </button>`
+                        }
+                    </div>
+                </div>
+            `;
+            container.innerHTML += cardHtml;
+        });
     }
 
-    // CÔNG TẮC BẢO HIỂM: Tự động tắt Loading sau 2.5s 
-    window.addEventListener('load', () => { setTimeout(hideLoading, 2500); });
+    function enterClassroom(levelId) {
+        db.ref('users/' + currentUser.uid).update({ current_level: levelId }).then(() => {
+            window.location.href = `classroom.html?level=${levelId}`;
+        });
+    }
 
-    // ==========================================
-    // THUẬT TOÁN VẼ BẢN ĐỒ LỘ TRÌNH (ROADMAP)
-    // ==========================================
+    function takeEntryTest(levelId, levelName) {
+        let confirmTest = confirm(`Bạn có muốn làm bài Entry Test để mở khóa ${levelName} không?\n(Bạn cần vượt qua bài thi này để chứng minh năng lực).`);
+        if(confirmTest) {
+            window.location.href = `exam.html?level=${levelId}&type=entry`;
+        }
+    }
+
+    function handleLogout() {
+        if(confirm("Are you sure you want to logout?")) {
+            auth.signOut().then(() => { window.location.href = "index.html"; });
+        }
+    }
+  </script>
+</body>
+</html>
