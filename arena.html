@@ -30,6 +30,13 @@
     .memory-card-front, .memory-card-back { position: absolute; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 1rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
     .memory-card-front { background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%); color: white; border: 2px solid #7c3aed; }
     .memory-card-back { background-color: white; color: #4c1d95; transform: rotateY(180deg); border: 2px solid #ddd6fe; }
+    
+    /* Hiệu ứng nhấp nháy cảnh báo hết giờ */
+    @keyframes urgent-pulse {
+        0%, 100% { opacity: 1; transform: scale(1); color: #f43f5e; }
+        50% { opacity: 0.8; transform: scale(1.1); color: #fff; }
+    }
+    .timer-urgent { animation: urgent-pulse 1s infinite; background-color: #be123c !important; }
   </style>
 </head>
 <body class="h-[100dvh] w-full flex flex-col bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')] relative overflow-hidden" id="mainBody">
@@ -60,10 +67,10 @@
   <main class="flex-1 w-full max-w-6xl mx-auto p-4 sm:p-8 overflow-y-auto custom-scroll opacity-0 transition-opacity duration-500" id="mainContent">
       <div class="text-center mb-10">
           <h2 class="text-3xl sm:text-4xl font-black text-slate-800 tracking-tight">Choose Your Challenge</h2>
-          <p class="text-slate-500 font-bold mt-2">Spend your coins to play and master vocabulary!</p>
+          <p class="text-slate-500 font-bold mt-2">Spend your coins to play. Win fast to play again for free!</p>
       </div>
 
-      <!-- DANH SÁCH 5 GAME TRONG ARENA -->
+      <!-- DANH SÁCH GAME TRONG ARENA -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           
           <!-- GAME 1: HANGMAN -->
@@ -72,7 +79,7 @@
               <div class="relative z-10 flex-1 flex flex-col">
                   <div class="w-16 h-16 bg-violet-100 text-violet-600 rounded-2xl flex items-center justify-center text-3xl mb-4 shadow-sm border border-violet-200"><i class="fa-solid fa-user-secret"></i></div>
                   <h3 class="text-2xl font-black text-slate-800 mb-2">Hangman</h3>
-                  <p class="text-slate-500 font-medium mb-6 flex-1 text-sm">Save the character by guessing the correct word letter by letter!</p>
+                  <p class="text-slate-500 font-medium mb-6 flex-1 text-sm">Save the character by guessing the correct word in 60 seconds!</p>
                   <div class="flex items-center justify-between mt-auto">
                       <span class="bg-amber-100 text-amber-700 font-black px-3 py-1.5 rounded-lg text-sm border border-amber-200"><i class="fa-solid fa-coins mr-1"></i><span id="hangmanCost">--</span></span>
                       <button onclick="requestPlayGame('hangman')" class="bg-violet-600 hover:bg-violet-700 text-white font-black px-6 py-2 rounded-xl shadow-md transition">PLAY</button>
@@ -86,7 +93,7 @@
               <div class="relative z-10 flex-1 flex flex-col">
                   <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-3xl mb-4 shadow-sm border border-emerald-200"><i class="fa-solid fa-clone"></i></div>
                   <h3 class="text-2xl font-black text-slate-800 mb-2">Memory Match</h3>
-                  <p class="text-slate-500 font-medium mb-6 flex-1 text-sm">Train your brain! Flip the cards and find the matching vocabulary pairs.</p>
+                  <p class="text-slate-500 font-medium mb-6 flex-1 text-sm">Flip cards and find matching pairs before the 60s timer runs out!</p>
                   <div class="flex items-center justify-between mt-auto">
                       <span class="bg-amber-100 text-amber-700 font-black px-3 py-1.5 rounded-lg text-sm border border-amber-200"><i class="fa-solid fa-coins mr-1"></i><span id="memoryCost">--</span></span>
                       <button onclick="requestPlayGame('memory')" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black px-6 py-2 rounded-xl shadow-md transition">PLAY</button>
@@ -94,41 +101,13 @@
               </div>
           </div>
 
-          <!-- GAME 3: WORD SCRAMBLE (UI Sẵn Sàng) -->
+          <!-- GAME 3: WORD SCRAMBLE -->
           <div class="bg-white rounded-3xl p-6 shadow-md border-2 border-slate-100 relative overflow-hidden flex flex-col opacity-80">
               <div class="absolute -right-4 -top-4 w-24 h-24 bg-sky-100 rounded-full z-0 opacity-50"></div>
               <div class="relative z-10 flex-1 flex flex-col">
                   <div class="w-16 h-16 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center text-3xl mb-4 shadow-sm border border-sky-200"><i class="fa-solid fa-shuffle"></i></div>
                   <h3 class="text-2xl font-black text-slate-800 mb-2">Word Scramble</h3>
                   <p class="text-slate-500 font-medium mb-6 flex-1 text-sm">Unscramble the mixed-up letters to find the correct English word.</p>
-                  <div class="flex items-center justify-between mt-auto">
-                      <span class="bg-slate-100 text-slate-500 font-black px-3 py-1.5 rounded-lg text-sm border border-slate-200">MAINTENANCE</span>
-                      <button disabled class="bg-slate-200 text-slate-400 font-black px-6 py-2 rounded-xl cursor-not-allowed">SOON</button>
-                  </div>
-              </div>
-          </div>
-
-          <!-- GAME 4: SPEED QUIZ (UI Sẵn Sàng) -->
-          <div class="bg-white rounded-3xl p-6 shadow-md border-2 border-slate-100 relative overflow-hidden flex flex-col opacity-80">
-              <div class="absolute -right-4 -top-4 w-24 h-24 bg-rose-100 rounded-full z-0 opacity-50"></div>
-              <div class="relative z-10 flex-1 flex flex-col">
-                  <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center text-3xl mb-4 shadow-sm border border-rose-200"><i class="fa-solid fa-bolt"></i></div>
-                  <h3 class="text-2xl font-black text-slate-800 mb-2">Speed Quiz</h3>
-                  <p class="text-slate-500 font-medium mb-6 flex-1 text-sm">Answer as many vocabulary questions as you can before time runs out!</p>
-                  <div class="flex items-center justify-between mt-auto">
-                      <span class="bg-slate-100 text-slate-500 font-black px-3 py-1.5 rounded-lg text-sm border border-slate-200">MAINTENANCE</span>
-                      <button disabled class="bg-slate-200 text-slate-400 font-black px-6 py-2 rounded-xl cursor-not-allowed">SOON</button>
-                  </div>
-              </div>
-          </div>
-
-          <!-- GAME 5: WORD SEARCH (UI Sẵn Sàng) -->
-          <div class="bg-white rounded-3xl p-6 shadow-md border-2 border-slate-100 relative overflow-hidden flex flex-col opacity-80">
-              <div class="absolute -right-4 -top-4 w-24 h-24 bg-amber-100 rounded-full z-0 opacity-50"></div>
-              <div class="relative z-10 flex-1 flex flex-col">
-                  <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center text-3xl mb-4 shadow-sm border border-amber-200"><i class="fa-solid fa-magnifying-glass"></i></div>
-                  <h3 class="text-2xl font-black text-slate-800 mb-2">Word Search</h3>
-                  <p class="text-slate-500 font-medium mb-6 flex-1 text-sm">Find the hidden words in the grid of letters.</p>
                   <div class="flex items-center justify-between mt-auto">
                       <span class="bg-slate-100 text-slate-500 font-black px-3 py-1.5 rounded-lg text-sm border border-slate-200">MAINTENANCE</span>
                       <button disabled class="bg-slate-200 text-slate-400 font-black px-6 py-2 rounded-xl cursor-not-allowed">SOON</button>
@@ -146,18 +125,22 @@
       <div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden transform transition-all scale-100 flex flex-col max-h-[90vh]">
           <div class="bg-violet-600 p-4 flex justify-between items-center text-white shrink-0">
               <h3 class="font-black text-xl flex items-center"><i class="fa-solid fa-user-secret mr-2"></i> Hangman Rescue</h3>
-              <button onclick="closeModal('gameModal')" class="w-8 h-8 flex items-center justify-center bg-violet-700 rounded-full hover:bg-rose-500 transition"><i class="fa-solid fa-xmark"></i></button>
+              <div class="flex items-center gap-4">
+                  <!-- ĐỒNG HỒ ĐẾM NGƯỢC -->
+                  <div id="hm-timer-box" class="font-black text-amber-300 text-lg flex items-center bg-violet-800 px-3 py-1 rounded-lg transition-colors">
+                      <i class="fa-solid fa-clock mr-2"></i><span id="hm-timer-text">01:00</span>
+                  </div>
+                  <button onclick="closeModal('gameModal')" class="w-8 h-8 flex items-center justify-center bg-violet-700 rounded-full hover:bg-rose-500 transition"><i class="fa-solid fa-xmark"></i></button>
+              </div>
           </div>
           <div class="p-6 flex-1 overflow-y-auto custom-scroll flex flex-col items-center">
-              <!-- Khu vực vẽ người treo cổ (Bọc thép bằng SVG) -->
-              <div class="w-full flex justify-center mb-6">
+              
+              <!-- Khu vực vẽ người treo cổ SVG -->
+              <div class="w-full flex justify-center mb-4">
                   <div class="w-40 h-40 bg-slate-50 border-4 border-slate-200 rounded-2xl flex items-center justify-center p-2 relative shadow-inner">
                       <svg viewBox="0 0 100 100" class="w-full h-full" fill="none" stroke-linecap="round">
-                          <!-- Khung treo (Luôn hiện) -->
                           <path d="M10,95 H50 M30,95 V10 M30,10 H60 M60,10 V20" class="stroke-slate-400" stroke-width="4"/>
                           <line x1="60" y1="10" x2="60" y2="25" class="stroke-rose-400" stroke-width="4"/>
-                          
-                          <!-- Các bộ phận cơ thể (Ẩn mặc định) -->
                           <circle id="hm-head" cx="60" cy="33" r="8" class="hidden fill-rose-100 stroke-slate-800" stroke-width="3"/>
                           <line id="hm-body" x1="60" y1="41" x2="60" y2="65" class="hidden stroke-slate-800" stroke-width="3"/>
                           <line id="hm-arm-l" x1="60" y1="45" x2="45" y2="55" class="hidden stroke-slate-800" stroke-width="3"/>
@@ -167,14 +150,19 @@
                       </svg>
                   </div>
               </div>
-              </div>
-              <div class="mb-8 font-black text-rose-500 tracking-wider">MISTAKES: <span id="mistakesCount">0</span> / 6</div>
-              <div id="wordDisplay" class="flex flex-wrap justify-center gap-2 mb-10 min-h-[50px]"></div>
+
+              <div class="mb-6 font-black text-rose-500 tracking-wider text-sm">MISTAKES: <span id="mistakesCount">0</span> / 6</div>
+              <div id="wordDisplay" class="flex flex-wrap justify-center gap-2 mb-8 min-h-[50px]"></div>
               <div id="keyboard" class="flex flex-wrap justify-center gap-2 max-w-xl w-full"></div>
-              <div id="gameResult" class="hidden flex-col items-center mt-6 w-full animate-bounce">
-                  <h4 id="resultMessage" class="text-3xl font-black mb-4"></h4>
+              
+              <!-- KẾT QUẢ VÀ NÚT ĐIỀU HƯỚNG -->
+              <div id="gameResult" class="hidden flex-col items-center mt-2 w-full animate-bounce">
+                  <h4 id="resultMessage" class="text-3xl font-black mb-2"></h4>
                   <p id="correctWordWas" class="text-slate-500 font-bold mb-6 hidden">The word was: <span id="theWord" class="text-violet-600 font-black"></span></p>
-                  <button onclick="closeModal('gameModal')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-black px-8 py-3 rounded-xl transition">Back to Arena</button>
+                  
+                  <div id="hm-action-btns" class="flex gap-4">
+                      <!-- Được điền bởi JS (Next Free hoặc Retry mất phí) -->
+                  </div>
               </div>
           </div>
       </div>
@@ -187,8 +175,12 @@
       <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden transform transition-all scale-100 flex flex-col max-h-[90vh]">
           <div class="bg-emerald-500 p-4 flex justify-between items-center text-white shrink-0">
               <h3 class="font-black text-xl flex items-center"><i class="fa-solid fa-clone mr-2"></i> Memory Match</h3>
-              <div class="flex items-center gap-4">
-                  <span class="bg-emerald-600 px-3 py-1 rounded-lg font-black text-sm">Flips: <span id="flipCount">0</span></span>
+              <div class="flex items-center gap-3">
+                  <span class="bg-emerald-600 px-3 py-1.5 rounded-lg font-black text-sm hidden sm:inline-block">Flips: <span id="flipCount">0</span></span>
+                  <!-- ĐỒNG HỒ ĐẾM NGƯỢC -->
+                  <div id="mem-timer-box" class="font-black text-emerald-100 text-lg flex items-center bg-emerald-700 px-3 py-1 rounded-lg transition-colors">
+                      <i class="fa-solid fa-clock mr-2"></i><span id="mem-timer-text">01:00</span>
+                  </div>
                   <button onclick="closeModal('memoryModal')" class="w-8 h-8 flex items-center justify-center bg-emerald-600 rounded-full hover:bg-rose-500 transition"><i class="fa-solid fa-xmark"></i></button>
               </div>
           </div>
@@ -198,15 +190,20 @@
                   <!-- JS nhúng thẻ vào đây -->
               </div>
               
-              <div id="memoryResult" class="hidden flex-col items-center mt-4 w-full animate-bounce">
-                  <h4 class="text-4xl font-black mb-4 text-emerald-500">EXCELLENT MEMORY!</h4>
-                  <button onclick="closeModal('memoryModal')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-black px-8 py-3 rounded-xl transition shadow-sm">Claim Victory</button>
+              <div id="memoryResult" class="hidden flex-col items-center mt-2 w-full animate-bounce">
+                  <h4 id="mem-resultMessage" class="text-4xl font-black mb-6 text-emerald-500">EXCELLENT!</h4>
+                  <div id="mem-action-btns" class="flex gap-4">
+                      <!-- Được điền bởi JS -->
+                  </div>
               </div>
           </div>
       </div>
   </div>
 
   <script>
+    // ==========================================
+    // CẤU HÌNH HỆ THỐNG
+    // ==========================================
     const firebaseConfig = {
       apiKey: "AIzaSyD8EXAmo1IlRCnQ_EFXorlKDrtrJmx8J1M",
       authDomain: "roundup-ai-academy.firebaseapp.com",
@@ -225,6 +222,10 @@
     let currentUser = null;
     let currentCoins = 0;
     let arenaData = null; 
+
+    // Biến Đồng hồ chung
+    let gameTimerInterval = null;
+    let gameTimeLeft = 60;
 
     auth.onAuthStateChanged((user) => {
       if (user) {
@@ -264,17 +265,48 @@
     }
 
     function closeModal(modalId) {
+        clearInterval(gameTimerInterval); // Reset timer khi đóng
         document.getElementById(modalId).classList.add('hidden');
         document.getElementById(modalId).classList.remove('flex');
     }
 
+    // ==========================================
+    // LOGIC ĐỒNG HỒ 60s
+    // ==========================================
+    function startGameTimer(boxId, textId, onTimeoutCallback) {
+        clearInterval(gameTimerInterval);
+        gameTimeLeft = 60;
+        document.getElementById(textId).innerText = "01:00";
+        document.getElementById(boxId).classList.remove('timer-urgent');
+
+        gameTimerInterval = setInterval(() => {
+            gameTimeLeft--;
+            let s = gameTimeLeft.toString().padStart(2, '0');
+            document.getElementById(textId).innerText = `00:${s}`;
+            
+            // Cảnh báo 10s cuối
+            if (gameTimeLeft <= 10 && gameTimeLeft > 0) {
+                document.getElementById(boxId).classList.add('timer-urgent');
+            }
+            
+            if (gameTimeLeft <= 0) {
+                clearInterval(gameTimerInterval);
+                document.getElementById(boxId).classList.remove('timer-urgent');
+                onTimeoutCallback();
+            }
+        }, 1000);
+    }
+
+    // ==========================================
+    // LOGIC TRỪ TIỀN (VÉ VÀO CỬA)
+    // ==========================================
     function requestPlayGame(gameType) {
         if (!arenaData || !arenaData[gameType]) { alert("Game chưa có data trên Google Sheets!"); return; }
         let cost = parseInt(arenaData[gameType].cost) || 0;
         let dataString = arenaData[gameType].gameData;
 
         if (!dataString) { alert("Kho từ vựng rỗng!"); return; }
-        if (currentCoins < cost) { alert(`Ối! Bạn cần ${cost} Xu để chơi. Hãy cày thêm bài tập nhé!`); return; }
+        if (currentCoins < cost) { alert(`Bạn cần ${cost} Xu để chơi. Hãy cày thêm bài tập nhé!`); return; }
 
         let newBalance = currentCoins - cost;
         db.ref('users/' + currentUser.uid).update({ coins: newBalance })
@@ -290,6 +322,11 @@
     let hm_currentWord = "", hm_guessedLetters = [], hm_mistakes = 0;
     const hm_maxMistakes = 6;
 
+    // Hàm gọi thẳng (Dùng cho nút Next không mất tiền)
+    function playNextHangmanFree() {
+        startHangman(arenaData['hangman'].gameData);
+    }
+
     function startHangman(dataString) {
         let wordsArray = dataString.split(',').map(w => w.trim().toUpperCase()).filter(w => w.length > 0);
         hm_currentWord = wordsArray[Math.floor(Math.random() * wordsArray.length)];
@@ -301,10 +338,14 @@
         document.getElementById('correctWordWas').classList.add('hidden');
         
         ['head', 'body', 'arm-l', 'arm-r', 'leg-l', 'leg-r'].forEach(part => { document.getElementById(`hm-${part}`).classList.add('hidden'); });
+        
         drawWord(); drawKeyboard();
         
         document.getElementById('gameModal').classList.remove('hidden');
         document.getElementById('gameModal').classList.add('flex');
+        
+        // Khởi động đồng hồ
+        startGameTimer('hm-timer-box', 'hm-timer-text', () => endHangman(false, true));
     }
 
     function drawWord() {
@@ -334,31 +375,48 @@
         let kb = document.getElementById(`key-${letter}`);
         if(kb) { kb.disabled = true; kb.className = "keyboard-key w-10 h-12 font-black text-lg rounded-lg shadow-sm border-b-4 bg-slate-200 text-slate-400 border-slate-300"; }
 
-        if (hm_currentWord.includes(letter)) { drawWord(); checkWin(); } 
+        if (hm_currentWord.includes(letter)) { 
+            drawWord(); 
+            if (hm_currentWord.split('').filter(c => c !== ' ').every(c => hm_guessedLetters.includes(c))) endHangman(true); 
+        } 
         else {
             hm_mistakes++; document.getElementById('mistakesCount').innerText = hm_mistakes;
             const parts = ['head', 'body', 'arm-l', 'arm-r', 'leg-l', 'leg-r'];
             if (hm_mistakes <= parts.length) document.getElementById(`hm-${parts[hm_mistakes - 1]}`).classList.remove('hidden');
-            if (hm_mistakes >= hm_maxMistakes) endGame(false);
+            if (hm_mistakes >= hm_maxMistakes) endHangman(false, false);
         }
     }
 
-    function checkWin() {
-        if (hm_currentWord.split('').filter(c => c !== ' ').every(c => hm_guessedLetters.includes(c))) endGame(true);
-    }
+    function endHangman(isWin, isTimeout = false) {
+        clearInterval(gameTimerInterval); // Dừng đồng hồ
+        document.getElementById('hm-timer-box').classList.remove('timer-urgent');
 
-    function endGame(isWin) {
         document.getElementById('keyboard').classList.add('hidden');
         document.getElementById('gameResult').classList.remove('hidden');
+        
+        const actionBtns = document.getElementById('hm-action-btns');
+        let cost = arenaData['hangman'].cost;
+
         if (isWin) {
             document.getElementById('resultMessage').innerText = "YOU SAVED HIM!";
             document.getElementById('resultMessage').className = "text-4xl font-black mb-4 text-emerald-500";
+            actionBtns.innerHTML = `
+                <button onclick="closeModal('gameModal')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-black px-6 py-3 rounded-xl transition">Quit</button>
+                <button onclick="playNextHangmanFree()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black px-8 py-3 rounded-xl shadow-lg hover:-translate-y-1 transition">Next (Free)</button>
+            `;
             confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
         } else {
-            document.getElementById('resultMessage').innerText = "GAME OVER!";
+            let msg = isTimeout ? "TIME'S UP!" : "GAME OVER!";
+            document.getElementById('resultMessage').innerText = msg;
             document.getElementById('resultMessage').className = "text-4xl font-black mb-4 text-rose-500";
+            
             document.getElementById('theWord').innerText = hm_currentWord;
             document.getElementById('correctWordWas').classList.remove('hidden');
+
+            actionBtns.innerHTML = `
+                <button onclick="closeModal('gameModal')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-black px-6 py-3 rounded-xl transition">Quit</button>
+                <button onclick="requestPlayGame('hangman')" class="bg-amber-500 hover:bg-amber-600 text-white font-black px-8 py-3 rounded-xl shadow-lg hover:-translate-y-1 transition">Retry (-${cost} <i class="fa-solid fa-coins text-sm ml-1"></i>)</button>
+            `;
         }
     }
 
@@ -368,8 +426,11 @@
     let mem_cards = [], mem_hasFlippedCard = false, mem_lockBoard = false;
     let mem_firstCard, mem_secondCard, mem_flips = 0, mem_matched = 0;
 
+    function playNextMemoryFree() {
+        startMemory(arenaData['memory'].gameData);
+    }
+
     function startMemory(dataString) {
-        // Lấy 6 từ ngẫu nhiên để tạo 12 thẻ (6 cặp)
         let words = dataString.split(',').map(w => w.trim().toUpperCase()).filter(w => w.length > 0);
         let selectedWords = words.sort(() => 0.5 - Math.random()).slice(0, 6);
         mem_cards = [...selectedWords, ...selectedWords].sort(() => 0.5 - Math.random());
@@ -379,11 +440,12 @@
         
         document.getElementById('flipCount').innerText = mem_flips;
         document.getElementById('memoryResult').classList.add('hidden');
+        document.getElementById('memoryGrid').classList.remove('hidden');
         
         const grid = document.getElementById('memoryGrid');
         grid.innerHTML = '';
         
-        mem_cards.forEach((word, index) => {
+        mem_cards.forEach((word) => {
             grid.innerHTML += `
                 <div class="memory-card h-24 sm:h-32" data-word="${word}" onclick="flipMemoryCard(this)">
                     <div class="memory-card-inner">
@@ -396,6 +458,9 @@
 
         document.getElementById('memoryModal').classList.remove('hidden');
         document.getElementById('memoryModal').classList.add('flex');
+
+        // Khởi động đồng hồ
+        startGameTimer('mem-timer-box', 'mem-timer-text', () => endMemory(false, true));
     }
 
     function flipMemoryCard(card) {
@@ -412,49 +477,61 @@
         mem_secondCard = card;
         mem_flips++;
         document.getElementById('flipCount').innerText = mem_flips;
-        checkForMatch();
-    }
-
-    function checkForMatch() {
-        let isMatch = mem_firstCard.dataset.word === mem_secondCard.dataset.word;
-        isMatch ? disableMemoryCards() : unflipMemoryCards();
-    }
-
-    function disableMemoryCards() {
-        mem_firstCard.classList.add('matched');
-        mem_secondCard.classList.add('matched');
         
-        // Đọc từ vựng khi lật trúng
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            let u = new SpeechSynthesisUtterance(mem_firstCard.dataset.word);
-            u.lang = 'en-US';
-            window.speechSynthesis.speak(u);
-        }
+        let isMatch = mem_firstCard.dataset.word === mem_secondCard.dataset.word;
+        if(isMatch) {
+            mem_firstCard.classList.add('matched');
+            mem_secondCard.classList.add('matched');
+            
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                let u = new SpeechSynthesisUtterance(mem_firstCard.dataset.word);
+                u.lang = 'en-US'; window.speechSynthesis.speak(u);
+            }
 
-        resetMemoryBoard();
-        mem_matched += 2;
-        if (mem_matched === mem_cards.length) {
+            mem_hasFlippedCard = false; mem_lockBoard = false; mem_firstCard = null; mem_secondCard = null;
+            mem_matched += 2;
+            
+            if (mem_matched === mem_cards.length) {
+                setTimeout(() => endMemory(true, false), 500);
+            }
+        } else {
+            mem_lockBoard = true;
             setTimeout(() => {
-                document.getElementById('memoryResult').classList.remove('hidden');
-                document.getElementById('memoryResult').classList.add('flex');
-                confetti({ particleCount: 150, spread: 80, origin: { y: 0.5 } });
-            }, 500);
+                mem_firstCard.classList.remove('flipped');
+                mem_secondCard.classList.remove('flipped');
+                mem_hasFlippedCard = false; mem_lockBoard = false; mem_firstCard = null; mem_secondCard = null;
+            }, 1000);
         }
     }
 
-    function unflipMemoryCards() {
-        mem_lockBoard = true;
-        setTimeout(() => {
-            mem_firstCard.classList.remove('flipped');
-            mem_secondCard.classList.remove('flipped');
-            resetMemoryBoard();
-        }, 1000);
-    }
+    function endMemory(isWin, isTimeout = false) {
+        clearInterval(gameTimerInterval); // Dừng đồng hồ
+        document.getElementById('mem-timer-box').classList.remove('timer-urgent');
 
-    function resetMemoryBoard() {
-        [mem_hasFlippedCard, mem_lockBoard] = [false, false];
-        [mem_firstCard, mem_secondCard] = [null, null];
+        document.getElementById('memoryGrid').classList.add('hidden');
+        document.getElementById('memoryResult').classList.remove('hidden');
+        document.getElementById('memoryResult').classList.add('flex');
+
+        const actionBtns = document.getElementById('mem-action-btns');
+        let cost = arenaData['memory'].cost;
+
+        if (isWin) {
+            document.getElementById('mem-resultMessage').innerText = "EXCELLENT MEMORY!";
+            document.getElementById('mem-resultMessage').className = "text-4xl font-black mb-6 text-emerald-500";
+            actionBtns.innerHTML = `
+                <button onclick="closeModal('memoryModal')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-black px-6 py-3 rounded-xl transition">Quit</button>
+                <button onclick="playNextMemoryFree()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black px-8 py-3 rounded-xl shadow-lg hover:-translate-y-1 transition">Next (Free)</button>
+            `;
+            confetti({ particleCount: 150, spread: 80, origin: { y: 0.5 } });
+        } else {
+            document.getElementById('mem-resultMessage').innerText = isTimeout ? "TIME'S UP!" : "GAME OVER!";
+            document.getElementById('mem-resultMessage').className = "text-4xl font-black mb-6 text-rose-500";
+            actionBtns.innerHTML = `
+                <button onclick="closeModal('memoryModal')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-black px-6 py-3 rounded-xl transition">Quit</button>
+                <button onclick="requestPlayGame('memory')" class="bg-amber-500 hover:bg-amber-600 text-white font-black px-8 py-3 rounded-xl shadow-lg hover:-translate-y-1 transition">Retry (-${cost} <i class="fa-solid fa-coins text-sm ml-1"></i>)</button>
+            `;
+        }
     }
   </script>
 </body>
